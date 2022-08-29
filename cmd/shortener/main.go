@@ -20,9 +20,11 @@ func HelloWorld(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    // 
-	//маршрутизация запросов обработчику
+    // маршрутизация запросов обработчику
     http.HandleFunc("/", HelloWorld)
-    // запуск сервера с адресом localhost, порт 8080
-    http.ListenAndServe(":8080", nil)
-}
+    // конструируем свой сервер
+    server := &http.Server{
+        Addr: "mydomain.com:80",
+    }
+    server.ListenAndServe()
+} 
