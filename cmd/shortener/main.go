@@ -24,7 +24,7 @@ func main() {
     http.HandleFunc("/", HelloWorld)
     // конструируем свой сервер
     server := &http.Server{
-        Addr: "mydomain.com:80",
+        Addr: "localhost:8080",
     }
     server.ListenAndServe()
 } 
