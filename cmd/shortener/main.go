@@ -8,33 +8,26 @@ import (
 // ShUrl — обработчик запроса.
 func ShUrl(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-		// если методом POST
-		case "POST":
-			// проверяем форму
-			if err := r.ParseForm(); err != nil {
-				// если не заполнена, возвращаем код ошибки
-				http.Error(w, "Bad auth", 401)
-				return
-			}
-					
-		case "GET":
-			// проверяем форму
-			if err := r.ParseForm(); err != nil {
-				// если не заполнена, возвращаем код ошибки
-				http.Error(w, "Bad auth", 401)
-				return
-			}
-					
-			// в остальных случаях предлагаем форму авторизации
-		default:
-			fmt.Fprint(w, form)
+	// если методом POST
+	case "GET":
+		// выдаем строку
+		if err := r.ParseForm(); err != nil {
+			// если не заполнена, возвращаем код ошибки
+			http.Error(w, "Bad auth", 401)
+			return
 		}
+	case "POST":
+		// проверяем форму
+		if err := r.ParseForm(); err != nil {
+			// если не заполнена, возвращаем код ошибки
+			http.Error(w, "Bad auth", 401)
+			return
+		}
+
+	default:
+		http.Error(w, "Bad auth", 401)
 	}
-	
-
-
-
-
+}
 
 func main() {
 	// маршрутизация запросов обработчику
@@ -50,7 +43,7 @@ func main() {
 
 }
 
-type Middleware func(http.Handler) http.Handler
+/* type Middleware func(http.Handler) http.Handler
 
 func Conveyor(h http.Handler, middlewares ...Middleware) http.Handler {
 	for _, middleware := range middlewares {
@@ -71,4 +64,4 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// продолжаем обработку запроса
 	// ...
-}
+} */
