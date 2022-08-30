@@ -5,25 +5,41 @@ import (
 	"net/http"
 )
 
-// HelloWorld — обработчик запроса.
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(`<!DOCTYPE html>
-	<html lang="ru">
-	  <head>
-		<meta charset="utf-8">
-		<title>Привет, мир!</title>
-	  </head>
-	  <body>
-		<h1>Привет, мир!</h1>
-		<p>Это веб-страница.</p>
-	 </body>
-	</html>`))
-}
+// ShUrl — обработчик запроса.
+func ShUrl(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+		// если методом POST
+		case "POST":
+			// проверяем форму
+			if err := r.ParseForm(); err != nil {
+				// если не заполнена, возвращаем код ошибки
+				http.Error(w, "Bad auth", 401)
+				return
+			}
+					
+		case "GET":
+			// проверяем форму
+			if err := r.ParseForm(); err != nil {
+				// если не заполнена, возвращаем код ошибки
+				http.Error(w, "Bad auth", 401)
+				return
+			}
+					
+			// в остальных случаях предлагаем форму авторизации
+		default:
+			fmt.Fprint(w, form)
+		}
+	}
+	
+
+
+
+
 
 func main() {
 	// маршрутизация запросов обработчику
-	http.HandleFunc("/", HelloWorld)
-	
+	http.HandleFunc("/", ShUrl)
+
 	//server := &http.Server{
 	//	Addr: "localhost:8080",
 	//}
