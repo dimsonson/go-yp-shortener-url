@@ -1,41 +1,50 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"text/template"
 )
 
-var tpl = template.Must(template.ParseFiles("index.html"))
-
 // ShUrl — обработчик запроса.
 func ShUrl(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("template")
+	tpl := template.Must(template.ParseFiles("templates/index.html"))
 	
 	switch r.Method {
 	// если методом POST
 	case "GET":
+		fmt.Println("get")
 		tpl.Execute(w, r)
 		// выдаем строку
-		if err := r.ParseForm(); err != nil {
-			// если не заполнена, возвращаем код ошибки
-			http.Error(w, "Bad auth", 401)
+	case "POST":
+		fmt.Println("post")
+		tpl.Execute(w, r)
+		//tpl.Execute(w, r)
+		fmt.Println("Post")
+
+		
+		u, err := url.Parse(r.URL.String())
+		fmt.Println(u, "парсинг")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal server error"))
 			return
 		}
-		w.Write(WebP1)
-		/* []byte(`<!DOCTYPE html>
-		<html lang="ru">
-		  <head>
-			<meta charset="utf-8">
-			<title>Привет, мир!</title>
-		  </head>
-		  <body>
-			<h1>Привет, мир!</h1>
-			<p>Это веб-страница.</p>
-		 </body>
-		</html>`)) */
-	case "POST":
-		tpl.Execute(w, r)
+
+		params := u.Query()
+		searchKey := params.Get("q")
+		page := params.Get("page")
+		if page == "" {
+			page = "1"
+		}
+
+		fmt.Println("Search Query is: ", searchKey)
+		fmt.Println("Results page is: ", page)
 		// проверяем форму
+
 		if err := r.ParseForm(); err != nil {
 			// если не заполнена, возвращаем код ошибки
 			http.Error(w, "Bad auth", 401)
