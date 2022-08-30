@@ -2,54 +2,51 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
-	"net/url"
-	"text/template"
+	"time"
 )
 
-// ShUrl — обработчик запроса.
+var db = make(map[string]string)
+
+// ShUrl — обработчик запроса
 func ShUrl(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("template")
-	tpl := template.Must(template.ParseFiles("templates/index.html"))
-	
+	//fmt.Println("обработчик")
 	switch r.Method {
-	// если методом POST
+	// если метод POST
 	case "GET":
 		fmt.Println("get")
-		tpl.Execute(w, r)
-		// выдаем строку
-	case "POST":
-		fmt.Println("post")
-		tpl.Execute(w, r)
-		//tpl.Execute(w, r)
-		fmt.Println("Post")
-
+		fmt.Println(r.Method)
 		
-		u, err := url.Parse(r.URL.String())
-		fmt.Println(u, "парсинг")
+	// если метод POST
+	case "POST":
+		//fmt.Println("post")
+		// читаем Body
+		b, err := io.ReadAll(r.Body)
+		// обрабатываем ошибку
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal server error"))
+			http.Error(w, err.Error(), 500)
 			return
 		}
+		//fmt.Println(string(b))
 
-		params := u.Query()
-		searchKey := params.Get("q")
-		page := params.Get("page")
-		if page == "" {
-			page = "1"
-		}
+		//создаем ключ
+		key := randSeq(5)
+		// проверяем уникальность ключа *********************
 
-		fmt.Println("Search Query is: ", searchKey)
-		fmt.Println("Results page is: ", page)
-		// проверяем форму
+		//создаем пару ключ-значение
+		db[key] = string(b)
+		fmt.Println(db)
 
-		if err := r.ParseForm(); err != nil {
-			// если не заполнена, возвращаем код ошибки
-			http.Error(w, "Bad auth", 401)
-			return
-		}
+		//устанавливаем заголовок Content-Type
+		w.Header().Set("content-type", "text/plain; charset=utf-8")
+		// устанавливаем статус-код 201
+		w.WriteHeader(http.StatusCreated)
+		// пишем тело ответа
+		w.Write([]byte(r.Host + "/" + key))
+		fmt.Println(r.Host)
 
 	default:
 		http.Error(w, "Bad auth", 401)
@@ -68,6 +65,16 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//server.ListenAndServe()
 
+}
+
+func randSeq(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 /* type Middleware func(http.Handler) http.Handler
@@ -92,7 +99,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// продолжаем обработку запроса
 	// ...
 } */
-
+/*
 var WebP1 = []byte(`<!DOCTYPE html>
 <html>
 
@@ -151,3 +158,4 @@ var WebP1 = []byte(`<!DOCTYPE html>
 </body>
 
 </html>`)
+*/
