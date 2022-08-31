@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,29 @@ func ShUrl(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		fmt.Println("get")
 		fmt.Println(r.Method)
-		
+		fmt.Println(r.URL)
+		fmt.Println(r.Header)
+
+		u := strings.TrimPrefix(r.URL.Path, "/")
+		fmt.Println(u)
+		value, inMap := db[u]
+		if !inMap {
+			fmt.Println("нет такого URL") //
+		}
+		fmt.Println(value)
+
+		w.Header().Set("content-type", "text/plain; charset=utf-8")
+		//w.Header().Add("Location", value)
+		//устанавливаем заголовок Content-Type
+		w.Header().Set("Location", value)
+		fmt.Println(w.Header())
+		// устанавливаем статус-код
+		//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		fmt.Println(w.Header())
+		// пишем тело ответа
+		w.Write([]byte("test"))
+
 	// если метод POST
 	case "POST":
 		//fmt.Println("post")
@@ -43,13 +66,13 @@ func ShUrl(w http.ResponseWriter, r *http.Request) {
 		//устанавливаем заголовок Content-Type
 		w.Header().Set("content-type", "text/plain; charset=utf-8")
 		// устанавливаем статус-код 201
-		w.WriteHeader(http.StatusCreated)
+		//w.WriteHeader(http.StatusCreated)
 		// пишем тело ответа
-		w.Write([]byte(r.Host + "/" + key))
+		w.Write([]byte("http://" + r.Host + "/" + key))
 		fmt.Println(r.Host)
 
 	default:
-		http.Error(w, "Bad auth", 401)
+		http.Error(w, "Вы ввели неверный адрес", 401)
 	}
 }
 
