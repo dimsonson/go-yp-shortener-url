@@ -12,14 +12,14 @@ import (
 var db = make(map[string]string)
 var keyLeght int = 5
 
-// ShUrl — обработчик запроса
+// ShortURL — обработчик запроса
 func ShortURL(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	// если метод POST
 	case "GET":
 		// проверяем наличие ключа и получем длинную ссылку
-		value, inMap := db[r.URL.Path]
-		if !inMap {
+		value, ok := db[r.URL.Path]
+		if !ok {
 			fmt.Println("нет такого URL")
 		}
 		http.Redirect(w, r, value, http.StatusTemporaryRedirect)
