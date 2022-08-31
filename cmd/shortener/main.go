@@ -13,7 +13,7 @@ var db = make(map[string]string)
 var keyLeght int = 5
 
 // ShUrl — обработчик запроса
-func ShortUrl(w http.ResponseWriter, r *http.Request) {
+func ShortURL(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	// если метод POST
 	case "GET":
@@ -57,7 +57,7 @@ func ShortUrl(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// маршрутизация запросов обработчику
-	http.HandleFunc("/", ShortUrl)
+	http.HandleFunc("/", ShortURL)
 	// конструируем сервер
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
