@@ -37,11 +37,10 @@ func ShortUrl(w http.ResponseWriter, r *http.Request) {
 		// присваиваем значение ключа и проверяем уникальность ключа
 		for {
 			tmpKey := randSeq(keyLeght)
-			if _, inMap := db[tmpKey]; inMap {
-				return
+			if _, ok := db[tmpKey]; !ok {
+				key = tmpKey
+				break
 			}
-			key = tmpKey
-			break
 		}
 		//создаем пару ключ-значение
 		db[key] = string(b)
