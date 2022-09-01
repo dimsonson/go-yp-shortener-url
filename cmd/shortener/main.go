@@ -51,7 +51,7 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		// пишем тело ответа
 		w.Write([]byte("http://" + r.Host + key))
 	default:
-		http.Error(w, "Вы ввели неверный адрес", 400)
+		http.Error(w, "Вы ввели неверный адрес", http.StatusBadRequest)
 	}
 }
 
