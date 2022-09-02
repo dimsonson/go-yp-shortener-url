@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/randomsuff"
@@ -23,7 +24,10 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	var key string //:= randSeq(5)
 	// присваиваем значение ключа и проверяем уникальность ключа
 	for {
-		tmpKey := randomsuff.RandSeq(settings.KeyLeght)
+		tmpKey, err := randomsuff.RandSeq(settings.KeyLeght)
+		if err != nil {
+			log.Fatal(err) //настраивается на этапе запуска http сервера
+		}
 		if _, ok := storage.Db[tmpKey]; !ok {
 			key = tmpKey
 			break
