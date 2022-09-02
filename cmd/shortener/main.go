@@ -7,10 +7,10 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+	"internal/app/settings"
 )
 
 var db = make(map[string]string)
-var keyLeght int = 5
 
 // ShortURL — обработчик запроса
 func ShortURL(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		var key string //:= randSeq(5)
 		// присваиваем значение ключа и проверяем уникальность ключа
 		for {
-			tmpKey := randSeq(keyLeght)
+			tmpKey := randSeq(settings.keyLeght)
 			if _, ok := db[tmpKey]; !ok {
 				key = tmpKey
 				break

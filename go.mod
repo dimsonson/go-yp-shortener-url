@@ -1,3 +1,3 @@
-module go-yp-shortener-url
+module github.com/dimsonson/go-yp-shortener-url
 
 go 1.19
