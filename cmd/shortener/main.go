@@ -29,7 +29,7 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		b, err := io.ReadAll(r.Body)
 		// обрабатываем ошибку
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		//создаем ключ
@@ -51,7 +51,7 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		// пишем тело ответа
 		w.Write([]byte("http://" + r.Host + key))
 	default:
-		http.Error(w, "Вы ввели неверный адрес", 400)
+		http.Error(w, "Вы ввели неверный адрес", http.StatusBadRequest)
 	}
 }
 
