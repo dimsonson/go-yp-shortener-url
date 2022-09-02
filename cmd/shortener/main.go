@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
-	"internal/app/settings"
+	"/internal/app/settings"
 )
 
 var db = make(map[string]string)
