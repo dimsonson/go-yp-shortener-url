@@ -7,9 +7,8 @@ import (
 )
 
 func RandSeq(n int) (string, error) {
-	if n < 2 {
-		err := fmt.Errorf("wromg argument: number %v less than 2\n ", n)
-		//fmt.Print//log.Fatal(err)
+	if n < 1 {
+		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
 		return "", err
 	}
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

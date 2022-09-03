@@ -26,7 +26,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		tmpKey, err := randomsuff.RandSeq(settings.KeyLeght)
 		if err != nil {
-			log.Fatal(err) //настраивается на этапе запуска http сервера
+			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
 		if _, ok := storage.Db[tmpKey]; !ok {
 			key = tmpKey

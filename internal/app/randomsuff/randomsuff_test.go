@@ -25,11 +25,6 @@ func TestRandSeq(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "one",
-			args:    1,
-			wantErr: true,
-		},
-		{
 			name:    "more than one number",
 			args:    5,
 			wantErr: false,
