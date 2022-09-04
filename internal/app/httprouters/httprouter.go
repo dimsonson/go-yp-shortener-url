@@ -9,7 +9,7 @@ import (
 func HttpRouter(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		handlers.GetHandler(w, r)
+		handlers.GetHandler(w, r) 
 	case "POST":
 		handlers.PostHandler(w, r)
 	default:

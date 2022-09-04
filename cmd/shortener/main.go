@@ -1,9 +1,15 @@
 package main
 
 import (
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/server"
+	"log"
+	"net/http"
+
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 )
 
 func main() {
-	server.HttpServer()
+	// маршрутизация запросов обработчику
+	http.HandleFunc("/", httprouters.HttpRouter)
+	// конструируем сервер
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

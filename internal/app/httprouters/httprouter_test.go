@@ -1,23 +1,22 @@
-package handlers_test
+package httprouters_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 )
 
-func TestDefHandler(t *testing.T) {
+func TestHttpRouter(t *testing.T) {
+
 	// определяем структуру теста
 	type want struct {
-		code int
+		handlerOutStatus int
 	}
 
 	type req struct {
-		metod    string
-		endpoint string
-		body     string
+		methodIn string
 	}
 
 	// создаём массив тестов: имя и желаемый результат
@@ -28,14 +27,30 @@ func TestDefHandler(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "GET #1",
+			name: "POST #1",
 			req: req{
-				metod:    "GET",
-				endpoint: "/xyz",
-				body:     "",
+				methodIn: "POST",
 			},
 			want: want{
-				code: 400,
+				handlerOutStatus: 201,
+			},
+		},
+		{
+			name: "DEF #1",
+			req: req{
+				methodIn: "PATCH",
+			},
+			want: want{
+				handlerOutStatus: 400,
+			},
+		},
+		{
+			name: "GET #1",
+			req: req{
+				methodIn: "GET",
+			},
+			want: want{
+				handlerOutStatus: 400, //307,
 			},
 		},
 	}
@@ -45,23 +60,22 @@ func TestDefHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем тестирующий запрос
-			request := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
+			request := httptest.NewRequest(tt.req.methodIn, "/", nil)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.DefHandler)
+			h := http.HandlerFunc(httprouters.HttpRouter)
 
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 			resp := w.Result()
 
-			// проверяем код ответа
-			if resp.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
+			// проверяем код ответа вызываемой функции
+			if tt.want.handlerOutStatus != resp.StatusCode {
+				t.Errorf("Expected status code %d, got %d", tt.want.handlerOutStatus, resp.StatusCode)
 			}
-
 		})
 	}
 }
