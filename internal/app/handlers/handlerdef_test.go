@@ -1,4 +1,4 @@
-package handlers_test
+package handlers
 
 import (
 	"io"
@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	//"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostHandler(t *testing.T) {
+func TestDefHandler(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -36,7 +36,7 @@ func TestPostHandler(t *testing.T) {
 			name: "POST #1",
 			req: req{
 				metod:    "POST",
-				endpoint: "/",
+				endpoint: "/5+5",
 				body:     "https://pkg.go.dev/io#Reader",
 			},
 			want: want{

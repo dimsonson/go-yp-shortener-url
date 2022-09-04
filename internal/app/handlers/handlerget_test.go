@@ -1,17 +1,14 @@
 package handlers_test
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestPostHandler(t *testing.T) {
+func TestGetHandler(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -33,16 +30,14 @@ func TestPostHandler(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "POST #1",
+			name: "GET #1",
 			req: req{
-				metod:    "POST",
-				endpoint: "/",
-				body:     "https://pkg.go.dev/io#Reader",
+				metod:    "GET",
+				endpoint: "/xyz",
+				body:     "",
 			},
 			want: want{
-				code:        201,
-				response:    "http://",
-				contentType: "text/plain; charset=utf-8",
+				code: 400,
 			},
 		},
 	}
@@ -52,14 +47,13 @@ func TestPostHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем тестирующий запрос
-			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://localhost:8080/"))
+			request := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
 
 			// создаём новый Recorder
-
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.PostHandler)
+			h := http.HandlerFunc(handlers.DefHandler)
 
 			// запускаем сервер
 			h.ServeHTTP(w, request)
@@ -70,20 +64,6 @@ func TestPostHandler(t *testing.T) {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
 			}
 
-			// получаем и проверяем тело ответа
-			defer resp.Body.Close()
-			resBody, err := io.ReadAll(resp.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			// проверка содержания строки в теле ответа
-			assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
-
-			// заголовок ответа
-			if resp.Header.Get("Content-Type") != tt.want.contentType {
-				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, resp.Header.Get("Content-Type"))
-			}
 		})
 	}
 }

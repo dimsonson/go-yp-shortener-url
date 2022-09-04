@@ -12,6 +12,11 @@ import (
 )
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
+	// проверяем пришел ли POST запрос
+	if r.Method != "POST" {
+		http.Error(w, "Error: method is not POST", http.StatusBadRequest)
+		return
+	}
 	// читаем Body
 	b, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
