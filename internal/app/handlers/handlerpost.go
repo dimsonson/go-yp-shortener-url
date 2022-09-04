@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,7 +23,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("b", string(b))
 	//создаем ключ
 	var key string //:= randSeq(5)
 	// присваиваем значение ключа и проверяем уникальность ключа
@@ -38,15 +36,12 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	fmt.Println("key", key)
 	//создаем пару ключ-значение
 	storage.Db[key] = string(b)
-	fmt.Println("storage.Db[key]", storage.Db[key])
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	fmt.Println("r.Host", r.Host)
 	w.Write([]byte("http://" + r.Host + key))
 }
