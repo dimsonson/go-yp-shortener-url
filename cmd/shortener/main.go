@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// маршрутизация запросов обработчику
-	http.HandleFunc("/", httprouters.HttpRouter)
+	http.HandleFunc("/", httprouters.HTTPRouter)
 	// конструируем сервер
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
