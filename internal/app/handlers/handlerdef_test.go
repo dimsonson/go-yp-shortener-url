@@ -56,7 +56,7 @@ func TestDefHandler(t *testing.T) {
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 			resp := w.Result()
-
+			defer resp.Body.Close()
 			// проверяем код ответа
 			if resp.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)

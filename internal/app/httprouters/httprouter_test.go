@@ -8,7 +8,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 )
 
-func TestHttpRouter(t *testing.T) {
+func TestHTTPRouter(t *testing.T) {
 
 	// определяем структуру теста
 	type want struct {
@@ -66,12 +66,12 @@ func TestHttpRouter(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(httprouters.HttpRouter)
+			h := http.HandlerFunc(httprouters.HTTPRouter)
 
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 			resp := w.Result()
-
+			defer resp.Body.Close()
 			// проверяем код ответа вызываемой функции
 			if tt.want.handlerOutStatus != resp.StatusCode {
 				t.Errorf("Expected status code %d, got %d", tt.want.handlerOutStatus, resp.StatusCode)

@@ -1,3 +1,3 @@
 package storage
 
-var Db = make(map[string]string)
+var DB = make(map[string]string)

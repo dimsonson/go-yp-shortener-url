@@ -6,7 +6,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 )
 
-func HttpRouter(w http.ResponseWriter, r *http.Request) {
+func HTTPRouter(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		handlers.GetHandler(w, r) 

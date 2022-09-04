@@ -52,7 +52,7 @@ func TestGetHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем запись в базе url
-			storage.Db["/xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
+			storage.DB["/xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
 
 			//создаем тестирующий запрос
 			request := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)

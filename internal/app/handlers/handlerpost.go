@@ -31,13 +31,13 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
-		if _, ok := storage.Db[tmpKey]; !ok {
+		if _, ok := storage.DB[tmpKey]; !ok {
 			key = tmpKey
 			break
 		}
 	}
 	//создаем пару ключ-значение
-	storage.Db[key] = string(b)
+	storage.DB[key] = string(b)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
