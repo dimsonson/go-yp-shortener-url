@@ -6,27 +6,26 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_main(t *testing.T) {
-	r := chi.NewRouter()
+	r := httprouters.NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	resp, body := testRequest(t, ts, "GET", "/")
-	assert.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode)
-	assert.Contains(t, "https://", body)
+    resp1, body1 := testRequest(t, ts, "POST", "/")
+	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
+	//assert.Contains(t, "https://", body)
 
-	resp, _ = testRequest(t, ts, "POST", "/")
-	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	assert.Contains(t, "https://", body)
+	resp2, _ := testRequest(t, ts, "GET", string(body1))
+	assert.Equal(t, http.StatusBadRequest, resp2.StatusCode)
+	//assert.Contains(t, "https://", body)
 
-	resp, _ = testRequest(t, ts, "PATCH", "/")
+	resp, _ := testRequest(t, ts, "PATCH", "/")
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	
 
 }
 
