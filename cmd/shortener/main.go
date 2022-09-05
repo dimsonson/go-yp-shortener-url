@@ -4,12 +4,24 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-	// маршрутизация запросов обработчику
-	http.HandleFunc("/", httprouters.HTTPRouter)
-	// конструируем сервер
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	rout := chi.NewRouter()
+
+	// зададим встроенные middleware, чтобы улучшить стабильность приложения
+	//rout.Use(middleware.RequestID)
+	//rout.Use(middleware.RealIP)
+	rout.Use(middleware.Logger)
+	rout.Use(middleware.Recoverer)
+
+	rout.HandleFunc("/*", handlers.DefHandler)
+	rout.Get("/*", handlers.GetHandler)
+	rout.Post("/*", handlers.PostHandler)
+
+	log.Fatal(http.ListenAndServe(":8080", rout))
 }

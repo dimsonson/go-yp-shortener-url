@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +17,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error: method is not POST", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("метод Post")
 	// читаем Body
 	b, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
