@@ -1,81 +1,46 @@
 package httprouters_test
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestHTTPRouter(t *testing.T) {
+func TestNewRouter(t *testing.T) {
 
-	// определяем структуру теста
-	type want struct {
-		handlerOutStatus int
-	}
+	r := httprouters.NewRouter()
+	ts := httptest.NewServer(r)
+	defer ts.Close()
 
-	type req struct {
-		methodIn string
-	}
+	resp1, _ := testRequest(t, ts, "POST", "/")
+	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
+	//assert.Contains(t, "https://", body)
 
-	// создаём массив тестов: имя и желаемый результат
-	tests := []struct {
-		name string
-		req  req
-		want want
-	}{
-		// определяем все тесты
-		{
-			name: "POST #1",
-			req: req{
-				methodIn: "POST",
-			},
-			want: want{
-				handlerOutStatus: 201,
-			},
-		},
-		{
-			name: "DEF #1",
-			req: req{
-				methodIn: "PATCH",
-			},
-			want: want{
-				handlerOutStatus: 400,
-			},
-		},
-		{
-			name: "GET #1",
-			req: req{
-				methodIn: "GET",
-			},
-			want: want{
-				handlerOutStatus: 400, //307,
-			},
-		},
-	}
+	resp2, _ := testRequest(t, ts, "GET", "/xyz") // string(body1))
+	assert.Equal(t, http.StatusBadRequest, resp2.StatusCode)
+	//assert.Contains(t, "https://", body)
 
-	for _, tt := range tests {
-		// запускаем каждый тест
-		t.Run(tt.name, func(t *testing.T) {
+	resp, _ := testRequest(t, ts, "PATCH", "/")
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-			//создаем тестирующий запрос
-			request := httptest.NewRequest(tt.req.methodIn, "/", nil)
+}
 
-			// создаём новый Recorder
-			w := httptest.NewRecorder()
+func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, nil)
+	require.NoError(t, err)
 
-			// определяем хендлер
-			h := http.HandlerFunc(httprouters.HTTPRouter)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
 
-			// запускаем сервер
-			h.ServeHTTP(w, request)
-			resp := w.Result()
-			defer resp.Body.Close()
-			// проверяем код ответа вызываемой функции
-			if tt.want.handlerOutStatus != resp.StatusCode {
-				t.Errorf("Expected status code %d, got %d", tt.want.handlerOutStatus, resp.StatusCode)
-			}
-		})
-	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	return resp, string(respBody)
 }
