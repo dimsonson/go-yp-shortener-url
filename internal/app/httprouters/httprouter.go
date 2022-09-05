@@ -10,14 +10,10 @@ func NewRouter() chi.Router {
 	rout := chi.NewRouter()
 
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
-	//rout.Use(middleware.RequestID)
-	//rout.Use(middleware.RealIP)
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
-
 	rout.HandleFunc("/*", handlers.DefHandler)
 	rout.Get("/*", handlers.GetHandler)
 	rout.Post("/*", handlers.PostHandler)
-	//log.Fatal(http.ListenAndServe(":8080", rout))
 	return rout
 }

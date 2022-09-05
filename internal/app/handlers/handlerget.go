@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("метод GET")
 	if r.URL.Path == "/" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
