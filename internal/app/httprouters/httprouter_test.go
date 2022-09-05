@@ -20,13 +20,16 @@ func TestNewRouter(t *testing.T) {
 	resp1, _ := testRequest(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
 	//assert.Contains(t, "https://", body)
+	defer resp1.Body.Close()
 
 	resp2, _ := testRequest(t, ts, "GET", "/xyz") // string(body1))
 	assert.Equal(t, http.StatusBadRequest, resp2.StatusCode)
 	//assert.Contains(t, "https://", body)
+	defer resp2.Body.Close()
 
 	resp, _ := testRequest(t, ts, "PATCH", "/")
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	defer resp.Body.Close()
 
 }
 
