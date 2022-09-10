@@ -12,7 +12,7 @@ import (
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// проверяем пришел ли POST запрос
-/* 	if r.Method != "POST" {
+	/* 	if r.Method != "POST" {
 		http.Error(w, "error: method is not POST", http.StatusBadRequest)
 		return
 	} */
