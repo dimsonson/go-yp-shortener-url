@@ -1,17 +1,20 @@
 package handlers_test
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
-func GetShortURL(t *testing.T) {
+func TestGetShortURL(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -41,8 +44,21 @@ func GetShortURL(t *testing.T) {
 			},
 			want: want{
 				code:        307,
-				response:    "https://",
+				response:    "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf",
 				contentType: "text/html; charset=utf-8",
+			},
+		},
+		{
+			name: "GET #2",
+			req: req{
+				metod:    "GET",
+				endpoint: "/",
+				body:     "",
+			},
+			want: want{
+				code:        400,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
@@ -52,10 +68,16 @@ func GetShortURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем запись в базе url
-			storage.DB["/xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
+			storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
+	        
+			r := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 			//создаем тестирующий запрос
-			request := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
+			//request := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
@@ -64,7 +86,7 @@ func GetShortURL(t *testing.T) {
 			h := http.HandlerFunc(handlers.GetShortURL)
 
 			// запускаем сервер
-			h.ServeHTTP(w, request)
+			h.ServeHTTP(w, r)
 			resp := w.Result()
 
 			// проверяем код ответа
