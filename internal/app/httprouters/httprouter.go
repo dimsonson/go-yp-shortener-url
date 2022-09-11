@@ -14,5 +14,7 @@ func NewRouter() chi.Router {
 	// маршруты
 	rout.Get("/{id}", handlers.GetShortURL)
 	rout.Post("/", handlers.CreateShortURL)
+	rout.HandleFunc("/*", handlers.IncorrectRequests)
+	//rout.HandleFunc("/", handlers.IncorrectRequests)
 	return rout
 }
