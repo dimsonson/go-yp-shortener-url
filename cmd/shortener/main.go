@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 func main() {
 
 	httprouters.NewRouter()
+	fmt.Println()
 	log.Fatal(http.ListenAndServe(":8080", httprouters.NewRouter()))
 	
 }

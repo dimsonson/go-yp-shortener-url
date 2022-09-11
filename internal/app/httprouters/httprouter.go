@@ -12,7 +12,7 @@ func NewRouter() chi.Router {
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
-	rout.HandleFunc("/*", handlers.DefHandler)
+	//rout.HandleFunc("/*", handlers.DefHandler)
 	rout.Get("/*", handlers.GetHandler)
 	rout.Post("/*", handlers.PostHandler)
 	return rout
