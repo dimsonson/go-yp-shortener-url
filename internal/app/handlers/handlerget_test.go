@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetHandler(t *testing.T) {
+func GetShortURL(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -61,7 +61,7 @@ func TestGetHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.GetHandler)
+			h := http.HandlerFunc(handlers.GetShortURL)
 
 			// запускаем сервер
 			h.ServeHTTP(w, request)

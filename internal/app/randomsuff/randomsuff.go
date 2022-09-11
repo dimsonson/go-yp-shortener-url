@@ -13,10 +13,18 @@ func RandSeq(n int) (string, error) {
 	}
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n+1)
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b), nil
+}
+/* 
+b := make([]rune, n+1)
 	b[0] = rune('/')
 	for i := range b[1:] {
 		b[i+1] = letters[rand.Intn(len(letters))]
 	}
 	return string(b), nil
 }
+ */

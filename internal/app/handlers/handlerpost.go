@@ -4,18 +4,24 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/randomsuff"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
-func PostHandler(w http.ResponseWriter, r *http.Request) {
+func CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
 	b, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = url.ParseRequestURI(string(b))
+	if err != nil {
+		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
 	//создаем ключ
@@ -38,5 +44,5 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	w.Write([]byte("http://" + r.Host + key))
+	w.Write([]byte("http://" + r.Host + "/" + key))
 }

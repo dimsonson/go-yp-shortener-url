@@ -59,7 +59,7 @@ func TestPostHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.PostHandler)
+			h := http.HandlerFunc(handlers.CreateShortURL)
 
 			// запускаем сервер
 			h.ServeHTTP(w, request)

@@ -7,12 +7,12 @@ import (
 )
 
 func NewRouter() chi.Router {
-
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
-	rout.Get("/{id}", handlers.GetHandler)
-	rout.Post("/", handlers.PostHandler)
+	// маршруты
+	rout.Get("/{id}", handlers.GetShortURL)
+	rout.Post("/", handlers.CreateShortURL)
 	return rout
 }
