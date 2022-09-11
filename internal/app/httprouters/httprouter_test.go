@@ -17,7 +17,7 @@ func TestNewRouter(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	resp1, _ := testRequest(t, ts, "POST", "/")
+	resp1, _ := testRequest(t, ts, "POST", "/{id}")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
 	//assert.Contains(t, "https://", body)
 	defer resp1.Body.Close()
