@@ -48,5 +48,5 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func IncorrectRequests(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "request incorect", http.StatusBadRequest)
+	http.Error(w, "request incorrect", http.StatusBadRequest)
 }
