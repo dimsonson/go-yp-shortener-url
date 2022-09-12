@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -23,7 +24,11 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//создаем ключ
-	key := services.ServiseCreateShortURL(string(B))
+	s := storage.NewMapStorage("map")
+	serv := services.NewHandler(s)
+	key := serv.ServiseCreateShortURL(string(B))
+
+	//key := services.ServiseCreateShortURL(string(B))
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -39,7 +44,11 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 	// проверяем наличие ключа и получем длинную ссылку
 	id := chi.URLParam(r, "id")
-	value, err := services.ServiceGetShortURL(id)
+
+	s := storage.NewMapStorage("map")
+	serv := services.NewHandler(s)
+	value, err := serv.ServiceGetShortURL(id)
+	//value, err := services.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}

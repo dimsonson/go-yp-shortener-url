@@ -7,22 +7,36 @@ import (
 	"time"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
-func ServiseCreateShortURL(url string) (key string) {
+type Storages interface {
+	PutStorage(key string, value string) (err error)
+	GetStorage(key string) (value string, err error)
+}
+
+type Handler struct {
+	Storage Storages
+}
+
+func NewHandler(s Storages) *Handler {
+	return &Handler{
+		s,
+	}
+}
+
+func (h *Handler) ServiseCreateShortURL(url string) (key string) {
 	// присваиваем значение ключа и проверяем уникальность ключа
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	//создаем пару ключ-значение
-	storage.PutMapStorage(key, url)
+	h.Storage.PutStorage(key, url)
 	return key
 }
 
-func ServiceGetShortURL(id string) (value string, err error) {
-	value, err = storage.GetMapStorage(id)
+func (h *Handler) ServiceGetShortURL(id string) (value string, err error) {
+	value, err = h.Storage.GetStorage(id)
 	if err != nil {
 		err = fmt.Errorf("id not found")
 
