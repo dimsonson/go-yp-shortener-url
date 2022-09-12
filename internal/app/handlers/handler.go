@@ -2,16 +2,11 @@ package handlers
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/randomsuff"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-delve/delve/service"
 )
 
 func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +23,7 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//создаем ключ
-    key := services.ServiseCreateShortURL(string(B))
+	key := services.ServiseCreateShortURL(string(B))
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -43,11 +38,12 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// проверяем наличие ключа и получем длинную ссылку
-	value, ok := storage.DB[chi.URLParam(r, "id")]
-	if !ok {
+	id := chi.URLParam(r, "id")
+	value, err := services.ServiceGetShortURL(id)
+	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
-		return
 	}
+
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
 

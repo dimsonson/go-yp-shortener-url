@@ -12,8 +12,8 @@ func NewRouter() chi.Router {
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
 	// маршруты
-	rout.Get("/{id}", handlers.GetShortURL)
-	rout.Post("/", handlers.CreateShortURL)
+	rout.Get("/{id}", handlers.HandlerGetShortURL)
+	rout.Post("/", handlers.HandlerCreateShortURL)
 	rout.HandleFunc("/*", handlers.IncorrectRequests)
 	return rout
 }
