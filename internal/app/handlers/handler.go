@@ -7,12 +7,14 @@ import (
 	"net/url"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/randomsuff"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-delve/delve/service"
 )
 
-func CreateShortURL(w http.ResponseWriter, r *http.Request) {
+func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
 	B, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -26,20 +28,7 @@ func CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//создаем ключ
-	var key string //:= randSeq(5)
-	// присваиваем значение ключа и проверяем уникальность ключа
-	for {
-		tmpKey, err := randomsuff.RandSeq(settings.KeyLeght)
-		if err != nil {
-			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
-		}
-		if _, ok := storage.DB[tmpKey]; !ok {
-			key = tmpKey
-			break
-		}
-	}
-	//создаем пару ключ-значение
-	storage.DB[key] = string(B)
+    key := services.ServiseCreateShortURL(string(B))
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -48,7 +37,7 @@ func CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("http://" + r.Host + "/" + key))
 }
 
-func GetShortURL(w http.ResponseWriter, r *http.Request) {
+func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return

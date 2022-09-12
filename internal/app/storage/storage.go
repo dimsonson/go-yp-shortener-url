@@ -16,9 +16,7 @@ func GetMapStorage(key string) (value string, err error) {
 	var ok bool
 	if value, ok = DB[key]; !ok {
 		return "", fmt.Errorf("key %v not found", key)
-		//fmt.Println(value)
 	}
-	fmt.Println(value)
 	return value, nil
 
 }
