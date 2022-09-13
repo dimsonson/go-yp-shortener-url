@@ -51,7 +51,6 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 	return resp, string(respBody)
 }
 
-
 func testRequest1(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader("https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"))
