@@ -9,16 +9,16 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-type Storages interface {
+type Storager interface {
 	PutStorage(key string, value string) (err error)
 	GetStorage(key string) (value string, err error)
 }
 
 type Service struct {
-	Storage Storages
+	Storage Storager
 }
 
-func NewService(s Storages) *Service {
+func NewService(s Storager) *Service {
 	return &Service{
 		s,
 	}
