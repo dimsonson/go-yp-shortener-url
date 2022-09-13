@@ -53,7 +53,7 @@ func TestIncorrectReques1ts(t *testing.T) {
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			
+
 			//создаем тестирующий запрос
 			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
 

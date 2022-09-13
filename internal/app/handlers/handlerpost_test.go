@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"context"
 	"io"
 	"net/http/httptest"
 	"strings"
@@ -11,9 +10,23 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
+
+/* type HandlerTest interface {
+	ServiceCreateShortURL(url string) (key string)
+	ServiceGetShortURL(id string) (value string, err error)
+}
+
+type Handler struct {
+	handler Services
+}
+
+func NewHandler(s Services) *Handler {
+	return &Handler{
+		s,
+	}
+} */
 
 func TestHandlerCreateShortURL(t *testing.T) {
 	// определяем структуру теста
@@ -37,20 +50,19 @@ func TestHandlerCreateShortURL(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "GET #1",
+			name: "POST #1",
 			req: req{
 				metod:    "POST",
 				endpoint: "/",
-				body:     "",
+				body:     "https://pkg.go.dev/io#Reader",
 			},
 			want: want{
-				code:        307,
-				response:    "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf",
+				code:        201,
+				response:    "http://example.com/",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
@@ -67,10 +79,10 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)
-
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			//h := http.HandlerFunc(handlers.)
+			//rctx := chi.NewRouteContext()
+			//rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
+			//req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 			//	h := http.HandlerFunc(handlers.NewHandler())
 
 			// запускаем сервер
