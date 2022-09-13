@@ -13,21 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/* type HandlerTest interface {
-	ServiceCreateShortURL(url string) (key string)
-	ServiceGetShortURL(id string) (value string, err error)
-}
-
-type Handler struct {
-	handler Services
-}
-
-func NewHandler(s Services) *Handler {
-	return &Handler{
-		s,
-	}
-} */
-
 func TestHandlerCreateShortURL(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
