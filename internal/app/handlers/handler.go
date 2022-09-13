@@ -24,9 +24,9 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//создаем ключ
-	
+
 	s := storage.NewMapStorage("map")
-	serv := services.NewHandler(s)
+	serv := services.NewService(s)
 	key := serv.ServiseCreateShortURL(string(B))
 
 	//key := services.ServiseCreateShortURL(string(B))
@@ -47,7 +47,7 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	s := storage.NewMapStorage("map")
-	serv := services.NewHandler(s)
+	serv := services.NewService(s)
 	value, err := serv.ServiceGetShortURL(id)
 
 	//value, err := services.ServiceGetShortURL(id)
