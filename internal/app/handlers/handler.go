@@ -24,12 +24,9 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//создаем ключ
-
 	s := storage.NewMapStorage("map")
-	serv := services.NewService(s)
-	key := serv.ServiseCreateShortURL(string(B))
-
-	//key := services.ServiseCreateShortURL(string(B))
+	srvs := services.NewService(s)
+	key := srvs.ServiseCreateShortURL(string(B))
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -47,10 +44,8 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	s := storage.NewMapStorage("map")
-	serv := services.NewService(s)
-	value, err := serv.ServiceGetShortURL(id)
-
-	//value, err := services.ServiceGetShortURL(id)
+	srvs := services.NewService(s)
+	value, err := srvs.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
