@@ -5,12 +5,25 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 )
 
-func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
+type Services interface {
+	ServiceCreateShortURL(url string) (key string)
+	ServiceGetShortURL(id string) (value string, err error)
+}
+
+type Handler struct {
+	handler Services
+}
+
+func NewHandler(s Services) *Handler {
+	return &Handler{
+		s,
+	}
+}
+
+func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
 	B, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -18,15 +31,14 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// валидация URL
 	_, err = url.ParseRequestURI(string(B))
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
 	//создаем ключ
-	s := storage.NewMapStorage("map")
-	srvs := services.NewService(s)
-	key := srvs.ServiseCreateShortURL(string(B))
+	key := hn.handler.ServiceCreateShortURL(string(B))
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -35,7 +47,7 @@ func HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("http://" + r.Host + "/" + key))
 }
 
-func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
+func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
@@ -43,9 +55,7 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// проверяем наличие ключа и получем длинную ссылку
 	id := chi.URLParam(r, "id")
 
-	s := storage.NewMapStorage("map")
-	srvs := services.NewService(s)
-	value, err := srvs.ServiceGetShortURL(id)
+	value, err := hn.handler.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
@@ -53,6 +63,6 @@ func HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
 
-func IncorrectRequests(w http.ResponseWriter, r *http.Request) {
+func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "request incorrect", http.StatusBadRequest)
 }
