@@ -8,10 +8,13 @@ import (
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostHandler(t *testing.T) {
+func TestHandlerCreateShortURL(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -59,10 +62,14 @@ func TestPostHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.CreateShortURL)
+			s := storage.NewMapStorage("map")
+			srvs := services.NewService(s)
+			h := handlers.NewHandler(srvs)
+			r := httprouters.NewRouter(h)
+			//	h := http.HandlerFunc(handlers.NewHandler())
 
 			// запускаем сервер
-			h.ServeHTTP(w, request)
+			r.ServeHTTP(w, request)
 			resp := w.Result()
 
 			// проверяем код ответа
