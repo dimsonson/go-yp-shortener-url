@@ -1,19 +1,19 @@
 package handlers_test
 
 import (
-	"io"
-	"net/http"
+	"context"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
-	"github.com/stretchr/testify/assert"
+	"github.com/go-chi/chi/v5"
 )
 
-func TestHandlerGetShortURL(t *testing.T) {
+func TestIncorrectReques1ts(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -34,17 +34,18 @@ func TestHandlerGetShortURL(t *testing.T) {
 		want want
 	}{
 		// определяем все тесты
+
 		{
-			name: "GET #1",
+			name: "GET #2",
 			req: req{
-				metod:    http.MethodGet,
+				metod:    "PATCH",
 				endpoint: "/",
-				body:     "https://pkg.go.dev/io#Reader",
+				//body:     "",
 			},
 			want: want{
-				code:        201,
-				response:    "http://",
-				contentType: "text/plain; charset=utf-8",
+				code: 400,
+				//response: "",
+				//contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
@@ -52,9 +53,9 @@ func TestHandlerGetShortURL(t *testing.T) {
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-
+			
 			//создаем тестирующий запрос
-			request := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
+			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
 
 			// создаём новый Recorder
 
@@ -65,10 +66,14 @@ func TestHandlerGetShortURL(t *testing.T) {
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 			//	h := http.HandlerFunc(handlers.NewHandler())
 
 			// запускаем сервер
-			r.ServeHTTP(w, request)
+			r.ServeHTTP(w, req)
 			resp := w.Result()
 
 			// проверяем код ответа
@@ -77,19 +82,19 @@ func TestHandlerGetShortURL(t *testing.T) {
 			}
 
 			// получаем и проверяем тело ответа
-			defer resp.Body.Close()
+			/* defer resp.Body.Close()
 			resBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				t.Fatal(err)
-			}
+			} */
 
 			// проверка содержания строки в теле ответа
-			assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
+			//assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
 
 			// заголовок ответа
-			if resp.Header.Get("Content-Type") != tt.want.contentType {
+			/* if resp.Header.Get("Content-Type") != tt.want.contentType {
 				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, resp.Header.Get("Content-Type"))
-			}
+			} */
 		})
 	}
 }

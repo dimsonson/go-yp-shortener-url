@@ -1,8 +1,8 @@
 package handlers_test
 
 import (
+	"context"
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -11,6 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,15 +37,15 @@ func TestHandlerCreateShortURL(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "POST #1",
+			name: "GET #1",
 			req: req{
 				metod:    "POST",
 				endpoint: "/",
-				body:     "https://pkg.go.dev/io#Reader",
+				body:     "",
 			},
 			want: want{
-				code:        201,
-				response:    "http://",
+				code:        307,
+				response:    "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -55,7 +56,7 @@ func TestHandlerCreateShortURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем тестирующий запрос
-			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://localhost:8080/"))
+			req := httptest.NewRequest(tt.req.metod, "/", strings.NewReader("http://localhost:8080/"))
 
 			// создаём новый Recorder
 
@@ -66,10 +67,14 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 			//	h := http.HandlerFunc(handlers.NewHandler())
 
 			// запускаем сервер
-			r.ServeHTTP(w, request)
+			r.ServeHTTP(w, req)
 			resp := w.Result()
 
 			// проверяем код ответа

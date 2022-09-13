@@ -18,7 +18,7 @@ func main() {
 	s := storage.NewMapStorage("map")
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
-	r:= httprouters.NewRouter(h)
+	r := httprouters.NewRouter(h)
 
 	log.Fatal(http.ListenAndServe(port, r))
 }
