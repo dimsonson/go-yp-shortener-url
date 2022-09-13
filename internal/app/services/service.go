@@ -14,17 +14,17 @@ type Storages interface {
 	GetStorage(key string) (value string, err error)
 }
 
-type Handler struct {
+type Service struct {
 	Storage Storages
 }
 
-func NewHandler(s Storages) *Handler {
-	return &Handler{
+func NewService(s Storages) *Service {
+	return &Service{
 		s,
 	}
 }
 
-func (h *Handler) ServiseCreateShortURL(url string) (key string) {
+func (h *Service) ServiseCreateShortURL(url string) (key string) {
 	// присваиваем значение ключа и проверяем уникальность ключа
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
@@ -35,7 +35,7 @@ func (h *Handler) ServiseCreateShortURL(url string) (key string) {
 	return key
 }
 
-func (h *Handler) ServiceGetShortURL(id string) (value string, err error) {
+func (h *Service) ServiceGetShortURL(id string) (value string, err error) {
 	value, err = h.Storage.GetStorage(id)
 	if err != nil {
 		err = fmt.Errorf("id not found")
