@@ -7,9 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,10 +16,7 @@ import (
 func TestNewRouter(t *testing.T) {
 	storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
 
-	s := storage.NewMapStorage("map")
-	srvs := services.NewService(s)
-	h := handlers.NewHandler(srvs)
-	r := httprouters.NewRouter(h)
+	r := httprouters.NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -55,6 +50,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 
 	return resp, string(respBody)
 }
+
 
 func testRequest1(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 
