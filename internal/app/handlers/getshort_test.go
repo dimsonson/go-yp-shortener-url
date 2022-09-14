@@ -69,7 +69,7 @@ func TestGetShortURL(t *testing.T) {
 
 			//создаем запись в базе url
 			storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
-	        
+
 			r := httptest.NewRequest(http.MethodGet, tt.req.endpoint, nil)
 
 			rctx := chi.NewRouteContext()
@@ -83,10 +83,8 @@ func TestGetShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			h := http.HandlerFunc(handlers.GetShortURL)
-
-			// запускаем сервер
-			h.ServeHTTP(w, r)
+			handlers.GetShortURL(w, r)
+			// записываем ответ
 			resp := w.Result()
 
 			// проверяем код ответа

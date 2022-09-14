@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,19 +25,14 @@ func CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	//создаем ключ
-	var key string //:= randSeq(5)
-	// присваиваем значение ключа и проверяем уникальность ключа
-	for {
-		tmpKey, err := randomsuff.RandSeq(settings.KeyLeght)
-		if err != nil {
-			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
-		}
-		if _, ok := storage.DB[tmpKey]; !ok {
-			key = tmpKey
-			break
-		}
+	// присваиваем значение не уникального ключа
+	tmpKey, err := randomsuff.RandSeq(settings.KeyLeght)
+	if err != nil {
+		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
+	unique := len(storage.DB) // уникальная часть
+	// присваиваем значение уникального ключа
+	key := fmt.Sprintf("%v%v", unique, tmpKey)
 	//создаем пару ключ-значение
 	storage.DB[key] = string(b)
 	//устанавливаем заголовок Content-Type
