@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -13,7 +12,7 @@ import (
 
 func main() {
 	port := ":8080"
-	fmt.Printf("Started server on port %s\n", port)
+	log.Printf("Starting server on port %s\n", port)
 
 	s := storage.NewMapStorage("map")
 	srvs := services.NewService(s)

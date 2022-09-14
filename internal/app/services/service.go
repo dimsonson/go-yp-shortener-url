@@ -25,11 +25,15 @@ func NewService(s Storages) *Services {
 }
 
 func (sr *Services) ServiceCreateShortURL(url string) (key string) {
+
+	// создать метод в storage для len
+
 	// присваиваем значение ключа и проверяем уникальность ключа
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
+
 	//создаем пару ключ-значение
 	sr.Storage.PutStorage(key, url)
 	return key
