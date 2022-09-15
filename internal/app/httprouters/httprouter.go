@@ -13,7 +13,9 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	rout.Use(middleware.Recoverer)
 	// маршруты
 	rout.Get("/{id}", hn.HandlerGetShortURL)
+	rout.Post("/api/shorten", hn.HandlerCreateShortJSON)
 	rout.Post("/", hn.HandlerCreateShortURL)
 	rout.HandleFunc("/*", hn.IncorrectRequests)
+
 	return rout
 }

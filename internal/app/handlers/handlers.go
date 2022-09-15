@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -21,6 +22,11 @@ func NewHandler(s Services) *Handler {
 	return &Handler{
 		s,
 	}
+}
+
+type PostJSON struct {
+	URL    string `json:"url,omitempty"`
+	Result string `json:"result,omitempty"`
 }
 
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
@@ -65,4 +71,41 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 
 func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "request incorrect", http.StatusBadRequest)
+}
+
+func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
+	// читаем Body
+	B, err := io.ReadAll(r.Body)
+	// обрабатываем ошибку
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// десериализация тела запроса
+	b := PostJSON{}
+	if err := json.Unmarshal(B, &b); err != nil {
+		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
+	}
+
+	// валидация URL
+	_, err = url.ParseRequestURI(b.URL)
+	if err != nil {
+		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
+		return
+	}
+	//создаем ключ
+	key := hn.handler.ServiceCreateShortURL(b.URL)
+	b.Result = "http://" + r.Host + "/" + key
+	b.URL = ""
+	jsn, err := json.Marshal(b)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	//устанавливаем заголовок Content-Type
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	//устанавливаем статус-код 201
+	w.WriteHeader(http.StatusCreated)
+	// пишем тело ответа
+	w.Write(jsn)
 }
