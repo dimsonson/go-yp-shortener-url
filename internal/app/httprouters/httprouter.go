@@ -7,14 +7,18 @@ import (
 )
 
 func NewRouter(hn *handlers.Handler) chi.Router {
+	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
-	// маршруты
+	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
+	// маршрут POST "/api/shorten" c JCON в теле запроса
 	rout.Post("/api/shorten", hn.HandlerCreateShortJSON)
+	// маршрут POST "/" с текстовым URL в теле запроса
 	rout.Post("/", hn.HandlerCreateShortURL)
+	// возврат ошибки 400 для всех остальных запросов
 	rout.HandleFunc("/*", hn.IncorrectRequests)
 
 	return rout

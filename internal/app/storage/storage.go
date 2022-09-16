@@ -1,6 +1,8 @@
 package storage
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Storage struct {
 	Type string
@@ -23,10 +25,14 @@ func NewMapStorage(s string) *Storage {
 }
 
 func (ms *Storage) GetStorage(key string) (value string, err error) {
-	var ok bool
-	if value, ok = DB[key]; !ok {
+	value, ok := DB[key]
+	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
 	return value, nil
+}
 
+func (ms *Storage) LenStorage() (lenn int) {
+	lenn = len(DB)
+	return lenn
 }

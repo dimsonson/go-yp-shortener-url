@@ -24,8 +24,13 @@ func NewHandler(s Services) *Handler {
 	}
 }
 
-type PostJSON struct {
-	URL    string `json:"url,omitempty"`
+// структура декодирования JSON
+type DecodeJSON struct {
+	URL string `json:"url,omitempty"`
+}
+
+// структура кодирования JSON
+type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
 
@@ -54,18 +59,19 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 }
 
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
+	// проверяем наличие id
 	if r.URL.Path == "/" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
 	}
-	// проверяем наличие ключа и получем длинную ссылку
+	// пролучаем id из URL через chi
 	id := chi.URLParam(r, "id")
-
+	// получаем ссылку по id
 	value, err := hn.handler.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
-
+	// перенаправление по ссылке
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
 
@@ -82,22 +88,22 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// десериализация тела запроса
-	b := PostJSON{}
-	if err := json.Unmarshal(B, &b); err != nil {
+	dc := DecodeJSON{}
+	if err := json.Unmarshal(B, &dc); err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 	}
-
 	// валидация URL
-	_, err = url.ParseRequestURI(b.URL)
+	_, err = url.ParseRequestURI(dc.URL)
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
 	//создаем ключ
-	key := hn.handler.ServiceCreateShortURL(b.URL)
-	b.Result = "http://" + r.Host + "/" + key
-	b.URL = ""
-	jsn, err := json.Marshal(b)
+	key := hn.handler.ServiceCreateShortURL(dc.URL)
+	// сериализация тела запроса
+	ec := EncodeJSON{}
+	ec.Result = "http://" + r.Host + "/" + key
+	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
