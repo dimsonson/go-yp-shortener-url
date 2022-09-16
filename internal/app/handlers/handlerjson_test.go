@@ -1,7 +1,7 @@
 package handlers_test
 
 import (
-	"context"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -10,10 +10,27 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
-	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestIncorrectReques1ts(t *testing.T) {
+/* // отдаем постоянный short url
+// тип объекта-заглушки
+type Mock struct {
+   Id string //(value string, err error)
+}
+
+// для удовлетворения интерфейсу Services реализуем
+func (sm *Mock) UserExists(url string, ) string {
+    return sm.Id
+}
+// вспомогательный метод, для подсовывания тестовых данных
+func (u *Mock) returnURL (id string) (url string){
+
+	return "xyz"
+}
+*/
+
+func TestHandlerCreateShortJSON(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -34,28 +51,26 @@ func TestIncorrectReques1ts(t *testing.T) {
 		want want
 	}{
 		// определяем все тесты
-
 		{
-			name: "GET #2",
+			name: "POST #1",
 			req: req{
-				metod:    "PATCH",
-				endpoint: "/",
-				//body:     "",
+				metod:    "POST",
+				endpoint: "/api/shorten",
+				body:     `{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`,
 			},
 			want: want{
-				code: 400,
-				//response: "",
-				//contentType: "text/plain; charset=utf-8",
+				code:        201,
+				response:    "http://example.com/",
+				contentType: "application/json; charset=utf-8",
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
 
 			//создаем тестирующий запрос
-			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
+			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, strings.NewReader(tt.req.body))
 
 			// создаём новый Recorder
 
@@ -67,11 +82,6 @@ func TestIncorrectReques1ts(t *testing.T) {
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)
 
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-			//	h := http.HandlerFunc(handlers.NewHandler())
-
 			// запускаем сервер
 			r.ServeHTTP(w, req)
 			resp := w.Result()
@@ -82,19 +92,19 @@ func TestIncorrectReques1ts(t *testing.T) {
 			}
 
 			// получаем и проверяем тело ответа
-			/* defer resp.Body.Close()
+			defer resp.Body.Close()
 			resBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				t.Fatal(err)
-			} */
+			}
 
 			// проверка содержания строки в теле ответа
-			//assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
+			assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
 
 			// заголовок ответа
-			/* if resp.Header.Get("Content-Type") != tt.want.contentType {
+			if resp.Header.Get("Content-Type") != tt.want.contentType {
 				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, resp.Header.Get("Content-Type"))
-			} */
+			}
 		})
 	}
 }

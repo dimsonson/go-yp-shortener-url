@@ -39,6 +39,11 @@ func TestNewRouter(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	defer resp.Body.Close()
 
+	resp3, _ := testRequest2(t, ts, "POST", "/api/shorten")
+	assert.Equal(t, http.StatusCreated, resp3.StatusCode)
+	//assert.Contains(t, "https://", body)
+	defer resp3.Body.Close()
+
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
@@ -59,6 +64,22 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 func testRequest1(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader("https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"))
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	return resp, string(respBody)
+}
+
+func testRequest2(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+
+	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader(`{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`))
 	require.NoError(t, err)
 
 	resp, err := http.DefaultClient.Do(req)
