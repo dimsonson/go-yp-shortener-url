@@ -13,16 +13,26 @@ import (
 
 func main() {
 	// export SERVER_ADDRESS=localhost:8080
+	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
 	if !ok {
-		log.Fatal("please, set SERVER_ADDRESS environment variable")
+		err := os.Setenv("SERVER_ADDRESS", "localhost:8080")
+		if err != nil {
+			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
+		}
 	}
+	log.Println("enviroment variable SERVER_ADDRESS set to defaulf value:", addr)
 	// export BASE_URL=localhost:8080
-	_, ok = os.LookupEnv("BASE_URL")
+	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
+	baseURL, ok := os.LookupEnv("BASE_URL")
 	if !ok {
-		log.Fatal("please, set BASE_URL environment variable")
+		err := os.Setenv("BASE_URL", "localhost:8080")
+		if err != nil {
+			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
+		}
 	}
-
+	log.Println("enviroment variable BASE_URL set to defaulf value:", baseURL)
+	
 	log.Printf("starting server on %s\n", addr)
 
 	s := storage.NewMapStorage("map")
