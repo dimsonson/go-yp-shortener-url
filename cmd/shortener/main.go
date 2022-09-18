@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
@@ -15,26 +16,28 @@ func main() {
 	// export SERVER_ADDRESS=localhost:8080
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
-	if !ok {
+	if !ok || !govalidator.IsURL(addr) {
 		err := os.Setenv("SERVER_ADDRESS", "localhost:8080")
 		if err != nil {
 			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
 		}
+		addr = os.Getenv("SERVER_ADDRESS")
 	}
 	log.Println("enviroment variable SERVER_ADDRESS set to defaulf value:", addr)
+
 	// export BASE_URL=localhost:8080
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
-	baseURL, ok := os.LookupEnv("BASE_URL")
-	if !ok {
+	base, ok := os.LookupEnv("BASE_URL")
+	if !ok || !govalidator.IsURL(base) {
 		err := os.Setenv("BASE_URL", "localhost:8080")
 		if err != nil {
 			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
 		}
 	}
-	log.Println("enviroment variable BASE_URL set to defaulf value:", baseURL)
-	
-	log.Printf("starting server on %s\n", addr)
+	log.Println("enviroment variable BASE_URL set to defaulf value:", os.Getenv("BASE_URL"))
 
+	// информирование, конфигурирование и запуск http сервера
+	log.Printf("starting server on %s\n", addr)
 	s := storage.NewMapStorage("map")
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
