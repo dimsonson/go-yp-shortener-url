@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -48,14 +50,20 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	//создаем ключ
+	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(B))
+	// проверяем наличие перменной окрудения и получаем ее актуальное значение
+	BaseURL, ok := os.LookupEnv("BASE_URL")
+	if !ok {
+		log.Println("please, set BASE_URL environment variable")
+	}
+
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	w.Write([]byte("http://" + r.Host + "/" + key))
+	w.Write([]byte("http://" + BaseURL + "/" + key))
 }
 
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
@@ -100,9 +108,14 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	}
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
+	// проверяем наличие перменной окрудения и получаем ее актуальное значение
+	BaseURL, ok := os.LookupEnv("BASE_URL")
+	if !ok {
+		log.Println("Please, set BASE_URL environment variable")
+	}
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = "http://" + r.Host + "/" + key
+	ec.Result = "http://" + BaseURL + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
