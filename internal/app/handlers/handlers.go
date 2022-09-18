@@ -63,7 +63,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	w.Write([]byte("http://" + BaseURL + "/" + key))
+	w.Write([]byte(BaseURL + "/" + key))
 }
 
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +115,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	}
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = "http://" + BaseURL + "/" + key
+	ec.Result = BaseURL + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -29,7 +29,7 @@ func main() {
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	base, ok := os.LookupEnv("BASE_URL")
 	if !ok || !govalidator.IsURL(base) {
-		err := os.Setenv("BASE_URL", "localhost:8080")
+		err := os.Setenv("BASE_URL", "http://localhost:8080")
 		if err != nil {
 			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
 		}
