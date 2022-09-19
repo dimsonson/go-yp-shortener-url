@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	// export SERVER_ADDRESS=localhost:8080
+
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
 	if !ok || !govalidator.IsURL(addr) {
@@ -25,7 +25,6 @@ func main() {
 	}
 	log.Println("enviroment variable SERVER_ADDRESS set to defaulf value:", addr)
 
-	// export BASE_URL=localhost:8080
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	base, ok := os.LookupEnv("BASE_URL")
 	if !ok || !govalidator.IsURL(base) {
@@ -38,7 +37,7 @@ func main() {
 
 	// информирование, конфигурирование и запуск http сервера
 	log.Printf("starting server on %s\n", addr)
-	
+
 	s := storage.NewFsStorage(make(map[string]string))
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
@@ -47,7 +46,13 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-/* Задание для трека «Сервис сокращения URL»
+// export BASE_URL=localhost:8080
+
+// export SERVER_ADDRESS=localhost:8080
+
+/* 
+ Инкремент 4
+Задание для трека «Сервис сокращения URL»
 Добавьте в сервер новый эндпоинт
 POST /api/shorten, принимающий
 в теле запроса JSON-объект
@@ -71,9 +76,10 @@ POST /api/shorten, принимающий
 базовый адрес результирующего сокращённого URL с помощью переменной BASE_URL.
 */
 
-/* 
+/*
+ Инкремент 6
 Задание для трека «Сервис сокращения URL»
 Сохраняйте все сокращённые URL на диск в виде файла. При перезапуске приложения все URL должны быть восстановлены.
 Путь до файла должен передаваться в переменной окружения FILE_STORAGE_PATH.
-При отсутствии переменной окружения или при её пустом значении вернитесь к хранению сокращённых URL в памяти. 
+При отсутствии переменной окружения или при её пустом значении вернитесь к хранению сокращённых URL в памяти.
 */
