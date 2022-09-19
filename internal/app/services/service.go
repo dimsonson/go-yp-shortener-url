@@ -16,7 +16,7 @@ type Storages interface {
 }
 
 type Services struct {
-	Storage Storages
+	storage Storages
 }
 
 func NewService(s Storages) *Services {
@@ -32,15 +32,15 @@ func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	// добавляем уникальный префикс к ключу
-	key = fmt.Sprintf("%d%s", sr.Storage.LenStorage(), key)
+	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
-	sr.Storage.PutStorage(key, url)
+	sr.storage.PutStorage(key, url)
 
 	return key
 }
 // возврат URL по id
 func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
-	value, err = sr.Storage.GetStorage(id)
+	value, err = sr.storage.GetStorage(id)
 	if err != nil {
 		err = fmt.Errorf("id not found")
 	}
