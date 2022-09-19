@@ -35,7 +35,7 @@ type DecodeJSON struct {
 type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
-
+// обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
 	B, err := io.ReadAll(r.Body)
@@ -65,7 +65,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// пишем тело ответа
 	w.Write([]byte(BaseURL + "/" + key))
 }
-
+// обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// проверяем наличие id
 	if r.URL.Path == "/" {
@@ -82,11 +82,11 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// перенаправление по ссылке
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
-
+// обработка всех остальных запросов и возврат кода 400
 func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "request incorrect", http.StatusBadRequest)
 }
-
+// обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
 	B, err := io.ReadAll(r.Body)

@@ -38,6 +38,7 @@ func main() {
 
 	// информирование, конфигурирование и запуск http сервера
 	log.Printf("starting server on %s\n", addr)
+	
 	s := storage.NewMapStorage("map")
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
