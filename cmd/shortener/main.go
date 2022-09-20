@@ -59,7 +59,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-// export FILE_STORAGE_PATH=/db
+// export FILE_STORAGE_PATH=db/keyvalue.json
 
 // export BASE_URL=http://localhost:8080
 

@@ -5,29 +5,29 @@ import (
 )
 
 type StorageMap struct {
-	IdURL map[string]string
+	IDURL map[string]string
 }
 
 var m = StorageMap{
-	IdURL: make(map[string]string),
+	IDURL: make(map[string]string),
 }
 
 func (ms *StorageMap) PutStorage(key string, value string) (err error) {
-	if _, ok := m.IdURL[key]; ok {
+	if _, ok := m.IDURL[key]; ok {
 		return fmt.Errorf("key is already in database")
 	}
-	m.IdURL[key] = string(value)
+	m.IDURL[key] = string(value)
 	return nil
 }
 
 func NewMapStorage(s map[string]string) *StorageMap {
 	return &StorageMap{
-		IdURL: s,
+		IDURL: s,
 	}
 }
 
 func (ms *StorageMap) GetStorage(key string) (value string, err error) {
-	value, ok := m.IdURL[key]
+	value, ok := m.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
@@ -35,6 +35,6 @@ func (ms *StorageMap) GetStorage(key string) (value string, err error) {
 }
 
 func (ms *StorageMap) LenStorage() (lenn int) {
-	lenn = len(m.IdURL)
+	lenn = len(m.IDURL)
 	return lenn
 }
