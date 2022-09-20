@@ -66,7 +66,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
 			// создаем запись в базе url
-			storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
+			//storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
 			//создаем тестирующий запрос
 			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
 
@@ -75,7 +75,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			s := storage.NewMapStorage("map")
+			s := storage.NewMapStorage(make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)

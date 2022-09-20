@@ -16,9 +16,9 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
+	//storage.StorageFs.IDURL["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
 
-	s := storage.NewMapStorage("map")
+	s := storage.NewMapStorage(make(map[string]string))
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
 	r := httprouters.NewRouter(h)

@@ -60,7 +60,7 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			s := storage.NewMapStorage("map")
+			s := storage.NewMapStorage(make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs)
 			r := httprouters.NewRouter(h)
