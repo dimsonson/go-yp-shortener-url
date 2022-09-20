@@ -16,7 +16,8 @@ var d = StorageFs{
 	IdURL: make(map[string]string),
 }
 
-var fileName = "keyvalue.json"
+var path = os.Getenv("FILE_STORAGE_PATH")
+var fileName = path + "/" + "keyvalue.json"
 
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	if _, ok := d.IdURL[key]; ok {
@@ -45,22 +46,31 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 
 func NewFsStorage(s map[string]string) *StorageFs {
 	// загрузка базы из JSON
+	_, pathOk := os.Stat(path)
+	fileInfo, _ := os.Stat(fileName)
+
+	if os.IsNotExist(pathOk) {
+		os.Mkdir(path, 0777)
+		log.Printf("folder %s created\n", path)
+	}
+
 	sfile, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
-		log.Println("file creating error", err)
+		log.Fatal("file creating error: ", err)
 	}
 
-	buf := bufio.NewReader(sfile)
-	js, err := buf.ReadBytes('\n')
-	if err != nil {
-		log.Println("file storage reading error", err)
-	}
+	if fileInfo.Size() != 0 {
+		buf := bufio.NewReader(sfile)
+		js, err := buf.ReadBytes('\n')
+		if err != nil {
+			log.Println("file storage reading error:", err)
+		}
 
-	err = json.Unmarshal(js, &d.IdURL)
-	if err != nil {
-		log.Println("JSON unmarshalling to struct error: ", err)
+		err = json.Unmarshal(js, &d.IdURL)
+		if err != nil {
+			log.Println("JSON unmarshalling to struct error:", err)
+		}
 	}
-
 	return &StorageFs{
 		IdURL: s,
 	}

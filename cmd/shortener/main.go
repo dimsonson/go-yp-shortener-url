@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -38,10 +37,8 @@ func main() {
 
 	// информирование, конфигурирование и запуск http сервера
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	fmt.Println(path)
-	fmt.Println(ok)
 
-	if !ok {
+	if !ok || !govalidator.IsUnixFilePath(path) {
 		s := storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
 		srvs := services.NewService(s)
