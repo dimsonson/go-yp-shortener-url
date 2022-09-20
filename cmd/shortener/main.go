@@ -40,8 +40,8 @@ func main() {
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
 	fmt.Println(path)
 	fmt.Println(ok)
-	//pathOk, _ := govalidator.IsFilePath(path)
-	if !ok /*|| !pathOk */ {
+
+	if !ok {
 		s := storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
 		srvs := services.NewService(s)
