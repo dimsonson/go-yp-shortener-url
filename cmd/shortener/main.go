@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,8 +23,8 @@ func main() {
 			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
 		}
 		addr = os.Getenv("SERVER_ADDRESS")
+		log.Println("enviroment variable SERVER_ADDRESS set to default value:", addr)
 	}
-	log.Println("enviroment variable SERVER_ADDRESS set to default value:", addr)
 
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 	base, ok := os.LookupEnv("BASE_URL")
@@ -32,21 +33,38 @@ func main() {
 		if err != nil {
 			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
 		}
+		log.Println("enviroment variable BASE_URL set to default value:", os.Getenv("BASE_URL"))
 	}
-	log.Println("enviroment variable BASE_URL set to default value:", os.Getenv("BASE_URL"))
 
 	// информирование, конфигурирование и запуск http сервера
-	log.Printf("starting server on %s\n", addr)
+	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
+	fmt.Println(path)
+	fmt.Println(ok)
+	//pathOk, _ := govalidator.IsFilePath(path)
+	if !ok /*|| !pathOk */ {
+		s := storage.NewMapStorage(make(map[string]string))
+		log.Println("server will start with data storage in memory")
+		srvs := services.NewService(s)
+		h := handlers.NewHandler(srvs)
+		r := httprouters.NewRouter(h)
 
+		log.Printf("starting server on %s\n", addr)
+		log.Fatal(http.ListenAndServe(addr, r))
+		return
+	}
+	log.Println("server will start with data storage in file and memory cash")
 	s := storage.NewFsStorage(make(map[string]string))
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
 	r := httprouters.NewRouter(h)
 
+	log.Printf("starting server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-// export BASE_URL=localhost:8080
+// export FILE_STORAGE_PATH=/db
+
+// export BASE_URL=http://localhost:8080
 
 // export SERVER_ADDRESS=localhost:8080
 
@@ -103,7 +121,9 @@ POST /api/shorten, принимающий
 /*
  Инкремент 6
 Задание для трека «Сервис сокращения URL»
-Сохраняйте все сокращённые URL на диск в виде файла. При перезапуске приложения все URL должны быть восстановлены.
+Сохраняйте все сокращённые URL на диск в виде файла.
+При перезапуске приложения все URL должны быть восстановлены.
 Путь до файла должен передаваться в переменной окружения FILE_STORAGE_PATH.
-При отсутствии переменной окружения или при её пустом значении вернитесь к хранению сокращённых URL в памяти.
+При отсутствии переменной окружения или при её пустом значении вернитесь
+к хранению сокращённых URL в памяти.
 */
