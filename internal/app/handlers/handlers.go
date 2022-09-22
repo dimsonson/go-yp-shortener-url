@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -22,20 +23,25 @@ type Handler struct {
 	Base    string
 }
 
+var hn = Handler{
+	handler: nil,
+	Base:    "",
+}
+
 // значение переменной BASE_URL по умолчанию
 var defBase string = "http://localhost:8080"
 
-func NewHandler(s Services) *Handler {
+func NewHandler(s Services, base string) *Handler {
 	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
-	base, ok := os.LookupEnv("BASE_URL")
-	if !ok || !govalidator.IsURL(base) {
-		err := os.Setenv("BASE_URL", defBase)
-		if err != nil {
-			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
+	var ok bool
+	if !govalidator.IsURL(base) {
+		base, ok = os.LookupEnv("BASE_URL")
+		if !ok || !govalidator.IsURL(base) {
+			base = defBase
+			log.Println("enviroment variable BASE_URL set to default value:", defBase)
 		}
-		base = defBase
-		log.Println("enviroment variable BASE_URL set to default value:", defBase)
 	}
+	fmt.Println(base)
 	return &Handler{
 		s,
 		base,
@@ -69,18 +75,14 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	}
 	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(B))
-	// проверяем наличие перменной окрудения и получаем ее актуальное значение
-	BaseURL, ok := os.LookupEnv("BASE_URL")
-	if !ok {
-		log.Println("please, set BASE_URL environment variable")
-	}
 
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	w.Write([]byte(BaseURL + "/" + key))
+	fmt.Println(hn.Base)
+	w.Write([]byte(hn.Base + "/" + key))
 }
 
 // обработка GET запроса c id и редирект по полному URL
@@ -128,14 +130,10 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	}
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
-	// проверяем наличие перменной окрудения и получаем ее актуальное значение
-	BaseURL, ok := os.LookupEnv("BASE_URL")
-	if !ok {
-		log.Println("Please, set BASE_URL environment variable")
-	}
+
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = BaseURL + "/" + key
+	ec.Result = hn.Base + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

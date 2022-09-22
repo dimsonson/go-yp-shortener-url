@@ -18,6 +18,7 @@ const defHost = "localhost:8080"
 func main() {
 	// декларируем флаги и связываем их с переменными
 	addr := flag.String("a", "localhost:8080", "HTTP Server address")
+	base := flag.String("b", "http://localhost:8080", "Base URL")
 	path := flag.String("f", "db/keyvalue.json", "Storage path")
 	// парсинг флагов в переменные
 	flag.Parse()
@@ -50,7 +51,7 @@ func main() {
 	}
 
 	srvs := services.NewService(s)
-	h := handlers.NewHandler(srvs)
+	h := handlers.NewHandler(srvs, *base)
 	r := httprouters.NewRouter(h)
 
 	log.Printf("starting server on %s\n", *addr)
