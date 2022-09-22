@@ -11,13 +11,15 @@ import (
 
 type StorageFs struct {
 	IDURL map[string]string `json:"idurl,omitempty"`
+	pathName string
 }
 
 var d = StorageFs{
 	IDURL: make(map[string]string),
+	pathName: "",
 }
 
-var fileName = os.Getenv("FILE_STORAGE_PATH")
+//var pathName = os.Getenv("FILE_STORAGE_PATH")
 
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	if _, ok := d.IDURL[key]; ok {
@@ -26,7 +28,7 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	d.IDURL[key] = string(value)
 
 	// запись в JSON
-	sfile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0777) //|os.O_APPEND
+	sfile, err := os.OpenFile(d.pathName, os.O_WRONLY|os.O_CREATE, 0777) //|os.O_APPEND
 	if err != nil {
 		log.Println("storage file opening/creating error: ", err)
 		return err
@@ -44,20 +46,20 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	return nil
 }
 
-func NewFsStorage(s map[string]string) *StorageFs {
+func NewFsStorage(s map[string]string, p string) *StorageFs {
 	// загрузка базы из JSON
-	_, pathOk := os.Stat(filepath.Dir(fileName))
+	_, pathOk := os.Stat(filepath.Dir(d.pathName))
 
 	if os.IsNotExist(pathOk) {
-		os.MkdirAll(filepath.Dir(fileName), 0777)
-		log.Printf("folder %s created\n", filepath.Dir(fileName))
+		os.MkdirAll(filepath.Dir(p), 0777)
+		log.Printf("folder %s created\n", filepath.Dir(d.pathName))
 	}
 
-	sfile, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
+	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Fatal("file creating error: ", err)
 	}
-	fileInfo, _ := os.Stat(fileName)
+	fileInfo, _ := os.Stat(p)
 	if fileInfo.Size() != 0 {
 		buf := bufio.NewReader(sfile)
 		js, err := buf.ReadBytes('\n')
@@ -73,6 +75,7 @@ func NewFsStorage(s map[string]string) *StorageFs {
 	
 	return &StorageFs{
 		IDURL: s,
+		pathName: p,
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,40 +13,48 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
+const defHost = "localhost:8080"
+
 func main() {
-
-	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
-	addr, ok := os.LookupEnv("SERVER_ADDRESS")
-	if !ok || !govalidator.IsURL(addr) {
-		err := os.Setenv("SERVER_ADDRESS", "localhost:8080")
-		if err != nil {
-			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
+	// декларируем флаги и связываем их с переменными
+	addr := flag.String("a", "localhost:8080", "HTTP Server address")
+	path := flag.String("f", "db/keyvalue.json", "Storage path")
+	// парсинг флагов в переменные
+	flag.Parse()
+	// валидация флага SERVER_ADDRESS
+	if !govalidator.IsURL(*addr) {
+		// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
+		var ok bool
+		*addr, ok = os.LookupEnv("SERVER_ADDRESS")
+		if !ok || !govalidator.IsURL(*addr) {
+			*addr = defHost
+			log.Println("SERVER_ADDRESS set to default value:", *addr)
 		}
-		addr = os.Getenv("SERVER_ADDRESS")
-		log.Println("enviroment variable SERVER_ADDRESS set to default value:", addr)
 	}
 
+	var s services.StorageProvider
 	// информирование, конфигурирование и запуск http сервера
-	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || !govalidator.IsUnixFilePath(path) {
-		s := storage.NewMapStorage(make(map[string]string))
-		log.Println("server will start with data storage in memory")
-		srvs := services.NewService(s)
-		h := handlers.NewHandler(srvs)
-		r := httprouters.NewRouter(h)
-
-		log.Printf("starting server on %s\n", addr)
-		log.Fatal(http.ListenAndServe(addr, r))
-		return
+	if !govalidator.IsUnixFilePath(*path) {
+		var ok bool
+		*path, ok = os.LookupEnv("FILE_STORAGE_PATH")
+		if !ok || !govalidator.IsUnixFilePath(*path) {
+			s = storage.NewMapStorage(make(map[string]string))
+			log.Println("server will start with data storage in memory")
+		} else {
+			s = storage.NewFsStorage(make(map[string]string), *path)
+			log.Println("server will start with data storage in file and memory cash")
+		}
+	} else {
+		s = storage.NewFsStorage(make(map[string]string), *path)
+		log.Println("server will start with data storage in file and memory cash")
 	}
-	s := storage.NewFsStorage(make(map[string]string))
-	log.Println("server will start with data storage in file and memory cash")
+
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
 	r := httprouters.NewRouter(h)
 
-	log.Printf("starting server on %s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, r))
+	log.Printf("starting server on %s\n", *addr)
+	log.Fatal(http.ListenAndServe(*addr, r))
 }
 
 // export FILE_STORAGE_PATH=db/keyvalue.json
