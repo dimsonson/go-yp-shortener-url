@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -18,11 +19,26 @@ type Services interface {
 
 type Handler struct {
 	handler Services
+	Base    string
 }
 
+// значение переменной BASE_URL по умолчанию
+var defBase string = "http://localhost:8080"
+
 func NewHandler(s Services) *Handler {
+	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
+	base, ok := os.LookupEnv("BASE_URL")
+	if !ok || !govalidator.IsURL(base) {
+		err := os.Setenv("BASE_URL", defBase)
+		if err != nil {
+			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
+		}
+		base = defBase
+		log.Println("enviroment variable BASE_URL set to default value:", defBase)
+	}
 	return &Handler{
 		s,
+		base,
 	}
 }
 
@@ -35,6 +51,7 @@ type DecodeJSON struct {
 type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
+
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
@@ -65,6 +82,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// пишем тело ответа
 	w.Write([]byte(BaseURL + "/" + key))
 }
+
 // обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// проверяем наличие id
@@ -82,10 +100,12 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// перенаправление по ссылке
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
+
 // обработка всех остальных запросов и возврат кода 400
 func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "request incorrect", http.StatusBadRequest)
 }
+
 // обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
 	// читаем Body

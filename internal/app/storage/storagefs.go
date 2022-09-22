@@ -17,7 +17,7 @@ var d = StorageFs{
 	IDURL: make(map[string]string),
 }
 
-var fileName = os.Getenv("FILE_STORAGE_PATH") 
+var fileName = os.Getenv("FILE_STORAGE_PATH")
 
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	if _, ok := d.IDURL[key]; ok {
@@ -70,6 +70,7 @@ func NewFsStorage(s map[string]string) *StorageFs {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
+	
 	return &StorageFs{
 		IDURL: s,
 	}

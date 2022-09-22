@@ -25,19 +25,8 @@ func main() {
 		log.Println("enviroment variable SERVER_ADDRESS set to default value:", addr)
 	}
 
-	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
-	base, ok := os.LookupEnv("BASE_URL")
-	if !ok || !govalidator.IsURL(base) {
-		err := os.Setenv("BASE_URL", "http://localhost:8080")
-		if err != nil {
-			log.Fatal("error setting default environment variable, please set SERVER_ADDRESS environment variable")
-		}
-		log.Println("enviroment variable BASE_URL set to default value:", os.Getenv("BASE_URL"))
-	}
-
 	// информирование, конфигурирование и запуск http сервера
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-
 	if !ok || !govalidator.IsUnixFilePath(path) {
 		s := storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
@@ -49,8 +38,8 @@ func main() {
 		log.Fatal(http.ListenAndServe(addr, r))
 		return
 	}
-	log.Println("server will start with data storage in file and memory cash")
 	s := storage.NewFsStorage(make(map[string]string))
+	log.Println("server will start with data storage in file and memory cash")
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs)
 	r := httprouters.NewRouter(h)
@@ -123,4 +112,14 @@ POST /api/shorten, принимающий
 Путь до файла должен передаваться в переменной окружения FILE_STORAGE_PATH.
 При отсутствии переменной окружения или при её пустом значении вернитесь
 к хранению сокращённых URL в памяти.
+*/
+
+/*
+Инкремент 7
+Задание для трека «Сервис сокращения URL»
+Поддержите конфигурирование сервиса с помощью флагов командной строки наравне с уже имеющимися переменными окружения:
+флаг -a, отвечающий за адрес запуска HTTP-сервера (переменная SERVER_ADDRESS);
+флаг -b, отвечающий за базовый адрес результирующего сокращённого URL (переменная BASE_URL);
+флаг -f, отвечающий за путь до файла с сокращёнными URL (переменная FILE_STORAGE_PATH).
+
 */
