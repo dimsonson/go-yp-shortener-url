@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -20,27 +17,19 @@ type Services interface {
 
 type Handler struct {
 	handler Services
-	Base    string
+	base    string
 }
-
+/* 
 var hn = Handler{
 	handler: nil,
 	Base:    "",
-}
+} */
 
 // значение переменной BASE_URL по умолчанию
-var defBase string = "http://localhost:8080"
+//var defBase string = "http://localhost:8080"
 
+// конструктор обработчика
 func NewHandler(s Services, base string) *Handler {
-	// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
-	var ok bool
-	if !govalidator.IsURL(base) {
-		base, ok = os.LookupEnv("BASE_URL")
-		if !ok || !govalidator.IsURL(base) {
-			base = defBase
-			log.Println("enviroment variable BASE_URL set to default value:", defBase)
-		}
-	}
 	fmt.Println("base", base)
 	return &Handler{
 		s,
@@ -61,28 +50,28 @@ type EncodeJSON struct {
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
-	B, err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// валидация URL
-	_, err = url.ParseRequestURI(string(B))
+	_, err = url.ParseRequestURI(string(b))
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
 	// создаем ключ
-	key := hn.handler.ServiceCreateShortURL(string(B))
+	key := hn.handler.ServiceCreateShortURL(string(b))
 
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	fmt.Println(hn.Base)
-	w.Write([]byte(hn.Base + "/" + key))
+	fmt.Println(hn.base)
+	w.Write([]byte(hn.base + "/" + key))
 }
 
 // обработка GET запроса c id и редирект по полному URL
@@ -111,7 +100,7 @@ func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 // обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
-	B, err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -119,7 +108,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	}
 	// десериализация тела запроса
 	dc := DecodeJSON{}
-	if err := json.Unmarshal(B, &dc); err != nil {
+	if err := json.Unmarshal(b, &dc); err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 	}
 	// валидация URL
@@ -133,7 +122,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = hn.Base + "/" + key
+	ec.Result = hn.base + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
