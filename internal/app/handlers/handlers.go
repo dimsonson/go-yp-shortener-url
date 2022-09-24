@@ -19,14 +19,6 @@ type Handler struct {
 	handler Services
 	base    string
 }
-/* 
-var hn = Handler{
-	handler: nil,
-	Base:    "",
-} */
-
-// значение переменной BASE_URL по умолчанию
-//var defBase string = "http://localhost:8080"
 
 // конструктор обработчика
 func NewHandler(s Services, base string) *Handler {
