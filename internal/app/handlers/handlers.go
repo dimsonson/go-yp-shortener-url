@@ -41,7 +41,7 @@ func NewHandler(s Services, base string) *Handler {
 			log.Println("enviroment variable BASE_URL set to default value:", defBase)
 		}
 	}
-	fmt.Println(base)
+	fmt.Println("base", base)
 	return &Handler{
 		s,
 		base,

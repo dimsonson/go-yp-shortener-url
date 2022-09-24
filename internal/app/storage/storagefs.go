@@ -10,77 +10,81 @@ import (
 )
 
 type StorageFs struct {
-	IDURL map[string]string `json:"idurl,omitempty"`
+	IDURL    map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
 
 var d = StorageFs{
-	IDURL: make(map[string]string),
+	IDURL:    make(map[string]string),
 	pathName: "",
 }
 
 //var pathName = os.Getenv("FILE_STORAGE_PATH")
 
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
-	if _, ok := d.IDURL[key]; ok {
+	if _, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key is already in database")
 	}
-	d.IDURL[key] = string(value)
+	ms.IDURL[key] = string(value)
 
 	// запись в JSON
-	sfile, err := os.OpenFile(d.pathName, os.O_WRONLY|os.O_CREATE, 0777) //|os.O_APPEND
+	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) //|os.O_APPEND
 	if err != nil {
-		log.Println("storage file opening/creating error: ", err)
+		log.Println("storage file opening error: ", err)
 		return err
 	}
 	defer sfile.Close()
 
-	js, err := json.Marshal(&d.IDURL)
+	js, err := json.Marshal(&ms.IDURL)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
 	}
-
+	fmt.Println("json1:", string(js))
 	js = append(js, '\n')
+	fmt.Println("json2:", string(js))
 	sfile.Write(js)
 	return nil
 }
 
 func NewFsStorage(s map[string]string, p string) *StorageFs {
+	//fmt.Println("path:", p)
 	// загрузка базы из JSON
-	_, pathOk := os.Stat(filepath.Dir(d.pathName))
+	_, pathOk := os.Stat(filepath.Dir(p))
 
 	if os.IsNotExist(pathOk) {
 		os.MkdirAll(filepath.Dir(p), 0777)
-		log.Printf("folder %s created\n", filepath.Dir(d.pathName))
+		log.Printf("folder %s created\n", filepath.Dir(p))
 	}
 
 	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Fatal("file creating error: ", err)
 	}
+	defer sfile.Close()
+
 	fileInfo, _ := os.Stat(p)
 	if fileInfo.Size() != 0 {
 		buf := bufio.NewReader(sfile)
-		js, err := buf.ReadBytes('\n')
+		b, err := buf.ReadBytes('\n')
 		if err != nil {
 			log.Println("file storage reading error:", err)
 		}
-
-		err = json.Unmarshal(js, &d.IDURL)
+		//js := make(map[string]string)
+		err = json.Unmarshal(b, &s)
 		if err != nil {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
-	
+	fmt.Println("path:", p)
 	return &StorageFs{
-		IDURL: s,
+		IDURL:    s,
 		pathName: p,
 	}
 }
 
 func (ms *StorageFs) GetStorage(key string) (value string, err error) {
-	value, ok := d.IDURL[key]
+	value, ok := ms.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
@@ -88,6 +92,6 @@ func (ms *StorageFs) GetStorage(key string) (value string, err error) {
 }
 
 func (ms *StorageFs) LenStorage() (lenn int) {
-	lenn = len(d.IDURL)
+	lenn = len(ms.IDURL)
 	return lenn
 }

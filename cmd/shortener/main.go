@@ -16,22 +16,34 @@ import (
 const defHost = "localhost:8080"
 
 func main() {
+	
+	addr, ok := os.LookupEnv("SERVER_ADDRESS")
+	if !ok || !govalidator.IsURL(addr) {
+		log.Println("SERVER_ADDRESS is empty or has wrong value:", addr)
+		addr = *flag.String("a", "localhost:8080", "HTTP Server address")
+	} 
+	
+	/* *path, ok = os.LookupEnv("FILE_STORAGE_PATH")
+	addr
+	base
+	path */
+	// var addr, base, path string
 	// декларируем флаги и связываем их с переменными
-	addr := flag.String("a", "localhost:8080", "HTTP Server address")
+	//addr := flag.String("a", "localhost:8080", "HTTP Server address")
 	base := flag.String("b", "http://localhost:8080", "Base URL")
 	path := flag.String("f", "db/keyvalue.json", "Storage path")
 	// парсинг флагов в переменные
 	flag.Parse()
 	// валидация флага SERVER_ADDRESS
-	if !govalidator.IsURL(*addr) {
+/* 	if !govalidator.IsURL(*addr) {
 		// проверка переменной окуржения и присвоение значения по умолчанию, если не установлено
 		var ok bool
 		*addr, ok = os.LookupEnv("SERVER_ADDRESS")
 		if !ok || !govalidator.IsURL(*addr) {
 			*addr = defHost
-			log.Println("SERVER_ADDRESS set to default value:", *addr)
+			log.Println("SERVER_ADDRESS has wrong value:", *addr)
 		}
-	}
+	} */
 
 	var s services.StorageProvider
 	// информирование, конфигурирование и запуск http сервера
@@ -54,8 +66,8 @@ func main() {
 	h := handlers.NewHandler(srvs, *base)
 	r := httprouters.NewRouter(h)
 
-	log.Printf("starting server on %s\n", *addr)
-	log.Fatal(http.ListenAndServe(*addr, r))
+	log.Printf("starting server on %s\n", addr)
+	log.Fatal(http.ListenAndServe(addr, r))
 }
 
 // export FILE_STORAGE_PATH=db/keyvalue.json
