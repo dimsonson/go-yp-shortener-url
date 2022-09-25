@@ -65,13 +65,13 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 
 // обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
-	// проверяем наличие id
-	if r.URL.Path == "/" {
+	
+	// пролучаем id из URL через chi, проверяем наличие
+	id := chi.URLParam(r, "id")
+	if id == "" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
 	}
-	// пролучаем id из URL через chi
-	id := chi.URLParam(r, "id")
 	// получаем ссылку по id
 	value, err := hn.handler.ServiceGetShortURL(id)
 	if err != nil {
