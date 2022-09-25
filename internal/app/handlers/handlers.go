@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -22,7 +21,6 @@ type Handler struct {
 
 // конструктор обработчика
 func NewHandler(s Services, base string) *Handler {
-	fmt.Println("base", base)
 	return &Handler{
 		s,
 		base,
@@ -62,7 +60,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	fmt.Println(hn.base)
 	w.Write([]byte(hn.base + "/" + key))
 }
 

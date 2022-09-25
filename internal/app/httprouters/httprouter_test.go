@@ -20,7 +20,7 @@ func TestNewRouter(t *testing.T) {
 
 	s := storage.NewMapStorage(make(map[string]string))
 	srvs := services.NewService(s)
-	h := handlers.NewHandler(srvs)
+	h := handlers.NewHandler(srvs, "")
 	r := httprouters.NewRouter(h)
 	ts := httptest.NewServer(r)
 	defer ts.Close()

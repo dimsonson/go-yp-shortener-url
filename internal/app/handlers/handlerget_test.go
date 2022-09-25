@@ -77,7 +77,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]string))
 			srvs := services.NewService(s)
-			h := handlers.NewHandler(srvs)
+			h := handlers.NewHandler(srvs, "")
 			r := httprouters.NewRouter(h)
 			//	h := http.HandlerFunc(handlers.NewHandler())
 

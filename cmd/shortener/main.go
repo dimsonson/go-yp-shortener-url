@@ -13,41 +13,57 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
-//const defHost = "localhost:8080"
+const (
+	defServAddr    = "localhost:8080"
+	defBaseURL     = "http://localhost:8080"
+	defStoragePath = "db/keyvalue.json"
+)
 
 func main() {
 
+	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
+	baseFlag := flag.String("b", defBaseURL, "Base URL")
+	pathFlag := flag.String("f", defStoragePath, "File storage path")
+
+	flag.Parse()
+
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
 	if !ok || !govalidator.IsURL(addr) {
-		log.Println("SERVER_ADDRESS is empty or has wrong value:", addr)
-		addr = *flag.String("a", "localhost:8080", "HTTP Server address")
+		log.Println("eviroment variable SERVER_ADDRESS is empty or has wrong value ", addr)
+		addr = *addrFlag
 	}
 
 	base, ok := os.LookupEnv("BASE_URL")
 	if !ok || !govalidator.IsURL(base) {
-		log.Println("BASE_URL is empty or has wrong value:", base)
-		base = *flag.String("b", "http://localhost:8080", "Base URL")
+		log.Println("eviroment variable BASE_URL is empty or has wrong value ", base)
+		base = *baseFlag
+	}
+
+	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
+	if !ok || !govalidator.IsUnixFilePath(path) || path == "" {
+		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
+		path = *pathFlag
 	}
 
 	var s services.StorageProvider
 
-	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || !govalidator.IsUnixFilePath(path) {
-		log.Println("FILE_STORAGE_PATH is empty or has wrong value:", path)
-		path = *flag.String("f", "db/keyvalue.json", "Storage path")
+	if !govalidator.IsUnixFilePath(path) || path == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
+
 	} else {
+
 		s = storage.NewFsStorage(make(map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
-	}
 
-	flag.Parse()
+	}
 
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
 
+	log.Printf("Base URL: %s\n", base)
+	log.Printf("File storage path: %s\n", path)
 	log.Printf("starting server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
 }

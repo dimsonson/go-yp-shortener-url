@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,13 +14,6 @@ type StorageFs struct {
 	IDURL    map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
-
-var d = StorageFs{
-	IDURL:    make(map[string]string),
-	pathName: "",
-}
-
-//var pathName = os.Getenv("FILE_STORAGE_PATH")
 
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	if _, ok := ms.IDURL[key]; ok {
@@ -40,15 +34,11 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
 	}
-	fmt.Println("json1:", string(js))
-	js = append(js, '\n')
-	fmt.Println("json2:", string(js))
 	sfile.Write(js)
 	return nil
 }
 
 func NewFsStorage(s map[string]string, p string) *StorageFs {
-	//fmt.Println("path:", p)
 	// загрузка базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
 
@@ -67,16 +57,14 @@ func NewFsStorage(s map[string]string, p string) *StorageFs {
 	if fileInfo.Size() != 0 {
 		buf := bufio.NewReader(sfile)
 		b, err := buf.ReadBytes('\n')
-		if err != nil {
+		if err != nil && err != io.EOF {
 			log.Println("file storage reading error:", err)
 		}
-		//js := make(map[string]string)
 		err = json.Unmarshal(b, &s)
 		if err != nil {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
-	fmt.Println("path:", p)
 	return &StorageFs{
 		IDURL:    s,
 		pathName: p,
