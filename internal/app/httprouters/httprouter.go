@@ -1,12 +1,15 @@
 package httprouters
 
 import (
+	"net/http"
+
+	"github.com/NYTimes/gziphandler"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-var defaultCompressibleContentTypes = []string{
+/* var defaultCompressibleContentTypes = []string{
 	"text/html",
 	"text/css",
 	"text/plain",
@@ -18,9 +21,9 @@ var defaultCompressibleContentTypes = []string{
 	"application/atom+xml",
 	"application/rss+xml",
 	"image/svg+xml",
-}
+} */
 
-func NewRouter(hn *handlers.Handler) chi.Router {
+func NewRouter(hn *handlers.Handler) http.Handler {
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
@@ -28,9 +31,11 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	rout.Use(middleware.Recoverer)
 	//rout.Use(middleware.Compress(5))
 	//rout.Use(middleware.Def)
-	compressor := middleware.NewCompressor(5, "application/x-gzip")
-
-	rout.Use(compressor.Handler)
+	//compressor := middleware.NewCompressor(5, "application/x-gzip")
+	//rout.Handle(CompressHandle())
+	//CompressHandle(rout)
+	//rout.Use(middleware.AllowContentEncoding())
+	//rout.Use(middleware.Gzip())
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
@@ -41,5 +46,33 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	// возврат ошибки 400 для всех остальных запросов
 	rout.HandleFunc("/*", hn.IncorrectRequests)
 
-	return rout
+	routgz := gziphandler.GzipHandler(rout)
+	return routgz
 }
+
+/* func CompressHandle(w http.ResponseWriter, r *http.Request) {
+	// переменная reader будет равна r.Body или *gzip.Reader
+	var reader io.Reader
+
+	if r.Header.Get(`Content-Encoding`) == `gzip` {
+		gz, err := gzip.NewReader(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		reader = gz
+		defer gz.Close()
+	} else {
+		reader = r.Body
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//fmt.Fprintf(w, "Length: %d", len(body))
+
+	//return r.Body
+} */
