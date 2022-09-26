@@ -78,6 +78,8 @@ func main() {
 
 // curl -H "Accept-Encoding: gzip" -I http://localhost:8080/22kByXO
 
+// curl -H "Accept-Encoding: gzip" --data "ya.ru" http://localhost:8080/api/shorten
+
 /* Инкремент 1
 Задание для трека «Сервис сокращения URL»
 Напишите сервис для сокращения длинных URL. Требования:

@@ -1,9 +1,6 @@
 package httprouters
 
 import (
-	"net/http"
-
-	"github.com/NYTimes/gziphandler"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,7 +8,7 @@ import (
 
 /* var defaultCompressibleContentTypes = []string{
 	"text/html",
-	"text/css",   
+	"text/css",
 	"text/plain",
 	"text/javascript",
 	"application/javascript",
@@ -23,7 +20,7 @@ import (
 	"image/svg+xml",
 } */
 
-func NewRouter(hn *handlers.Handler) http.Handler {
+func NewRouter(hn *handlers.Handler)  http.Handler { //chi.Router {
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
