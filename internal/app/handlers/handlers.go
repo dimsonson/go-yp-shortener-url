@@ -78,6 +78,7 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
 	// перенаправление по ссылке
+	w.Header().Set("Content-Type", http.DetectContentType([]byte(value)))
 	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 }
 
@@ -118,7 +119,8 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	//устанавливаем заголовок Content-Type
-	w.Header().Set("content-type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", http.DetectContentType(jsn))
+	//w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
