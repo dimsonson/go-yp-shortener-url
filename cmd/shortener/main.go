@@ -74,6 +74,10 @@ func main() {
 
 // export SERVER_ADDRESS=localhost:8080
 
+// curl -H  -I http://localhost:8080/22kByXO
+
+// curl -H "Accept-Encoding: gzip" -I http://localhost:8080/22kByXO
+
 /* Инкремент 1
 Задание для трека «Сервис сокращения URL»
 Напишите сервис для сокращения длинных URL. Требования:

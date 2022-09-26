@@ -78,8 +78,25 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
 	// перенаправление по ссылке
-	//w.Header().Set("Content-Type", http.DetectContentType([]byte(value)))
-	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+	
+	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+
+	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	//w.Header().Add("Location", value)
+	//устанавливаем заголовок Content-Type
+	w.Header().Set("Location", value)
+	// устанавливаем статус-код
+	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	// пишем тело ответа
+	w.Write([]byte(value))
+
+
+	/* w.Header().Set("content-type", "text/plain; charset=utf-8")
+	//устанавливаем статус-код 201
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	// пишем тело ответа
+	w.Write([]byte(value)) */
 }
 
 // обработка всех остальных запросов и возврат кода 400
