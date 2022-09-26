@@ -26,13 +26,19 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
-	//rout.Use(middleware.Compress(5))
+	rout.Use(middleware.Compress(1))
 	//rout.Use(middleware.Def)
 	//compressor := middleware.NewCompressor(5, "application/x-gzip")
 	//rout.Handle(CompressHandle())
 	//CompressHandle(rout)
 	//rout.Use(middleware.AllowContentEncoding())
 	//rout.Use(middleware.Gzip())
+	/* 	compressor := middleware.NewCompressor(5, "/*")
+	   	compressor.SetEncoder("gzip", func(w http.ResponseWriter, level int) io.Writer {
+
+
+	   		return w
+	   	})  */
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
