@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-/* var defaultCompressibleContentTypes = []string{
+var defaultCompressibleContentTypes = []string{
     "text/html",
     "text/css",
     "text/plain",
@@ -17,7 +17,7 @@ import (
     "application/atom+xml",
     "application/rss+xml",
     "image/svg+xml",
-} */
+}
 
 func NewRouter(hn *handlers.Handler) chi.Router {
 	// chi роутер
