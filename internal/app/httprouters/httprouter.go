@@ -6,12 +6,26 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+/* var defaultCompressibleContentTypes = []string{
+    "text/html",
+    "text/css",
+    "text/plain",
+    "text/javascript",
+    "application/javascript",
+    "application/x-javascript",
+    "application/json",
+    "application/atom+xml",
+    "application/rss+xml",
+    "image/svg+xml",
+} */
+
 func NewRouter(hn *handlers.Handler) chi.Router {
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Recoverer)
+	rout.Use(middleware.Compress(5))
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
 	// маршрут POST "/api/shorten" c JSON в теле запроса
