@@ -25,9 +25,8 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
+	rout.Use(middleware.Compress(1, "/*"))
 	rout.Use(middleware.Recoverer)
-	rout.Use(middleware.Compress(1))
-	
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
@@ -41,5 +40,3 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	//routgz := gziphandler.GzipHandler(rout)
 	return rout //gz
 }
-
-
