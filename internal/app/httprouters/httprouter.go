@@ -20,7 +20,7 @@ import (
 	"image/svg+xml",
 } */
 
-func NewRouter(hn *handlers.Handler)  http.Handler { //chi.Router {
+func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
@@ -43,8 +43,8 @@ func NewRouter(hn *handlers.Handler)  http.Handler { //chi.Router {
 	// возврат ошибки 400 для всех остальных запросов
 	rout.HandleFunc("/*", hn.IncorrectRequests)
 
-	routgz := gziphandler.GzipHandler(rout)
-	return routgz
+	//routgz := gziphandler.GzipHandler(rout)
+	return rout //gz
 }
 
 /* func CompressHandle(w http.ResponseWriter, r *http.Request) {

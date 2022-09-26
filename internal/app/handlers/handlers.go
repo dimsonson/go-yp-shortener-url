@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -116,7 +117,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	if err := json.Unmarshal(b, &dc); err != nil {
-		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
+		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
 	_, err = url.ParseRequestURI(dc.URL)
