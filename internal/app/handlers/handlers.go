@@ -83,7 +83,8 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// перенаправление по ссылке
 	
 	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-
+	w.Header().Set("Accept-Encoding", "gzip")
+	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//w.Header().Add("Location", value)
 	//устанавливаем заголовок Content-Type
