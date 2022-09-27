@@ -22,4 +22,5 @@ vendor/
 .idea
 .vscode
 
+# windows indexes
 .DS_Store
