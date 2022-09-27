@@ -4,38 +4,48 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 )
 
 type StorageFs struct {
-	IDURL    map[string]string `json:"idurl,omitempty"`
-	pathName string
+	IDURL    map[string]string `json:"-"`
+	Id       string            `json:"id,omitempty"`
+	URL      string            `json:"url,omitempty"`
+	pathName string            `json:"-"`
 }
 
+var d = StorageFs{
+	IDURL: make(map[string]string),
+	Id:       "",            
+	URL:      "",           
+	pathName: "",
+}
+
+// без рефакторинга
 func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	if _, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key is already in database")
 	}
 	ms.IDURL[key] = string(value)
+	ms.Id = key
+	ms.URL = value
 
 	// запись в JSON
-	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) //|os.O_APPEND
+	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY|os.O_APPEND, 0777) //|os.O_APPEND
 	if err != nil {
 		log.Println("storage file opening error: ", err)
 		return err
 	}
 	defer sfile.Close()
 
-	//js, err := json.Marshal(ms.IDURL[key])
-	js, err := json.Marshal(ms.IDURL)
+	js, err := json.Marshal(ms)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
 	}
-	//js = append(js, '\n')
+	js = append(js, '\n')
 	sfile.Write(js)
 	return nil
 }
@@ -56,15 +66,15 @@ func NewFsStorage(s map[string]string, p string) *StorageFs {
 	defer sfile.Close()
 
 	fileInfo, _ := os.Stat(p)
+
 	if fileInfo.Size() != 0 {
-		buf := bufio.NewReader(sfile)
-		b, err := buf.ReadBytes('\n')
-		if err != nil && err != io.EOF {
-			log.Println("file storage reading error:", err)
-		}
-		err = json.Unmarshal(b, &s)
-		if err != nil {
-			log.Println("JSON unmarshalling to struct error:", err)
+		buf := bufio.NewScanner(sfile)
+		for buf.Scan() {
+			err = json.Unmarshal(buf.Bytes(), &d)
+			if err != nil {
+				log.Println("JSON unmarshalling to struct error:", err)
+			}
+			d.IDURL[d.Id] = d.URL
 		}
 	}
 	return &StorageFs{
@@ -74,7 +84,7 @@ func NewFsStorage(s map[string]string, p string) *StorageFs {
 }
 
 func (ms *StorageFs) GetStorage(key string) (value string, err error) {
-	value, ok := ms.IDURL[key]
+	value, ok := d.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}

@@ -53,7 +53,7 @@ func main() {
 
 	} else {
 
-		s = storage.NewFsStorage(make(map[string]string), path)
+		s = storage.NewJsStorage(make(map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
 
 	}
