@@ -41,7 +41,7 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 }
 
 func NewFsStorage(s map[string]string, p string) *StorageFs {
-	// загрузка базы из JSON
+	// загрузка  базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
 
 	if os.IsNotExist(pathOk) {
