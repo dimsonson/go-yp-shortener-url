@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -50,11 +49,11 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	}
 	fmt.Println("text", string(b))
 	// валидация URL
-	_, err = url.ParseRequestURI(string(b))
+	/* _, err = url.ParseRequestURI(string(b))
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
-	}
+	} */
 	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(b))
 
@@ -81,7 +80,7 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
 	// перенаправление по ссылке
-	
+
 	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 	w.Header().Set("Accept-Encoding", "gzip")
 	w.Header().Set("Content-Encoding", "gzip")
@@ -94,7 +93,6 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	// пишем тело ответа
 	w.Write([]byte(value))
-
 
 	/* w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -124,11 +122,11 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
-	_, err = url.ParseRequestURI(dc.URL)
+	/* _, err = url.ParseRequestURI(dc.URL)
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
-	}
+	} */
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 

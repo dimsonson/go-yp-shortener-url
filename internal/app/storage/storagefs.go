@@ -29,11 +29,13 @@ func (ms *StorageFs) PutStorage(key string, value string) (err error) {
 	}
 	defer sfile.Close()
 
-	js, err := json.Marshal(&ms.IDURL)
+	//js, err := json.Marshal(ms.IDURL[key])
+	js, err := json.Marshal(ms.IDURL)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
 	}
+	//js = append(js, '\n')
 	sfile.Write(js)
 	return nil
 }
