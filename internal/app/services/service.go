@@ -36,7 +36,6 @@ func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
 	sr.storage.PutStorage(key, url)
-
 	return key
 }
 
@@ -46,7 +45,6 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 	if err != nil {
 		log.Println("id not found:", err)
 	}
-	fmt.Println(id, value)
 	return value, err
 }
 

@@ -16,13 +16,10 @@ type StorageJs struct {
 }
 
 func (ms *StorageJs) PutStorage(key string, value string) (err error) {
-	if _, ok := ms.IDURL[key]; ok {
-		return fmt.Errorf("key is already in database")
+	if value, ok := ms.IDURL[key]; ok {
+		return fmt.Errorf("key %s is already in database", value)
 	}
 	ms.IDURL[key] = string(value)
-
-	fmt.Println("map storage", ms.IDURL)
-
 	// запись в JSON
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) //|os.O_APPEND
 	if err != nil {
@@ -48,7 +45,6 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 		os.MkdirAll(filepath.Dir(p), 0777)
 		log.Printf("folder %s created\n", filepath.Dir(p))
 	}
-
 	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Fatal("file creating error: ", err)
@@ -67,7 +63,6 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
-	fmt.Println(s)
 	return &StorageJs{
 		IDURL:    s,
 		pathName: p,
@@ -79,7 +74,6 @@ func (ms *StorageJs) GetStorage(key string) (value string, err error) {
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
-	fmt.Println("map storage", ms.IDURL)
 	return value, nil
 }
 

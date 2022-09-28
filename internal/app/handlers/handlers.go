@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -48,7 +47,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("text", string(b))
 	// валидация URL
 	_, err = url.ParseRequestURI(string(b))
 	if err != nil {
@@ -67,7 +65,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 
 // обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
-
 	// пролучаем id из URL через chi, проверяем наличие
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -101,7 +98,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("JSON", string(b))
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	if err := json.Unmarshal(b, &dc); err != nil {
@@ -111,8 +107,8 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	_, err = url.ParseRequestURI(dc.URL)
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
-		return/*  */
-	} 
+		return /*  */
+	}
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 	// сериализация тела запроса

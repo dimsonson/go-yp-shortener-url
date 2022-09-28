@@ -25,3 +25,4 @@ vendor/
 # windows indexes
 .DS_Store
 .DS_Store
+cmd/shortener/db/keyvalue.json
