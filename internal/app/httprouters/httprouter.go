@@ -77,7 +77,7 @@ func gzipHandle(next http.Handler) http.Handler {
 
 
 
-		
+
 		// проверяем, получены ли сжатые gzip данные
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// если не использован gzip в запросе, передаём управление дальше без изменений
@@ -99,7 +99,7 @@ func gzipHandle(next http.Handler) http.Handler {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Write(data)
 
-		// передаём обработчику страницы переменную типа gzipWriter и r с расшиброванным body
+		// передаём обработчику страницы переменную типа gzipWriter и w с расшиброванным body
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzWriter: gzW}, r)
 	})
 }
