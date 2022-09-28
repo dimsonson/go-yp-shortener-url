@@ -90,6 +90,8 @@ func gzipHandle(next http.Handler) http.Handler {
 		}
 		defer gzRb.Close()
 
+		
+
 		w.Header().Set("Content-Encoding", "gzip")
 		// передаём обработчику страницы переменную типа gzipWriter и r с расшиброванным body
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //, gzipBody: gzRb})//r) //gzipReader{Request: r, gzipBody: gzRb})
