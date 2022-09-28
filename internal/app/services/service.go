@@ -44,6 +44,7 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 	if err != nil {
 		err = fmt.Errorf("id not found")
 	}
+	fmt.Println(id, value)
 	return
 }
 // генерация случайной последовательности знаков

@@ -6,20 +6,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-/* var defaultCompressibleContentTypes = []string{
-	"text/html",
-	"text/css",
-	"text/plain",
-	"text/javascript",
-	"application/javascript",
-	"application/x-javascript",
-	"application/x-gzip",
-	"application/json",
-	"application/atom+xml",
-	"application/rss+xml",
-	"image/svg+xml",
-} */
-
 func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	// chi роутер
 	rout := chi.NewRouter()
@@ -27,6 +13,7 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Compress(1)) //, "/*"))
 	rout.Use(middleware.Recoverer)
+	//rout.Use(gzipHandle)
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
@@ -37,6 +24,70 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	// возврат ошибки 400 для всех остальных запросов
 	rout.HandleFunc("/*", hn.IncorrectRequests)
 
-	//routgz := gziphandler.GzipHandler(rout)
 	return rout //gz
 }
+
+/* type gzipWriter struct {
+	http.ResponseWriter
+	gzipWriter io.Writer
+}
+
+func (w gzipWriter) Write(b []byte) (int, error) {
+	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
+	return w.gzipWriter.Write(b)
+}
+
+type gzipBodyReader struct {
+	http.Request
+	gzipBody io.ReadCloser
+}
+
+func (r gzipBodyReader) Close() error {
+	//
+	return r.gzipBody.Close()
+}
+
+func (r gzipBodyReader) Read(b []byte) (int, error) {
+	//
+	return r.gzipBody.Read(b)
+}
+
+func gzipHandle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// проверяем, что клиент поддерживает gzip-сжатие
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			// если gzip не поддерживается, передаём управление
+			// дальше без изменений
+			next.ServeHTTP(w, r)
+			return
+		}
+		// создаём gzip.Writer поверх текущего w для сжатия отправляемого ответа
+		gzW, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			io.WriteString(w, err.Error())
+			return
+		}
+		defer gzW.Close()
+
+		// проверяем, получены ли сжатые gzip данные
+		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			// если не использован gzip в запросе, передаём управление дальше без изменений
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// распаковка gzip
+		gzRb, err := gzip.NewReader(r.Body)
+		if err != nil {
+			log.Println("request body decoding error", err)
+			return
+		}
+		defer gzRb.Close()
+
+		//fmt.Println((gzRb))
+		w.Header().Set("Content-Encoding", "gzip")
+		// передаём обработчику страницы переменную типа gzipWriter и r с расшиброванным body
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //gzipReader{Request: r, gzipBody: gzRb})
+	})
+}
+*/

@@ -21,6 +21,8 @@ func (ms *StorageJs) PutStorage(key string, value string) (err error) {
 	}
 	ms.IDURL[key] = string(value)
 
+	fmt.Println("map storage", ms.IDURL)
+
 	// запись в JSON
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) //|os.O_APPEND
 	if err != nil {
@@ -76,6 +78,7 @@ func (ms *StorageJs) GetStorage(key string) (value string, err error) {
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
+	fmt.Println("map storage", ms.IDURL)
 	return value, nil
 }
 

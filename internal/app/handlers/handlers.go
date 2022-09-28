@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -49,11 +50,11 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	}
 	fmt.Println("text", string(b))
 	// валидация URL
-	/* _, err = url.ParseRequestURI(string(b))
+	_, err = url.ParseRequestURI(string(b))
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
-	} */
+	}
 	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(b))
 
@@ -75,30 +76,28 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// получаем ссылку по id
+	fmt.Println("id", id)
 	value, err := hn.handler.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
+	fmt.Println("value", value)
 	// перенаправление по ссылке
+	/* 	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+	   	//устанавливаем заголовок Content-Type
+	   	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	   	w.Header().Set("Location", value)
+	   	// устанавливаем статус-код
+	   	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+	   	w.WriteHeader(http.StatusTemporaryRedirect)
+	   	// пишем тело ответа
+	   	w.Write([]byte(value)) */
 
-	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	w.Header().Set("Accept-Encoding", "gzip")
-	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	//w.Header().Add("Location", value)
-	//устанавливаем заголовок Content-Type
-	w.Header().Set("Location", value)
-	// устанавливаем статус-код
-	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	w.WriteHeader(http.StatusTemporaryRedirect)
-	// пишем тело ответа
-	w.Write([]byte(value))
-
-	/* w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	// пишем тело ответа
-	w.Write([]byte(value)) */
+	w.Write([]byte(value))
 }
 
 // обработка всех остальных запросов и возврат кода 400
