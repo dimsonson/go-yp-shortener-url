@@ -17,9 +17,9 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
 	rout.Use(middleware.Logger)
-	rout.Use(middleware.Compress(1)) //, "/*"))
+	//rout.Use(middleware.Compress(1)) //, "/*"))
 	rout.Use(middleware.Recoverer)
-	//rout.Use(gzipHandle)
+	rout.Use(gzipHandle)
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
@@ -67,10 +67,10 @@ func gzipHandle(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		// создаём gzip.Writer поверх текущего w для сжатия отправляемого ответа
+		// создаём gzip.Writer поверх текущего w для записи сжатого ответа
 		gzW, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
-			io.WriteString(w, err.Error())
+			log.Println("gzip encodimg error:", err) //io.WriteString(w, err.Error())
 			return
 		}
 		defer gzW.Close()
@@ -82,7 +82,7 @@ func gzipHandle(next http.Handler) http.Handler {
 			return
 		}
 
-		// распаковка gzip
+		// читаем и распаковываем тело запроса с gzip
 		gzRb, err := gzip.NewReader(r.Body)
 		if err != nil {
 			log.Println("request body decoding error", err)
@@ -90,9 +90,8 @@ func gzipHandle(next http.Handler) http.Handler {
 		}
 		defer gzRb.Close()
 
-		//fmt.Println((gzRb))
 		w.Header().Set("Content-Encoding", "gzip")
 		// передаём обработчику страницы переменную типа gzipWriter и r с расшиброванным body
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //gzipReader{Request: r, gzipBody: gzRb})
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //, gzipBody: gzRb})//r) //gzipReader{Request: r, gzipBody: gzRb})
 	})
 }
