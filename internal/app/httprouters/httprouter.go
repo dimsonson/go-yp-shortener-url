@@ -19,7 +19,7 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Compress(1)) //, "/*"))
 	rout.Use(middleware.Recoverer)
-	rout.Use(gzipHandle)
+	//rout.Use(gzipHandle)
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
