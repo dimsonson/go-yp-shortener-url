@@ -40,7 +40,7 @@ func (ms *StorageJs) PutStorage(key string, value string) (err error) {
 	return nil
 }
 
-func NewJsStorage(s map[string]string, p string) *StorageFs {
+func NewJsStorage(s map[string]string, p string) *StorageJs {
 	// загрузка базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
 
@@ -67,7 +67,8 @@ func NewJsStorage(s map[string]string, p string) *StorageFs {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
-	return &StorageFs{
+	fmt.Println(s)
+	return &StorageJs{
 		IDURL:    s,
 		pathName: p,
 	}
