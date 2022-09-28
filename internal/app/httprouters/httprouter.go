@@ -1,6 +1,12 @@
 package httprouters
 
 import (
+	"compress/gzip"
+	"io"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -13,7 +19,7 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	rout.Use(middleware.Logger)
 	rout.Use(middleware.Compress(1)) //, "/*"))
 	rout.Use(middleware.Recoverer)
-	//rout.Use(gzipHandle)
+	rout.Use(gzipHandle)
 
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
@@ -27,7 +33,7 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 	return rout //gz
 }
 
-/* type gzipWriter struct {
+type gzipWriter struct {
 	http.ResponseWriter
 	gzipWriter io.Writer
 }
@@ -56,7 +62,7 @@ func gzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// проверяем, что клиент поддерживает gzip-сжатие
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			// если gzip не поддерживается, передаём управление
+			// если gzip не поддерживается клиентом, передаём управление
 			// дальше без изменений
 			next.ServeHTTP(w, r)
 			return
@@ -90,4 +96,3 @@ func gzipHandle(next http.Handler) http.Handler {
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //gzipReader{Request: r, gzipBody: gzRb})
 	})
 }
-*/
