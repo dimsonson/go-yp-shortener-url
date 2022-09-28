@@ -57,7 +57,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	}
 	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(b))
-
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -76,26 +75,14 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// получаем ссылку по id
-	fmt.Println("id", id)
 	value, err := hn.handler.ServiceGetShortURL(id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
-	fmt.Println("value", value)
-	// перенаправление по ссылке
-	/* 	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	   	//устанавливаем заголовок Content-Type
-	   	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	   	w.Header().Set("Location", value)
-	   	// устанавливаем статус-код
-	   	//http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	   	w.WriteHeader(http.StatusTemporaryRedirect)
-	   	// пишем тело ответа
-	   	w.Write([]byte(value)) */
-
+	// устанавливаем заголовок content-type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	//устанавливаем статус-код 201
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	// перенаправление по ссылке
+	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 	// пишем тело ответа
 	w.Write([]byte(value))
 }
@@ -121,14 +108,13 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
-	/* _, err = url.ParseRequestURI(dc.URL)
+	_, err = url.ParseRequestURI(dc.URL)
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
-		return
-	} */
+		return/*  */
+	} 
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
-
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
@@ -138,8 +124,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	//устанавливаем заголовок Content-Type
-	//w.Header().Set("Content-Type", http.DetectContentType(jsn))
-	//fmt.Println("http.DetectContentType", http.DetectContentType(jsn))
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
