@@ -35,27 +35,27 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 
 type gzipWriter struct {
 	http.ResponseWriter
-	gzipWriter io.Writer
+	gzWriter io.Writer
 }
 
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
-	return w.gzipWriter.Write(b)
+	return w.gzWriter.Write(b)
 }
 
-type gzipBodyReader struct {
-	http.Request
-	gzipBody io.ReadCloser
+type gzipReader struct {
+	gzipReader io.Reader
+	gzipBody   io.ReadCloser
 }
 
-func (r gzipBodyReader) Close() error {
+func (r gzipReader) Close() error {
 	//
 	return r.gzipBody.Close()
 }
 
-func (r gzipBodyReader) Read(b []byte) (int, error) {
+func (r gzipReader) Read(b []byte) (int, error) {
 	//
-	return r.gzipBody.Read(b)
+	return r.gzipReader.Read(b)
 }
 
 func gzipHandle(next http.Handler) http.Handler {
@@ -75,6 +75,9 @@ func gzipHandle(next http.Handler) http.Handler {
 		}
 		defer gzW.Close()
 
+
+
+
 		// проверяем, получены ли сжатые gzip данные
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// если не использован gzip в запросе, передаём управление дальше без изменений
@@ -89,11 +92,14 @@ func gzipHandle(next http.Handler) http.Handler {
 			return
 		}
 		defer gzRb.Close()
-
-
-
+		data, err := io.ReadAll(gzRb)
+		if err != nil {
+			log.Println(err)
+		}
 		w.Header().Set("Content-Encoding", "gzip")
-		// передаём обработчику страницы переменную типа gzipWriter и r с расшиброванным body
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzipWriter: gzW}, r) //, gzipBody: gzRb})//r) //gzipReader{Request: r, gzipBody: gzRb})
+		w.Write(data)
+
+		// передаём обработчику страницы переменную типа gzipWriter и w с расшиброванным body
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzWriter: gzW}, r)
 	})
 }
