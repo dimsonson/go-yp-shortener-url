@@ -61,22 +61,21 @@ func (r gzipReader) Read(b []byte) (int, error) {
 
 func gzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// читаем и распаковываем тело запроса с gzip
 			gzRb, err := gzip.NewReader(r.Body)
 			if err != nil {
 				log.Println("request body decoding error", err)
+				next.ServeHTTP(w, r)
 				return
 			}
 			defer gzRb.Close()
-
+			//
 			data, err := io.ReadAll(gzRb)
 			if err != nil {
 				log.Println(err)
 			}
-
-			w.Header().Set("Content-Encoding", "gzip")
+			//
 			r.Body.Read(data)
 			fmt.Println(r.Body)
 		}
@@ -94,9 +93,7 @@ func gzipHandle(next http.Handler) http.Handler {
 			next.ServeHTTP(gzipWriter{ResponseWriter: w, gzWriter: gzW}, r)
 			return
 		}
-
 		// если gzip не поддерживается клиентом, передаём управление дальше без изменений
 		next.ServeHTTP(w, r)
-
 	})
 }
