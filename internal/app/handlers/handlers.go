@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -107,8 +106,8 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	//_, err = url.ParseRequestURI(dc.URL)
 	/* if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
-		return 
-	} 
+		return
+	}
 	*/
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
