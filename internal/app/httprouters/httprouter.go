@@ -36,12 +36,12 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 
 type gzipWriter struct {
 	http.ResponseWriter
-	Writer io.Writer
+	gzWriter io.Writer
 }
 
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
-	return w.Writer.Write(b)
+	return w.gzWriter.Write(b)
 }
 
 type gzipReader struct {
@@ -56,7 +56,7 @@ func (r gzipReader) Close() error {
 
 func (r gzipReader) Read(b []byte) (int, error) {
 	//
-	return r.gzipReader.Read(b)
+	return r.gzipBody.Read(b)
 }
 
 func gzipHandle(next http.Handler) http.Handler {
@@ -91,7 +91,7 @@ func gzipHandle(next http.Handler) http.Handler {
 			defer gzW.Close()
 			w.Header().Set("Content-Encoding", "gzip")
 			//
-			next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gzW}, r)
+			next.ServeHTTP(gzipWriter{ResponseWriter: w, gzWriter: gzW}, r)
 			return
 		}
 
