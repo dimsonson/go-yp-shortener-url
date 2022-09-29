@@ -50,12 +50,9 @@ func main() {
 	if !govalidator.IsUnixFilePath(path) || path == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
-
 	} else {
-
 		s = storage.NewJsStorage(make(map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
-
 	}
 
 	srvs := services.NewService(s)

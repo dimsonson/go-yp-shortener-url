@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +20,7 @@ func (ms *StorageJs) PutStorage(key string, value string) (err error) {
 	}
 	ms.IDURL[key] = string(value)
 	// запись в JSON
-	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) //|os.O_APPEND
+	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) 
 	if err != nil {
 		log.Println("storage file opening error: ", err)
 		return err
@@ -53,8 +52,7 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 
 	fileInfo, _ := os.Stat(p)
 	if fileInfo.Size() != 0 {
-		buf := bufio.NewReader(sfile)
-		b, err := buf.ReadBytes('\n')
+		b, err := io.ReadAll(sfile)
 		if err != nil && err != io.EOF {
 			log.Println("file storage reading error:", err)
 		}

@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -47,11 +48,11 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// валидация URL
-	/* _, err = url.ParseRequestURI(string(b))
+	_, err = url.ParseRequestURI(string(b))
 	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
-	} */
+	}
 	// создаем ключ
 	key := hn.handler.ServiceCreateShortURL(string(b))
 	//устанавливаем заголовок Content-Type
@@ -103,12 +104,12 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
-	//_, err = url.ParseRequestURI(dc.URL)
-	/* if err != nil {
+	_, err = url.ParseRequestURI(dc.URL)
+	if err != nil {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	*/
+	
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 	// сериализация тела запроса
