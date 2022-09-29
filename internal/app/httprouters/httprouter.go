@@ -2,6 +2,7 @@ package httprouters
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -35,12 +36,12 @@ func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
 
 type gzipWriter struct {
 	http.ResponseWriter
-	gzWriter io.Writer
+	Writer io.Writer
 }
 
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
-	return w.gzWriter.Write(b)
+	return w.Writer.Write(b)
 }
 
 type gzipReader struct {
@@ -75,15 +76,14 @@ func gzipHandle(next http.Handler) http.Handler {
 		}
 		defer gzW.Close()
 
-
-
+		w.Header().Set("Content-Encoding", "gzip")
 
 		// проверяем, получены ли сжатые gzip данные
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// если не использован gzip в запросе, передаём управление дальше без изменений
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gzW}, r)
 			return
-		}
+		} 
 
 		// читаем и распаковываем тело запроса с gzip
 		gzRb, err := gzip.NewReader(r.Body)
@@ -96,10 +96,14 @@ func gzipHandle(next http.Handler) http.Handler {
 		if err != nil {
 			log.Println(err)
 		}
+
 		w.Header().Set("Content-Encoding", "gzip")
-		w.Write(data)
+
+		r.Body.Read(data)
+
+		fmt.Println(r.Body)
 
 		// передаём обработчику страницы переменную типа gzipWriter и w с расшиброванным body
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, gzWriter: gzW}, r)
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gzW}, r)
 	})
 }

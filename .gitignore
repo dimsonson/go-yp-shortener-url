@@ -26,5 +26,9 @@ vendor/
 .DS_Store
 .DS_Store
 *keyvalue.json
+
+
+# bd
+cmd/shortener/db/keyvalue.json
 cmd/shortener/db/keyvalue.json
 cmd/shortener/db/keyvalue.json
