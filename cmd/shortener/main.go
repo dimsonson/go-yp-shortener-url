@@ -13,6 +13,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
+// переменные по умолчанию
 const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
@@ -20,48 +21,47 @@ const (
 )
 
 func main() {
-
+	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
-
+	// пасрсим флаги в переменные
 	flag.Parse()
-
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
-	if !ok || !govalidator.IsURL(addr) {
+	if !ok || !govalidator.IsURL(addr) || addr == "" {
 		log.Println("eviroment variable SERVER_ADDRESS is empty or has wrong value ", addr)
 		addr = *addrFlag
 	}
-
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	base, ok := os.LookupEnv("BASE_URL")
-	if !ok || !govalidator.IsURL(base) {
+	if !ok || !govalidator.IsURL(base) || base == "" {
 		log.Println("eviroment variable BASE_URL is empty or has wrong value ", base)
 		base = *baseFlag
 	}
-
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
 	if !ok || !govalidator.IsUnixFilePath(path) || path == "" {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
-
+	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
-
+	// если переменная не валидна, то используем память для хранения id:url
 	if !govalidator.IsUnixFilePath(path) || path == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
 
 	} else {
-
+		// иначе используем для хранения id:url файл
 		s = storage.NewJsStorage(make(map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
-
 	}
-
+	// инициализируем конструкторы
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
-
+	// запускаем сервер
 	log.Printf("Base URL: %s\n", base)
 	log.Printf("File storage path: %s\n", path)
 	log.Printf("starting server on %s\n", addr)
@@ -150,7 +150,7 @@ POST /api/shorten, принимающий
 
 */
 
-/* 
+/*
 Инкремент 8
 Задание для трека «Сервис сокращения URL»
 Добавьте поддержку gzip в ваш сервис. Научите его:
@@ -158,4 +158,4 @@ POST /api/shorten, принимающий
 отдавать сжатый ответ клиенту, который поддерживает обработку сжатых ответов (HTTP-заголовок Accept-Encoding).
 Вспомните middleware из урока про HTTP-сервер, это может вам помочь.
 
- */
+*/
