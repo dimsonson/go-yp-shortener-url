@@ -9,33 +9,37 @@ import (
 	"path/filepath"
 )
 
+// структура хранилища
 type StorageJs struct {
 	IDURL    map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
 
+// метод записи id:url в хранилище
 func (ms *StorageJs) PutStorage(key string, value string) (err error) {
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
 	}
 	ms.IDURL[key] = string(value)
-	// запись в JSON
-	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777) 
+	// открываем файл
+	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
 		log.Println("storage file opening error: ", err)
 		return err
 	}
 	defer sfile.Close()
-
+	// кодирование в JSON
 	js, err := json.Marshal(&ms.IDURL)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
 	}
+	// запись в файл
 	sfile.Write(js)
 	return nil
 }
 
+// конструктор нового хранилища JSON
 func NewJsStorage(s map[string]string, p string) *StorageJs {
 	// загрузка базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
@@ -67,6 +71,7 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 	}
 }
 
+// метод получения записи из хранилища
 func (ms *StorageJs) GetStorage(key string) (value string, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
@@ -75,6 +80,7 @@ func (ms *StorageJs) GetStorage(key string) (value string, err error) {
 	return value, nil
 }
 
+// метод определения длинны хранилища
 func (ms *StorageJs) LenStorage() (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn

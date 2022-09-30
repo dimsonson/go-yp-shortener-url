@@ -9,23 +9,26 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
+// интерфейс методов хранилища
 type StorageProvider interface {
 	PutStorage(key string, value string) (err error)
 	GetStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
 }
 
+// структура конструктора бизнес логики
 type Services struct {
 	storage StorageProvider
 }
 
+// конструктор бизнес логики
 func NewService(s StorageProvider) *Services {
 	return &Services{
 		s,
 	}
 }
 
-// создание пары id : URL
+// метод создание пары id : URL
 func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 	// присваиваем значение ключа
 	key, err := RandSeq(settings.KeyLeght)
@@ -39,8 +42,9 @@ func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 	return key
 }
 
-// возврат URL по id
+// метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
+	// используем метод хранилища
 	value, err = sr.storage.GetStorage(id)
 	if err != nil {
 		log.Println("id not found:", err)
@@ -48,7 +52,7 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 	return value, err
 }
 
-// генерация случайной последовательности знаков
+// функция генерации случайной последовательности знаков
 func RandSeq(n int) (string, error) {
 	if n < 1 {
 		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)

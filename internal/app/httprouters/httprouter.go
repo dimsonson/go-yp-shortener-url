@@ -6,7 +6,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(hn *handlers.Handler) chi.Router { // http.Handler {
+// маршрутизатор запросов
+func NewRouter(hn *handlers.Handler) chi.Router {
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения

@@ -10,11 +10,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// интерфейс методов бизнес логики
 type Services interface {
 	ServiceCreateShortURL(url string) (key string)
 	ServiceGetShortURL(id string) (value string, err error)
 }
 
+// структура для конструктура обработчика
 type Handler struct {
 	handler Services
 	base    string
@@ -109,7 +111,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	
 	//создаем ключ
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 	// сериализация тела запроса
