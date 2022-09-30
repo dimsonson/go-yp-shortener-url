@@ -60,7 +60,7 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 			},
 			want: want{
 				code:        201,
-				response:    "http://example.com/",
+				response:    "/0",
 				contentType: "application/json; charset=utf-8",
 			},
 		},

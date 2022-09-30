@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"io"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +45,7 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			},
 			want: want{
 				code:        201,
-				response:    "http://example.com/",
+				response:    "/0",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -65,10 +67,10 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			h := handlers.NewHandler(srvs, "")
 			r := httprouters.NewRouter(h)
 			//h := http.HandlerFunc(handlers.)
-			//rctx := chi.NewRouteContext()
-			//rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
-			//req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-			//	h := http.HandlerFunc(handlers.NewHandler())
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			//h := http.HandlerFunc(handlers.NewHandler())
 
 			// запускаем сервер
 			r.ServeHTTP(w, req)

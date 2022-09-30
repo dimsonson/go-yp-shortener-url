@@ -16,8 +16,6 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	//storage.StorageFs.IDURL["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
-
 	s := storage.NewMapStorage(make(map[string]string))
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, "")
@@ -25,12 +23,14 @@ func TestNewRouter(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
+	s.PutStorage("xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+
 	resp1, _ := testRequest1(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
 	//assert.Contains(t, "https://", body)
 	defer resp1.Body.Close()
 
-	resp2, _ := testRequest(t, ts, "GET", "/xyz") // string(body1))
+	resp2, _ := testRequest(t, ts, "GET", "/xyz") 
 	assert.Equal(t, http.StatusOK, resp2.StatusCode)
 	//assert.Contains(t, "https://", body)
 	defer resp2.Body.Close()
