@@ -51,7 +51,6 @@ func main() {
 	if !govalidator.IsUnixFilePath(path) || path == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
-
 	} else {
 		// иначе используем для хранения id:url файл
 		s = storage.NewJsStorage(make(map[string]string), path)
