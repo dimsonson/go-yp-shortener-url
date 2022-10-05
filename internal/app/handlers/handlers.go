@@ -116,7 +116,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = "/" + key //hn.base + "/" + key
+	ec.Result = key //hn.base + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
