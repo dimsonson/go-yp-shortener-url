@@ -10,17 +10,17 @@ import (
 )
 
 // структура хранилища
-type StorageJs struct {
+type StorageJson struct {
 	IDURL    map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageJs) PutStorage(key string, value string) (err error) {
+func (ms *StorageJson) PutToStorage(key string, value string) (err error) {
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
 	}
-	ms.IDURL[key] = string(value)
+	ms.IDURL[key] = value
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
@@ -40,7 +40,7 @@ func (ms *StorageJs) PutStorage(key string, value string) (err error) {
 }
 
 // конструктор нового хранилища JSON
-func NewJsStorage(s map[string]string, p string) *StorageJs {
+func NewJsStorage(s map[string]string, p string) *StorageJson {
 	// загрузка базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
 
@@ -57,7 +57,7 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 	fileInfo, _ := os.Stat(p)
 	if fileInfo.Size() != 0 {
 		b, err := io.ReadAll(sfile)
-		if err != nil && err != io.EOF {
+		if err != nil { 
 			log.Println("file storage reading error:", err)
 		}
 		err = json.Unmarshal(b, &s)
@@ -65,14 +65,14 @@ func NewJsStorage(s map[string]string, p string) *StorageJs {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
 	}
-	return &StorageJs{
+	return &StorageJson{
 		IDURL:    s,
 		pathName: p,
 	}
 }
 
 // метод получения записи из хранилища
-func (ms *StorageJs) GetStorage(key string) (value string, err error) {
+func (ms *StorageJson) GetStorage(key string) (value string, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
@@ -81,7 +81,7 @@ func (ms *StorageJs) GetStorage(key string) (value string, err error) {
 }
 
 // метод определения длинны хранилища
-func (ms *StorageJs) LenStorage() (lenn int) {
+func (ms *StorageJson) LenStorage() (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }

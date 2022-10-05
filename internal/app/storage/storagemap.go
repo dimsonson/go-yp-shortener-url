@@ -10,7 +10,7 @@ type StorageMap struct {
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutStorage(key string, value string) (err error) {
+func (ms *StorageMap) PutToStorage(key string, value string) (err error) {
 	if _, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key is already in database")
 	}

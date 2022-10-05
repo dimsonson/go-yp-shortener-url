@@ -80,7 +80,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 			h := handlers.NewHandler(srvs, "")
 			r := httprouters.NewRouter(h)
 			//	h := http.HandlerFunc(handlers.NewHandler())
-			s.PutStorage("xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+			s.PutToStorage("xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))

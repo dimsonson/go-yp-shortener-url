@@ -23,7 +23,7 @@ func TestNewRouter(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	s.PutStorage("xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+	s.PutToStorage("xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
 	resp1, _ := testRequest1(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
