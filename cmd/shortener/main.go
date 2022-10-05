@@ -41,14 +41,14 @@ func main() {
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || !govalidator.IsUnixFilePath(path) || path == "" {
+	if !ok || (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
 	// если переменная не валидна, то используем память для хранения id:url
-	if !govalidator.IsUnixFilePath(path) || path == "" {
+	if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
 	} else {
