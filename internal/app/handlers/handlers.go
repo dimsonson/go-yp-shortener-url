@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -43,20 +43,20 @@ type EncodeJSON struct {
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	// читаем Body
-	b, err := io.ReadAll(r.Body)
+	bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	b := string(bs)
 	// валидация URL
-	_, err = url.ParseRequestURI(string(b))
-	if err != nil {
+	if !govalidator.IsURL(b) {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
 	// создаем ключ
-	key := hn.handler.ServiceCreateShortURL(string(b))
+	key := hn.handler.ServiceCreateShortURL(b)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -100,14 +100,15 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	if err := json.Unmarshal(b, &dc); err != nil {
 		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
-	_, err = url.ParseRequestURI(dc.URL)
-	if err != nil {
+	if !govalidator.IsURL(dc.URL) {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
@@ -115,7 +116,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	key := hn.handler.ServiceCreateShortURL(dc.URL)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
-	ec.Result = hn.base + "/" + key
+	ec.Result = "/" + key //hn.base + "/" + key
 	jsn, err := json.Marshal(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
