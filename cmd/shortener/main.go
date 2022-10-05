@@ -1,27 +1,26 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"github.com/dimsonson/go-yp-shortener-url/internal/config"
 )
 
 // переменные по умолчанию
-const (
+/* const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
-)
+) */
 
 func main() {
-	// описываем флаги
+	/* // описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
@@ -41,30 +40,32 @@ func main() {
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || !govalidator.IsUnixFilePath(path) || path == "" {
+	if !ok || (!govalidator.IsUnixFilePath(path) || !govalidator.IsWinFilePath(path)) || path == "" {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
-	}
+	} */
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
 	// если переменная не валидна, то используем память для хранения id:url
-	if !govalidator.IsUnixFilePath(path) || path == "" {
+	if (!govalidator.IsUnixFilePath(config.StoragePath) ||
+		!govalidator.IsWinFilePath(config.StoragePath)) ||
+		config.StoragePath == "" {
 		s = storage.NewMapStorage(make(map[string]string))
 		log.Println("server will start with data storage in memory")
 	} else {
 		// иначе используем для хранения id:url файл
-		s = storage.NewJsStorage(make(map[string]string), path)
+		s = storage.NewJsStorage(make(map[string]string), config.StoragePath)
 		log.Println("server will start with data storage in file and memory cash")
 	}
 	// инициализируем конструкторы
 	srvs := services.NewService(s)
-	h := handlers.NewHandler(srvs, base)
+	h := handlers.NewHandler(srvs, config.BaseURL)
 	r := httprouters.NewRouter(h)
 	// запускаем сервер
-	log.Printf("Base URL: %s\n", base)
-	log.Printf("File storage path: %s\n", path)
-	log.Printf("starting server on %s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, r))
+	log.Printf("Base URL: %s\n", config.BaseURL)
+	log.Printf("File storage path: %s\n", config.StoragePath)
+	log.Printf("starting server on %s\n", config.ServAddr)
+	log.Fatal(http.ListenAndServe(config.ServAddr, r))
 }
 
 // export FILE_STORAGE_PATH=db/keyvalue.json
