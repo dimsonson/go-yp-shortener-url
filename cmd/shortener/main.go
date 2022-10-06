@@ -53,7 +53,7 @@ func main() {
 		log.Println("server will start with data storage in memory")
 	} else {
 		// иначе используем для хранения id:url файл
-		s = storage.NewJsStorage(make(map[string]string), path)
+		s = storage.NewJSONStorage(make(map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
 	}
 	// инициализируем конструкторы

@@ -26,7 +26,7 @@ func NewMapStorage(s map[string]string) *StorageMap {
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) GetStorage(key string) (value string, err error) {
+func (ms *StorageMap) GetFromStorage(key string) (value string, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {

@@ -12,7 +12,7 @@ import (
 // интерфейс методов хранилища
 type StorageProvider interface {
 	PutToStorage(key string, value string) (err error)
-	GetStorage(key string) (value string, err error)
+	GetFromStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
 }
 
@@ -45,7 +45,7 @@ func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 // метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 	// используем метод хранилища
-	value, err = sr.storage.GetStorage(id)
+	value, err = sr.storage.GetFromStorage(id)
 	if err != nil {
 		log.Println("id not found:", err)
 	}
