@@ -7,28 +7,13 @@ import (
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	//"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 )
 
-/* // отдаем постоянный short url
-// тип объекта-заглушки
-type Mock struct {
-   Id string //(value string, err error)
-}
 
-// для удовлетворения интерфейсу Services реализуем
-func (sm *Mock) UserExists(url string, ) string {
-    return sm.Id
-}
-// вспомогательный метод, для подсовывания тестовых данных
-func (u *Mock) returnURL (id string) (url string){
-
-	return "xyz"
-}
-*/
 
 func TestHandlerCreateShortJSON(t *testing.T) {
 	// определяем структуру теста
@@ -52,7 +37,7 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "POST #1",
+			name: "POST - URL Successfully created",
 			req: req{
 				metod:    "POST",
 				endpoint: "/api/shorten",
@@ -62,6 +47,32 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 				code:        201,
 				response:    "/0",
 				contentType: "application/json; charset=utf-8",
+			},
+		},
+		{
+			name: "POST empty body",
+			req: req{
+				metod:    "POST",
+				endpoint: "/api/shorten",
+				body:     "",
+			},
+			want: want{
+				code:        400,
+				response:    "invalid URL received",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "POST wrong url",
+			req: req{
+				metod:    "POST",
+				endpoint: "/api/shorten",
+				body:     `{"url":"htpandexru/search/?text=AToi+go&lr=213"}`,
+			},
+			want: want{
+				code:        400,
+				response:    "invalid URL received",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
@@ -80,10 +91,11 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 			s := storage.NewMapStorage(make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
-			r := httprouters.NewRouter(h)
-
+			//r := httprouters.NewRouter(h)
+            h.HandlerCreateShortJSON(w, req)
+			
 			// запускаем сервер
-			r.ServeHTTP(w, req)
+			//r.ServeHTTP(w, req)
 			resp := w.Result()
 
 			// проверяем код ответа

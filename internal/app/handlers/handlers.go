@@ -93,18 +93,10 @@ func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 
 // обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
-	// читаем Body
-	b, err := io.ReadAll(r.Body)
-	// обрабатываем ошибку
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-
 	// десериализация тела запроса
 	dc := DecodeJSON{}
-	if err := json.Unmarshal(b, &dc); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&dc)
+	if err != nil {
 		log.Printf("Unmarshal error: %s", err)
 	}
 	// валидация URL
@@ -117,15 +109,14 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
-	jsn, err := json.Marshal(ec)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
-	w.Write(jsn)
+	json.NewEncoder(w).Encode(ec)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

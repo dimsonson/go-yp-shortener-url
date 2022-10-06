@@ -35,7 +35,7 @@ func (r gzipReader) Close() error {
 // метод для чтения зашифрованного тела запроса
 func (r gzipReader) Read(b []byte) (int, error) {
 	//
-	return r.gzipBody.Read(b)
+	return r.gzipReader.Read(b)
 }
 
 // middleware функция распаковки-сжатия http алгоритмом gzip
@@ -44,13 +44,21 @@ func middlewareGzip(next http.Handler) http.Handler {
 		// проверяем, что запрос содежит сжатые данные
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// читаем и распаковываем тело запроса с gzip
-			var err error
+			
+			gzR, _ := gzip.NewReader(r.Body)
+ 
+			r.Body = gzipReader{gzipReader: gzR, gzipBody: r.Body}
+			
+		    gzR.Close() 
+			r.Body.Close()
+
+			/* var err error
 		 	r.Body, err = gzip.NewReader(r.Body)
 			if err != nil {
 				log.Println("request body decoding error", err)
 				next.ServeHTTP(w, r)
 				return
-			} 
+			}  */
 			defer r.Body.Close()
 		}
 		// проверяем, что клиент поддерживает gzip-сжатие
