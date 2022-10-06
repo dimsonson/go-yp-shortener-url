@@ -41,7 +41,7 @@ func TestNewRouter(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	defer resp.Body.Close()
 
-	resp3, _ := CreateURLRequestJson(t, ts, "POST", "/api/shorten")
+	resp3, _ := CreateURLRequestJSON(t, ts, "POST", "/api/shorten")
 	assert.Equal(t, http.StatusCreated, resp3.StatusCode)
 	//assert.Contains(t, "https://", body)
 	defer resp3.Body.Close()
@@ -84,7 +84,7 @@ func CreateURLRequest(t *testing.T, ts *httptest.Server, method, path string) (*
 	return resp, string(respBody)
 }
 
-func CreateURLRequestJson(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+func CreateURLRequestJSON(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader(`{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`))
 	require.NoError(t, err)
