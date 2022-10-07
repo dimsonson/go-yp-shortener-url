@@ -11,16 +11,17 @@ import (
 
 // структура хранилища
 type StorageJSON struct {
-	IDURL    map[string]string `json:"idurl,omitempty"`
+	IDURL    map[string]map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
 
-// метод записи id:url в хранилище
-func (ms *StorageJSON) PutToStorage(key string, value string) (err error) {
-	if value, ok := ms.IDURL[key]; ok {
+// метод записи userid:id:url в хранилище
+func (ms *StorageJSON) PutToStorage(userid string, key string, value string) (err error) {
+	if value, ok := ms.IDURL[userid][key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
 	}
-	ms.IDURL[key] = value
+	ms.IDURL[userid]= make(map[string]string)
+	ms.IDURL[userid][key] = value
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
@@ -40,7 +41,7 @@ func (ms *StorageJSON) PutToStorage(key string, value string) (err error) {
 }
 
 // конструктор нового хранилища JSON
-func NewJSONStorage(s map[string]string, p string) *StorageJSON {
+func NewJSONStorage(s map[string]map[string]string, p string) *StorageJSON {
 	// загрузка базы из JSON
 	_, pathOk := os.Stat(filepath.Dir(p))
 
@@ -57,7 +58,7 @@ func NewJSONStorage(s map[string]string, p string) *StorageJSON {
 	fileInfo, _ := os.Stat(p)
 	if fileInfo.Size() != 0 {
 		b, err := io.ReadAll(sfile)
-		if err != nil { 
+		if err != nil {
 			log.Println("file storage reading error:", err)
 		}
 		err = json.Unmarshal(b, &s)
@@ -73,12 +74,21 @@ func NewJSONStorage(s map[string]string, p string) *StorageJSON {
 
 // метод получения записи из хранилища
 func (ms *StorageJSON) GetFromStorage(key string) (value string, err error) {
-	value, ok := ms.IDURL[key]
+	for _, v := range ms.IDURL {
+		if value, ok := v[key]; ok {
+			return value, nil
+		}
+	}
+	return "", fmt.Errorf("key %v not found", key)
+}
+
+/* func (ms *StorageJSON) GetFromStorageUserID(userid string, key string) (value string, err error) {
+	value, ok := ms.IDURL[userid][key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
 	}
 	return value, nil
-}
+} */
 
 // метод определения длинны хранилища
 func (ms *StorageJSON) LenStorage() (lenn int) {

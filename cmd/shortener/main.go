@@ -49,11 +49,11 @@ func main() {
 	var s services.StorageProvider
 	// если переменная не валидна, то используем память для хранения id:url
 	if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
-		s = storage.NewMapStorage(make(map[string]string))
+		s = storage.NewMapStorage(make(map[string]map[string]string))
 		log.Println("server will start with data storage in memory")
 	} else {
 		// иначе используем для хранения id:url файл
-		s = storage.NewJSONStorage(make(map[string]string), path)
+		s = storage.NewJSONStorage(make(map[string]map[string]string), path)
 		log.Println("server will start with data storage in file and memory cash")
 	}
 	// инициализируем конструкторы
@@ -157,4 +157,21 @@ POST /api/shorten, принимающий
 отдавать сжатый ответ клиенту, который поддерживает обработку сжатых ответов (HTTP-заголовок Accept-Encoding).
 Вспомните middleware из урока про HTTP-сервер, это может вам помочь.
 
+*/
+/*
+Инкремент 9
+Задание для трека «Сервис сокращения URL»
+Добавьте в сервис функциональность аутентификации пользователя.
+Сервис должен:
+Выдавать пользователю симметрично подписанную куку, содержащую уникальный идентификатор пользователя, если такой куки не существует или она не проходит проверку подлинности.
+Иметь хендлер GET /api/user/urls, который сможет вернуть пользователю все когда-либо сокращённые им URL в формате:
+[
+    {
+        "short_url": "http://...",
+        "original_url": "http://..."
+    },
+    ...
+]
+При отсутствии сокращённых пользователем URL хендлер должен отдавать HTTP-статус 204 No Content.
+Получить куки запроса можно из поля (*http.Request).Cookie, а установить — методом http.SetCookie.
 */

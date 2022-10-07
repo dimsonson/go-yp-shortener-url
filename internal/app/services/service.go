@@ -11,7 +11,7 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(key string, value string) (err error)
+	PutToStorage(userid string, key string, value string) (err error)
 	GetFromStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
 }
@@ -38,7 +38,7 @@ func (sr *Services) ServiceCreateShortURL(url string) (key string) {
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(key, url)
+	sr.storage.PutToStorage("id1", key, url) //тест
 	return key
 }
 
