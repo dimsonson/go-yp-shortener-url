@@ -11,16 +11,20 @@ import (
 
 // структура хранилища
 type StorageJSON struct {
+	UserID   map[string]string `json:"iserid,omitempty"`
 	IDURL    map[string]string `json:"idurl,omitempty"`
 	pathName string
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageJSON) PutToStorage(key string, value string) (err error) {
+func (ms *StorageJSON) PutToStorage(userid string, key string, value string) (err error) {
+	// проверяем наличие ключа в хранилище
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
 	}
+	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
+	ms.UserID[key] = userid
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
@@ -29,7 +33,7 @@ func (ms *StorageJSON) PutToStorage(key string, value string) (err error) {
 	}
 	defer sfile.Close()
 	// кодирование в JSON
-	js, err := json.Marshal(&ms.IDURL)
+	js, err := json.Marshal(&ms)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return err
@@ -40,32 +44,10 @@ func (ms *StorageJSON) PutToStorage(key string, value string) (err error) {
 }
 
 // конструктор нового хранилища JSON
-func NewJSONStorage(s map[string]string, p string) *StorageJSON {
-	// загрузка базы из JSON
-	_, pathOk := os.Stat(filepath.Dir(p))
+func NewJSONStorage(u map[string]string, s map[string]string, p string) *StorageJSON {
 
-	if os.IsNotExist(pathOk) {
-		os.MkdirAll(filepath.Dir(p), 0777)
-		log.Printf("folder %s created\n", filepath.Dir(p))
-	}
-	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
-	if err != nil {
-		log.Fatal("file creating error: ", err)
-	}
-	defer sfile.Close()
-
-	fileInfo, _ := os.Stat(p)
-	if fileInfo.Size() != 0 {
-		b, err := io.ReadAll(sfile)
-		if err != nil { 
-			log.Println("file storage reading error:", err)
-		}
-		err = json.Unmarshal(b, &s)
-		if err != nil {
-			log.Println("JSON unmarshalling to struct error:", err)
-		}
-	}
 	return &StorageJSON{
+		UserID:   u,
 		IDURL:    s,
 		pathName: p,
 	}
@@ -84,4 +66,45 @@ func (ms *StorageJSON) GetFromStorage(key string) (value string, err error) {
 func (ms *StorageJSON) LenStorage() (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
+}
+
+// метод отбора URLs по UserID
+func (ms *StorageJSON) URLsByUserID(userid string) (userURLs map[string]string, err error) {
+	userURLs = make(map[string]string)
+	for k, v := range ms.UserID {
+		if v == userid {
+			userURLs[k] = ms.IDURL[k]
+		}
+	}
+	if len(userURLs) == 0 {
+		err = fmt.Errorf("userid not found in the storage")
+	}
+	return userURLs, err
+}
+
+func (ms *StorageJSON) LoadFromFileToStorage() {
+	// загрузка базы из JSON
+	p := ms.pathName
+	_, pathOk := os.Stat(filepath.Dir(p))
+	if os.IsNotExist(pathOk) {
+		os.MkdirAll(filepath.Dir(p), 0777)
+		log.Printf("folder %s created\n", filepath.Dir(p))
+	}
+	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
+	if err != nil {
+		log.Fatal("file creating error: ", err)
+	}
+	defer sfile.Close()
+
+	fileInfo, _ := os.Stat(p)
+	if fileInfo.Size() != 0 {
+		b, err := io.ReadAll(sfile)
+		if err != nil {
+			log.Println("file storage reading error:", err)
+		}
+		err = json.Unmarshal(b, &ms)
+		if err != nil {
+			log.Println("JSON unmarshalling to struct error:", err)
+		}
+	}
 }

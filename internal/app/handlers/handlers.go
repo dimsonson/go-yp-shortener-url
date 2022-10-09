@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,8 +13,9 @@ import (
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(url string) (key string)
+	ServiceCreateShortURL(url string, userCookie string) (key string, userToken string)
 	ServiceGetShortURL(id string) (value string, err error)
+	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
 }
 
 // структура для конструктура обработчика
@@ -30,12 +32,12 @@ func NewHandler(s Services, base string) *Handler {
 	}
 }
 
-// структура декодирования JSON
+// структура декодирования JSON для POST запроса
 type DecodeJSON struct {
 	URL string `json:"url,omitempty"`
 }
 
-// структура кодирования JSON
+// структура кодирования JSON для POST запроса
 type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
@@ -55,8 +57,28 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	// создаем ключ
-	key := hn.handler.ServiceCreateShortURL(b)
+
+	// читаем куку с userid
+	var userToken string
+	userCookie, err := r.Cookie("token")
+	if err != nil {
+		log.Println("Request does not consist token cookie - err:", err)
+	} else {
+		userCookie.Value = userToken
+	}
+
+	fmt.Println("userCookie.Value:", userToken)
+
+	// создаем ключ и userid token
+	key, userToken := hn.handler.ServiceCreateShortURL(b, userToken)
+	// создаем куку
+	cookie := &http.Cookie{
+		Name:   "token",
+		Value:  userToken,
+		MaxAge: 300,
+	}
+	// установим куку в ответ
+	http.SetCookie(w, cookie)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -104,8 +126,25 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	//создаем ключ
-	key := hn.handler.ServiceCreateShortURL(dc.URL)
+	// читаем куку с userid
+	var userToken string
+	userCookie, err := r.Cookie("token")
+	if err != nil {
+		log.Println("Request does not consist token cookie - err:", err)
+	} else {
+		userCookie.Value = userToken
+	}
+	fmt.Println("userCookie.Value:", userToken)
+	// создаем ключ и userid token
+	key, userToken := hn.handler.ServiceCreateShortURL(dc.URL, userToken)
+	// создаем куку
+	cookie := &http.Cookie{
+		Name:   "token",
+		Value:  userToken,
+		MaxAge: 300,
+	}
+	// установим куку в ответ
+	http.SetCookie(w, cookie)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
@@ -119,4 +158,44 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
+func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
+
+	// читаем куку с userid
+	userCookie, err := r.Cookie("token")
+	if err != nil {
+		log.Println("request does not consist token cookie - err:", err)
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
+	fmt.Println("userCookie.Value:", userCookie.Value)
+	// получаем структуру всех URLs по usertoken
+	userURLsMap, err := hn.handler.ServiceGetUserShortURLs(userCookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
+	// создаем и заполняем слайс структур
+	UserURLs := make([]UserURL, len(userURLsMap))
+	for k, v := range userURLsMap {
+		UserURLs = append(UserURLs, UserURL{k, v})
+	}
+	// сериализация тела запроса
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	//устанавливаем статус-код 201
+	w.WriteHeader(http.StatusCreated)
+	// сериализуем и пишем тело ответа
+	json.NewEncoder(w).Encode(UserURLs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// структура для создания среза surl:url и дельнейшего ecode
+type UserURL struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }

@@ -16,6 +16,8 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	// дополнительный middleware
 	rout.Use(middlewareGzip)
 
+	// маршрут GET "/api/user/urls" id в URL
+	rout.Get("/api/user/urls", hn.HandlerGetUserURLs)
 	// маршрут GET "/{id}" id в URL
 	rout.Get("/{id}", hn.HandlerGetShortURL)
 	// маршрут POST "/api/shorten" c JSON в теле запроса

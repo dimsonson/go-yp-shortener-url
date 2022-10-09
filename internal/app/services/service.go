@@ -11,9 +11,11 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(key string, value string) (err error)
+	PutToStorage(userid string, key string, value string) (err error)
 	GetFromStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
+	URLsByUserID(userid string) (userURLs map[string]string, err error)
+	LoadFromFileToStorage() 
 }
 
 // структура конструктора бизнес логики
@@ -29,17 +31,18 @@ func NewService(s StorageProvider) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(url string) (key string) {
+func (sr *Services) ServiceCreateShortURL(url string, userCookie string) (key string, userToken string) {
 	// присваиваем значение ключа
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
+	userid := "testuser"
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(key, url)
-	return key
+	sr.storage.PutToStorage(userid, key, url)
+	return key, userToken
 }
 
 // метод возврат URL по id
@@ -50,6 +53,21 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 		log.Println("id not found:", err)
 	}
 	return value, err
+}
+
+// метод возврат всех URLs по userid
+func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error) {
+
+	userid := userToken
+	// используем метод хранилища для получения map URLs по userid
+	userURLsMap, err := sr.storage.URLsByUserID(userid)
+	fmt.Println("userURLsMap:", userURLsMap)
+	if err != nil {
+		log.Println(err)
+		return map[string]string{"": ""}, err //userURLsMap, err
+	}
+
+	return userURLsMap, err
 }
 
 // функция генерации случайной последовательности знаков
