@@ -108,3 +108,14 @@ func (ms *StorageJSON) LoadFromFileToStorage() {
 		}
 	}
 }
+
+// посик userid в хранилице
+func (ms *StorageJSON) UserIDExist(userid string) bool {
+	// цикл по map поиск значения без ключа
+	for _, v := range ms.IDURL {
+		if v == userid {
+			return true
+		}
+	}
+	return false
+}

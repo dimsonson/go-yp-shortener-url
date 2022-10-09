@@ -59,5 +59,16 @@ func (ms *StorageMap) URLsByUserID(userid string) (userURLs map[string]string, e
 	return userURLs, err
 }
 
-func (ms *StorageMap) LoadFromFileToStorage()  {
+func (ms *StorageMap) LoadFromFileToStorage() {
+}
+
+// посик userid в хранилице
+func (ms *StorageMap) UserIDExist(userid string) bool {
+	// цикл по map поиск значения без ключа
+	for _, v := range ms.IDURL {
+		if v == userid {
+			return true
+		}
+	}
+	return false
 }

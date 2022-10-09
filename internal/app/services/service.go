@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"math/rand"
@@ -15,7 +16,8 @@ type StorageProvider interface {
 	GetFromStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
 	URLsByUserID(userid string) (userURLs map[string]string, err error)
-	LoadFromFileToStorage() 
+	LoadFromFileToStorage()
+	UserIDExist(userid string) bool
 }
 
 // структура конструктора бизнес логики
@@ -31,18 +33,27 @@ func NewService(s StorageProvider) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(url string, userCookie string) (key string, userToken string) {
-	// присваиваем значение ключа
+func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string) {
+	// создаем и присваиваем значение короткой ссылки
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-	userid := "testuser"
+	// если токена нет в куке, токен не подписан, токена нет в хранилище - генерация и кодирование криптостойкого слайса байт
+	if userTokenIn == "" || !TokenCheckSign(userTokenIn) || !sr.storage.UserIDExist(userTokenIn) {
+		userTokenIn, err = UserIDGenerator(settings.UserIDLeght)
+		if err != nil {
+			log.Println("error with userid generation : ", err)
+		}
+		fmt.Println("userTokenIn:", userTokenIn)
+	}
+	// подписание токена для возарата в ответе
+	userTokenIn = userTokenOut
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(userid, key, url)
-	return key, userToken
+	sr.storage.PutToStorage(userTokenIn, key, url)
+	return key, userTokenOut
 }
 
 // метод возврат URL по id
@@ -60,11 +71,11 @@ func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[s
 
 	//userid := userToken
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err := sr.storage.URLsByUserID("testuser")
+	userURLsMap, err := sr.storage.URLsByUserID(userToken)
 	fmt.Println("userURLsMap:", userURLsMap)
 	if err != nil {
 		log.Println(err)
-		return map[string]string{"": ""}, err //userURLsMap, err
+		return map[string]string{"": ""}, err
 	}
 
 	return userURLsMap, err
@@ -83,4 +94,19 @@ func RandSeq(n int) (string, error) {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b), nil
+}
+
+// генерация и кодирование криптостойкого слайса байт
+func UserIDGenerator(n int) (string, error) {
+	// определяем слайс нужной длины
+	b := make([]byte, n)
+	_, err := rand.Read(b) // записываем байты в массив b
+	if err != nil {
+		return ``, err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func TokenCheckSign(t string) bool {
+	return true
 }

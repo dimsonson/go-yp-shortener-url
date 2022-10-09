@@ -13,7 +13,7 @@ import (
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(url string, userCookie string) (key string, userToken string)
+	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string) 
 	ServiceGetShortURL(id string) (value string, err error)
 	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
 }
@@ -74,9 +74,10 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// создаем куку
 	cookie := &http.Cookie{
 		Name:   "token",
-		Value:  userToken,
+		Value:  "9e9e0b4e6de418b2f84fca35165571c5",
 		MaxAge: 300,
 	}
+	fmt.Println("cookie:  ", cookie)
 	// установим куку в ответ
 	http.SetCookie(w, cookie)
 	//устанавливаем заголовок Content-Type
@@ -180,6 +181,7 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	// создаем и заполняем слайс структур
 	UserURLs := []UserURL{}
 	for k, v := range userURLsMap {
+		k = hn.base + "/" + k
 		UserURLs = append(UserURLs, UserURL{k, v})
 	}
 	fmt.Println("UserURLs:", UserURLs)
