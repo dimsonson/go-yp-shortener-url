@@ -58,9 +58,9 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error) {
 
-	userid := userToken
+	//userid := userToken
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err := sr.storage.URLsByUserID(userid)
+	userURLsMap, err := sr.storage.URLsByUserID("testuser")
 	fmt.Println("userURLsMap:", userURLsMap)
 	if err != nil {
 		log.Println(err)

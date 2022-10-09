@@ -171,17 +171,18 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("userCookie.Value:", userCookie.Value)
-	// получаем структуру всех URLs по usertoken
+	// получаем map всех URLs по usertoken
 	userURLsMap, err := hn.handler.ServiceGetUserShortURLs(userCookie.Value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
 	}
 	// создаем и заполняем слайс структур
-	UserURLs := make([]UserURL, len(userURLsMap))
+	UserURLs := []UserURL{}
 	for k, v := range userURLsMap {
 		UserURLs = append(UserURLs, UserURL{k, v})
 	}
+	fmt.Println("UserURLs:", UserURLs)
 	// сериализация тела запроса
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -196,6 +197,6 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 
 // структура для создания среза surl:url и дельнейшего ecode
 type UserURL struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	ShortURL    string `json:"short_url,omitempty"`
+	OriginalURL string `json:"original_url,omitempty"`
 }
