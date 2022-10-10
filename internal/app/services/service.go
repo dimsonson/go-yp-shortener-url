@@ -1,6 +1,9 @@
 package services
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -41,7 +44,7 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 	}
 	// если токена нет в куке, токен не подписан, токена нет в хранилище - генерация и кодирование криптостойкого слайса байт
 	if userTokenIn == "" || !TokenCheckSign(userTokenIn) || !sr.storage.UserIDExist(userTokenIn) {
-		userTokenIn, err = UserIDGenerator(settings.UserIDLeght)
+		userTokenIn, err = RandomGenerator(settings.UserIDLeght)
 		if err != nil {
 			log.Println("error with userid generation : ", err)
 		}
@@ -97,7 +100,7 @@ func RandSeq(n int) (string, error) {
 }
 
 // генерация и кодирование криптостойкого слайса байт
-func UserIDGenerator(n int) (string, error) {
+func RandomGenerator(n int) (string, error) {
 	// определяем слайс нужной длины
 	b := make([]byte, n)
 	_, err := rand.Read(b) // записываем байты в массив b
@@ -107,6 +110,45 @@ func UserIDGenerator(n int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func TokenCheckSign(t string) bool {
-	return true
+// проверка подписи iserid в куке
+func TokenCheckSign(userid int, token string, key []byte) bool {
+	uid := make([]byte, 4)
+	binary.BigEndian.PutUint32(uid, uint32(userid))
+	fmt.Println("uid", uid)
+
+	h := hmac.New(sha256.New, key)
+	h.Write(uid)
+	dst := h.Sum(nil)
+	fmt.Println("dst", dst)
+
+	src := append(uid, dst[:]...)
+	fmt.Printf("signed %x\n", dst)
+	fmt.Println("dst1append", src)
+
+	tokenNew := hex.EncodeToString(src)
+	fmt.Println("cookDst", token)
+
+	return tokenNew == token
+}
+
+// создание куки с подписанным iserid
+func TokenCreateSign(userid int, key []byte) (token string) {
+
+	uid := make([]byte, 4)
+	binary.BigEndian.PutUint32(uid, uint32(userid))
+	fmt.Println("uid", uid)
+
+	h := hmac.New(sha256.New, key)
+	h.Write(uid)
+	dst := h.Sum(nil)
+	fmt.Println("dst", dst)
+
+	src := append(uid, dst[:]...)
+	fmt.Printf("signed %x\n", dst)
+	fmt.Println("dst1append", src)
+
+	token = hex.EncodeToString(src)
+	fmt.Println("cookDst", token)
+
+	return
 }
