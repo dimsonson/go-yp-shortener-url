@@ -43,7 +43,7 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	// если токена нет в куке, токен не подписан, токена нет в хранилище - генерация и кодирование криптостойкого слайса байт
-	if userTokenIn == "" || !TokenCheckSign(userTokenIn) || !sr.storage.UserIDExist(userTokenIn) {
+	if userTokenIn == "" || /*!TokenCheckSign(userTokenIn, settings.SignKey) || */!sr.storage.UserIDExist(userTokenIn) {
 		userTokenIn, err = RandomGenerator(settings.UserIDLeght)
 		if err != nil {
 			log.Println("error with userid generation : ", err)
@@ -111,24 +111,36 @@ func RandomGenerator(n int) (string, error) {
 }
 
 // проверка подписи iserid в куке
-func TokenCheckSign(userid int, token string, key []byte) bool {
-	uid := make([]byte, 4)
-	binary.BigEndian.PutUint32(uid, uint32(userid))
-	fmt.Println("uid", uid)
+func TokenCheckSign(token string, key []byte) (userid int, err error) {
+	tokenBytes, err := hex.DecodeString(token)
+	if err != nil {
+		log.Printf("error: %v\n", err)
+	}
+	fmt.Println("useridBytes", tokenBytes)
 
+	id := binary.BigEndian.Uint32(tokenBytes[:4])
+	fmt.Println("id :", id)
+
+	idBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(idBytes, id)
+	
 	h := hmac.New(sha256.New, key)
-	h.Write(uid)
-	dst := h.Sum(nil)
-	fmt.Println("dst", dst)
+	h.Write(tokenBytes[:4])
+	newSign := h.Sum(nil)
+	fmt.Println("newSign", newSign)
 
-	src := append(uid, dst[:]...)
-	fmt.Printf("signed %x\n", dst)
-	fmt.Println("dst1append", src)
+	NewTokenBytes := append(idBytes, newSign[:]...)
+	fmt.Printf("signed %x\n", newSign)
+	fmt.Println("dst1append", NewTokenBytes)
 
-	tokenNew := hex.EncodeToString(src)
+	tokenNew := hex.EncodeToString(NewTokenBytes)
 	fmt.Println("cookDst", token)
 
-	return tokenNew == token
+	if token != tokenNew {
+		err = fmt.Errorf("sign incorrect")
+	}
+
+	return int(id), err
 }
 
 // создание куки с подписанным iserid
