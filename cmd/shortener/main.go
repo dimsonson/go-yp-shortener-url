@@ -49,11 +49,11 @@ func main() {
 	var s services.StorageProvider
 	// если переменная не валидна, то используем память для хранения id:url
 	if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
-		s = storage.NewMapStorage(make(map[string]string), make(map[string]string))
+		s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
 		log.Println("server will start with data storage in memory")
 	} else {
 		// иначе используем для хранения id:url файл
-		s = storage.NewJSONStorage(make(map[string]string), make(map[string]string), path)
+		s = storage.NewJSONStorage(make(map[string]int), make(map[string]string), path)
 		s.LoadFromFileToStorage()
 		log.Println("server will start with data storage in file and memory cash")
 	}

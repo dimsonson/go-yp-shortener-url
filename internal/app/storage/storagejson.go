@@ -11,13 +11,13 @@ import (
 
 // структура хранилища
 type StorageJSON struct {
-	UserID   map[string]string `json:"iserid,omitempty"`
-	IDURL    map[string]string `json:"idurl,omitempty"`
+	UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
+	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	pathName string
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageJSON) PutToStorage(userid string, key string, value string) (err error) {
+func (ms *StorageJSON) PutToStorage(userid int, key string, value string) (err error) {
 	// проверяем наличие ключа в хранилище
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
@@ -44,7 +44,7 @@ func (ms *StorageJSON) PutToStorage(userid string, key string, value string) (er
 }
 
 // конструктор нового хранилища JSON
-func NewJSONStorage(u map[string]string, s map[string]string, p string) *StorageJSON {
+func NewJSONStorage(u map[string]int, s map[string]string, p string) *StorageJSON {
 
 	return &StorageJSON{
 		UserID:   u,
@@ -69,7 +69,7 @@ func (ms *StorageJSON) LenStorage() (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageJSON) URLsByUserID(userid string) (userURLs map[string]string, err error) {
+func (ms *StorageJSON) URLsByUserID(userid int) (userURLs map[string]string, err error) {
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -110,9 +110,9 @@ func (ms *StorageJSON) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageJSON) UserIDExist(userid string) bool {
+func (ms *StorageJSON) UserIDExist(userid int) bool {
 	// цикл по map поиск значения без ключа
-	for _, v := range ms.IDURL {
+	for _, v := range ms.UserID {
 		if v == userid {
 			return true
 		}

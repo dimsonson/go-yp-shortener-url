@@ -15,12 +15,12 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(userid string, key string, value string) (err error)
+	PutToStorage(userid int, key string, value string) (err error)
 	GetFromStorage(key string) (value string, err error)
 	LenStorage() (lenn int)
-	URLsByUserID(userid string) (userURLs map[string]string, err error)
+	URLsByUserID(userid int) (userURLs map[string]string, err error)
 	LoadFromFileToStorage()
-	UserIDExist(userid string) bool
+	UserIDExist(userid int) bool
 }
 
 // структура конструктора бизнес логики
