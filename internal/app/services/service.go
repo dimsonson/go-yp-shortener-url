@@ -42,11 +42,17 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-	userid, err := TokenCheckSign(userTokenIn, []byte(settings.SignKey))
-	// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
-	if err != nil || userTokenIn == "" || !sr.storage.UserIDExist(userid) {
+	var userid int
+	if userTokenIn == "" {
 		log.Println(err)
 		userid = sr.storage.LenStorage()
+	} else {
+		userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
+		// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
+		if err != nil || !sr.storage.UserIDExist(userid) {
+			log.Println(err, "or userid doesnt exist in storage")
+			userid = sr.storage.LenStorage()
+		}
 	}
 
 	// подписание токена для возарата в ответе
@@ -72,7 +78,7 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error) {
 	//
-    userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
+	userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
 	if err != nil {
 		return UserURLsMap, err
 	}
@@ -116,6 +122,7 @@ func RandomGenerator(n int) (string, error) {
 
 // проверка подписи iserid в куке
 func TokenCheckSign(token string, key []byte) (userid int, err error) {
+	//tokenBytes := make([]byte, 5)
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {
 		log.Printf("error: %v\n", err)
