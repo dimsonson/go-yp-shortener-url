@@ -42,20 +42,20 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-	// если токена нет в куке, токен не подписан, токена нет в хранилище - генерация и кодирование криптостойкого слайса байт
-	if userTokenIn == "" || /*!TokenCheckSign(userTokenIn, settings.SignKey) || */!sr.storage.UserIDExist(userTokenIn) {
-		userTokenIn, err = RandomGenerator(settings.UserIDLeght)
-		if err != nil {
-			log.Println("error with userid generation : ", err)
-		}
-		fmt.Println("userTokenIn:", userTokenIn)
+	userid, err := TokenCheckSign(userTokenIn, []byte(settings.SignKey))
+	// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
+	if err != nil || userTokenIn == "" || !sr.storage.UserIDExist(userid) {
+		log.Println(err)
+		userid = sr.storage.LenStorage()
 	}
+
 	// подписание токена для возарата в ответе
-	userTokenIn = userTokenOut
+	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey))
+
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(userTokenIn, key, url)
+	sr.storage.PutToStorage(userid, key, url)
 	return key, userTokenOut
 }
 
@@ -71,10 +71,14 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error) {
-
+	//
+    userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
+	if err != nil {
+		return UserURLsMap, err
+	}
 	//userid := userToken
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err := sr.storage.URLsByUserID(userToken)
+	userURLsMap, err := sr.storage.URLsByUserID(userid)
 	fmt.Println("userURLsMap:", userURLsMap)
 	if err != nil {
 		log.Println(err)
@@ -123,7 +127,7 @@ func TokenCheckSign(token string, key []byte) (userid int, err error) {
 
 	idBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(idBytes, id)
-	
+
 	h := hmac.New(sha256.New, key)
 	h.Write(tokenBytes[:4])
 	newSign := h.Sum(nil)

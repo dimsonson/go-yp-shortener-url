@@ -13,7 +13,7 @@ import (
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string) 
+	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string)
 	ServiceGetShortURL(id string) (value string, err error)
 	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
 }
@@ -64,22 +64,25 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Println("Request does not consist token cookie - err:", err)
 	} else {
-		userCookie.Value = userToken
+		userToken = userCookie.Value
 	}
-
 	fmt.Println("userCookie.Value:", userToken)
 
 	// создаем ключ и userid token
-	key, userToken := hn.handler.ServiceCreateShortURL(b, userToken)
-	// создаем куку
-	cookie := &http.Cookie{
-		Name:   "token",
-		Value:  "9e9e0b4e6de418b2f84fca35165571c5",
-		MaxAge: 300,
+	key, userTokenNew := hn.handler.ServiceCreateShortURL(b, userToken)
+
+	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
+	if err != nil || userTokenNew != userToken {
+		cookie := &http.Cookie{
+			Name:   "token",
+			Value:  userTokenNew,
+			MaxAge: 300,
+		}
+		fmt.Println("cookie:  ", cookie)
+		// установим куку в ответ
+		http.SetCookie(w, cookie)
 	}
-	fmt.Println("cookie:  ", cookie)
-	// установим куку в ответ
-	http.SetCookie(w, cookie)
+
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
