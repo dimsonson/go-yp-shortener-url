@@ -54,12 +54,12 @@ func TestNewRouter(t *testing.T) {
 	resp5, _ := CreateURLsListWrong(t, ts, "GET", "/api/user/urls")
 	assert.Equal(t, http.StatusNoContent, resp5.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp4.Body.Close()
+	defer resp5.Body.Close()
 
 	resp6, _ := CreateURLsList(t, ts, "GET", "/api/user/urls")
 	assert.Equal(t, http.StatusOK, resp6.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp4.Body.Close()
+	defer resp6.Body.Close()
 
 }
 
