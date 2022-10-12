@@ -196,10 +196,12 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// сериализуем и пишем тело ответа
 	json.NewEncoder(w).Encode(UserURLs)
-/* 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} */
+	/*
+		 	if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+	*/
 }
 
 // структура для создания среза surl:url и дельнейшего ecode
