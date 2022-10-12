@@ -124,6 +124,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil {
 		log.Printf("Unmarshal error: %s", err)
+		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
 	// валидация URL
 	if !govalidator.IsURL(dc.URL) {
