@@ -164,10 +164,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusCreated)
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 // обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
