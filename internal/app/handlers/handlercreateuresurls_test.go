@@ -37,7 +37,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 		Value:  "00000000b38aaf6c89467a765a15a5d40098d050c80503562bebef1c64ded15cc4fbdaeb",
 		MaxAge: 300,
 	}
-	cook_bad := http.Cookie{}
+	cookBad := http.Cookie{}
 
 	
 	// создаём массив тестов: имя и желаемый результат
@@ -67,7 +67,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 			req: req{
 				metod:    "GET",
 				endpoint: "/api/user/urls",
-				cookie:   cook_bad,
+				cookie:   cookBad,
 				id : 5,
 				body:     "",
 			},
