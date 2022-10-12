@@ -1,7 +1,9 @@
 package handlers_test
 
 import (
+	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -13,9 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
-
-func TestHandlerCreateShortJSON(t *testing.T) {
+func TestHandlerGetUserURLs(t *testing.T) {
 	// определяем структуру теста
 	type want struct {
 		code        int
@@ -26,9 +26,20 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 	type req struct {
 		metod    string
 		endpoint string
+		cookie   http.Cookie
+		id int
 		body     string
 	}
 
+	//var cook http.Cookie
+	cook := http.Cookie{
+		Name:   "token",
+		Value:  "00000000b38aaf6c89467a765a15a5d40098d050c80503562bebef1c64ded15cc4fbdaeb",
+		MaxAge: 300,
+	}
+	cook_bad := http.Cookie{}
+
+	
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name string
@@ -37,44 +48,37 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 	}{
 		// определяем все тесты
 		{
-			name: "POST - URL Successfully created",
+			name: "GET - set of URLs Successfully created",
 			req: req{
-				metod:    "POST",
-				endpoint: "/api/shorten",
+				metod:    "GET",
+				endpoint: "/api/user/urls",
+				cookie:   cook,
+				id : 0,
 				body:     `{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`,
 			},
 			want: want{
-				code:        201,
-				response:    "/0",
+				code:        200,
+				response:    "[",
 				contentType: "application/json; charset=utf-8",
 			},
 		},
 		{
-			name: "POST empty body",
+			name: "GET wrong cookie",
 			req: req{
-				metod:    "POST",
-				endpoint: "/api/shorten",
+				metod:    "GET",
+				endpoint: "/api/user/urls",
+				cookie:   cook_bad,
+				id : 5,
 				body:     "",
 			},
 			want: want{
-				code:        400,
-				response:    "invalid URL received",
+				code:     204,
+				response: "",
+
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		{
-			name: "POST wrong url",
-			req: req{
-				metod:    "POST",
-				endpoint: "/api/shorten",
-				body:     `{"url":"htpandexru/search/?text=AToi+go&lr=213"}`,
-			},
-			want: want{
-				code:        400,
-				response:    "invalid URL received",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
+		
 	}
 	for _, tt := range tests {
 		// запускаем каждый тест
@@ -82,6 +86,8 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 
 			//создаем тестирующий запрос
 			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, strings.NewReader(tt.req.body))
+			// установим куку в ответ
+			req.AddCookie(&cook)
 
 			// создаём новый Recorder
 
@@ -89,11 +95,12 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+			s.PutToStorage(tt.req.id, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
 			//r := httprouters.NewRouter(h)
-            h.HandlerCreateShortJSON(w, req)
-			
+			h.HandlerGetUserURLs(w, req)
+			fmt.Println(s.UserID)
 			// запускаем сервер
 			//r.ServeHTTP(w, req)
 			resp := w.Result()
