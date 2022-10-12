@@ -197,7 +197,7 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	// сериализация тела запроса
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	// сериализуем и пишем тело ответа
 	json.NewEncoder(w).Encode(UserURLs)
 	if err != nil {
