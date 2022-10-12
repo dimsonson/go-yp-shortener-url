@@ -89,6 +89,8 @@ func TestHandlerGetUserURLs(t *testing.T) {
 			// установим куку в ответ
 			req.AddCookie(&cook)
 
+			defer req.Body.Close()
+
 			// создаём новый Recorder
 
 			w := httptest.NewRecorder()
