@@ -136,19 +136,24 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Println("Request does not consist token cookie - err:", err)
 	} else {
-		userCookie.Value = userToken
+		userToken = userCookie.Value
 	}
 	fmt.Println("userCookie.Value:", userToken)
+
 	// создаем ключ и userid token
-	key, userToken := hn.handler.ServiceCreateShortURL(dc.URL, userToken)
-	// создаем куку
-	cookie := &http.Cookie{
-		Name:   "token",
-		Value:  userToken,
-		MaxAge: 300,
+	key, userTokenNew := hn.handler.ServiceCreateShortURL(dc.URL, userToken)
+
+	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
+	if err != nil || userTokenNew != userToken {
+		cookie := &http.Cookie{
+			Name:   "token",
+			Value:  userTokenNew,
+			MaxAge: 300,
+		}
+		fmt.Println("cookie:  ", cookie)
+		// установим куку в ответ
+		http.SetCookie(w, cookie)
 	}
-	// установим куку в ответ
-	http.SetCookie(w, cookie)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
