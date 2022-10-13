@@ -16,6 +16,7 @@ type Services interface {
 	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string)
 	ServiceGetShortURL(id string) (value string, err error)
 	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
+	ServiceStorageOkPing() bool
 }
 
 // структура для конструктура обработчика
@@ -208,4 +209,13 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 type UserURL struct {
 	ShortURL    string `json:"short_url,omitempty"`
 	OriginalURL string `json:"original_url,omitempty"`
+}
+
+func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
+	if !hn.handler.ServiceStorageOkPing() {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+	w.Write([]byte("ping"))
 }

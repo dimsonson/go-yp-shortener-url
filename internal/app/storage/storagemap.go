@@ -72,3 +72,8 @@ func (ms *StorageMap) UserIDExist(userid int) bool {
 	}
 	return false
 }
+
+func (ms *StorageMap) StorageOkPing() bool {
+	
+	return true
+}

@@ -21,6 +21,7 @@ type StorageProvider interface {
 	URLsByUserID(userid int) (userURLs map[string]string, err error)
 	LoadFromFileToStorage()
 	UserIDExist(userid int) bool
+	StorageOkPing() bool
 }
 
 // структура конструктора бизнес логики
@@ -174,4 +175,8 @@ func TokenCreateSign(userid int, key []byte) (token string) {
 	fmt.Println("cookDst", token)
 
 	return
+}
+
+func (sr *Services) ServiceStorageOkPing() bool {
+	return sr.storage.StorageOkPing()
 }

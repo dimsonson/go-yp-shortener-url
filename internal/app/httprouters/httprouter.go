@@ -16,6 +16,8 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	// дополнительный middleware
 	rout.Use(middlewareGzip)
 
+	// маршрут GET "/ping" проверка доступности PostgreSQL
+	rout.Get("/ping", hn.HandlerSQLping)
 	// маршрут GET "/api/user/urls" id в URL
 	rout.Get("/api/user/urls", hn.HandlerGetUserURLs)
 	// маршрут GET "/{id}" id в URL

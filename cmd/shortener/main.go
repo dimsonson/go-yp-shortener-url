@@ -11,6 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // переменные по умолчанию
@@ -18,13 +19,18 @@ const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
+	defDBlink      = "postgres://postgres:1818@localhost:5432/postgres"
 )
+
+// DATABASE_DSN
+// -d
 
 func main() {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
+	dlinkFlag := flag.String("d", defDBlink, "Database DSN link")
 	// пасрсим флаги в переменные
 	flag.Parse()
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
@@ -40,28 +46,42 @@ func main() {
 		base = *baseFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
+	dlink, dOk := os.LookupEnv("DATABASE_DSN")
+	if !dOk {
+		log.Println("eviroment variable DATABASE_DSN is not exist", dlink)
+		dlink = *dlinkFlag
+	}
+
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
 	if !ok || (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
+
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
-	// если переменная не валидна, то используем память для хранения id:url
-	if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
-		s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
-		log.Println("server will start with data storage in memory")
+
+	if dOk {
+		s = storage.NewSQLStorage(make(map[string]int), make(map[string]string), dlink)
+		log.Println("server will start with data storage in PostgreeSQL")
 	} else {
-		// иначе используем для хранения id:url файл
-		s = storage.NewJSONStorage(make(map[string]int), make(map[string]string), path)
-		s.LoadFromFileToStorage()
-		log.Println("server will start with data storage in file and memory cash")
+		// если переменная не валидна, то используем память для хранения id:url
+		if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
+			s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
+			log.Println("server will start with data storage in memory")
+		} else {
+			// иначе используем для хранения id:url файл
+			s = storage.NewJSONStorage(make(map[string]int), make(map[string]string), path)
+			s.LoadFromFileToStorage()
+			log.Println("server will start with data storage in file and memory cash")
+		}
 	}
 	// инициализируем конструкторы
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
-	
+
 	// запускаем сервер
 	log.Printf("Base URL: %s\n", base)
 	log.Printf("File storage path: %s\n", path)
@@ -74,6 +94,8 @@ func main() {
 // export BASE_URL=http://localhost:8080
 
 // export SERVER_ADDRESS=localhost:8080
+
+// export DATABASE_DSN=postgres://postgres:1818@localhost:5432/postgres
 
 // curl -H  -I http://localhost:8080/22kByXO
 
@@ -174,7 +196,7 @@ POST /api/shorten, принимающий
         "original_url": "http://..."
     },
     ...
-] 
+]
 При отсутствии сокращённых пользователем URL хендлер должен отдавать HTTP-статус 204 No Content.
 Получить куки запроса можно из поля (*http.Request).Cookie, а установить — методом http.SetCookie.
 

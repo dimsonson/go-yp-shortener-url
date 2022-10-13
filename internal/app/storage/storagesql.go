@@ -1,24 +1,23 @@
 package storage
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
+	"context"
+	"database/sql"
+	"time"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // структура хранилища
-type StorageJSON struct {
-	UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
-	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
-	pathName string
+type StorageSQL struct {
+	//UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
+	//IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
+	//pathName string
+	PostgreSQL string //*sql.DB
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageJSON) PutToStorage(userid int, key string, value string) (err error) {
-	// проверяем наличие ключа в хранилище
+func (ms *StorageSQL) PutToStorage(userid int, key string, value string) (err error) {
+	/* // проверяем наличие ключа в хранилище
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
 	}
@@ -39,38 +38,45 @@ func (ms *StorageJSON) PutToStorage(userid int, key string, value string) (err e
 		return err
 	}
 	// запись в файл
-	sfile.Write(js)
+	sfile.Write(js) */
 	return nil
 }
 
 // конструктор нового хранилища JSON
-func NewJSONStorage(u map[string]int, s map[string]string, p string) *StorageJSON {
+func NewSQLStorage(u map[string]int, s map[string]string, p string) *StorageSQL {
+	db, err := sql.Open("pgx", p)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	return &StorageSQL{
+		//UserID:   u,
+		//IDURL:    s,
+		//pathName: p,
 
-	return &StorageJSON{
-		UserID:   u,
-		IDURL:    s,
-		pathName: p,
+		PostgreSQL: p,
 	}
 }
 
 // метод получения записи из хранилища
-func (ms *StorageJSON) GetFromStorage(key string) (value string, err error) {
-	value, ok := ms.IDURL[key]
+func (ms *StorageSQL) GetFromStorage(key string) (value string, err error) {
+	/* value, ok := ms.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
-	}
+	} */
 	return value, nil
 }
 
 // метод определения длинны хранилища
-func (ms *StorageJSON) LenStorage() (lenn int) {
-	lenn = len(ms.IDURL)
+func (ms *StorageSQL) LenStorage() (lenn int) {
+
+	//lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageJSON) URLsByUserID(userid int) (userURLs map[string]string, err error) {
-	userURLs = make(map[string]string)
+func (ms *StorageSQL) URLsByUserID(userid int) (userURLs map[string]string, err error) {
+	/* userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
 			userURLs[k] = ms.IDURL[k]
@@ -78,13 +84,13 @@ func (ms *StorageJSON) URLsByUserID(userid int) (userURLs map[string]string, err
 	}
 	if len(userURLs) == 0 {
 		err = fmt.Errorf("userid not found in the storage")
-	}
+	} */
 	return userURLs, err
 }
 
-func (ms *StorageJSON) LoadFromFileToStorage() {
+func (ms *StorageSQL) LoadFromFileToStorage() {
 	// загрузка базы из JSON
-	p := ms.pathName
+	/* p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
 	if os.IsNotExist(pathOk) {
 		os.MkdirAll(filepath.Dir(p), 0777)
@@ -106,16 +112,32 @@ func (ms *StorageJSON) LoadFromFileToStorage() {
 		if err != nil {
 			log.Println("JSON unmarshalling to struct error:", err)
 		}
-	}
+	} */
 }
 
 // посик userid в хранилице
-func (ms *StorageJSON) UserIDExist(userid int) bool {
+func (ms *StorageSQL) UserIDExist(userid int) bool {
 	// цикл по map поиск значения без ключа
-	for _, v := range ms.UserID {
+	/* for _, v := range ms.UserID {
 		if v == userid {
 			return true
 		}
-	}
+	} */
 	return false
+}
+
+func (ms *StorageSQL) StorageOkPing() bool {
+ 	db, err := sql.Open("pgx", ms.PostgreSQL)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close() 
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	if err := db.PingContext(ctx); err != nil {
+		return false
+	}
+	return true
 }
