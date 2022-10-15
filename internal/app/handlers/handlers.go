@@ -212,10 +212,14 @@ type UserURL struct {
 }
 
 func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
+	var result []byte
 	if !hn.handler.ServiceStorageOkPing() {
 		w.WriteHeader(http.StatusInternalServerError)
+		result = []byte("DB ping NOT OK")
+
 	} else {
 		w.WriteHeader(http.StatusOK)
+		result = []byte("DB ping OK")
 	}
-	w.Write([]byte("ping"))
+	w.Write(result)
 }

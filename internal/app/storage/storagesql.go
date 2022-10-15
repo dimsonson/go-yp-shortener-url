@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -12,7 +13,7 @@ type StorageSQL struct {
 	//UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
 	//IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	//pathName string
-	PostgreSQL string //*sql.DB
+	PostgreSQL *sql.DB
 }
 
 // метод записи id:url в хранилище
@@ -48,13 +49,13 @@ func NewSQLStorage(u map[string]int, s map[string]string, p string) *StorageSQL 
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	//defer db.Close()
 	return &StorageSQL{
 		//UserID:   u,
 		//IDURL:    s,
 		//pathName: p,
 
-		PostgreSQL: p,
+		PostgreSQL: db,
 	}
 }
 
@@ -127,16 +128,17 @@ func (ms *StorageSQL) UserIDExist(userid int) bool {
 }
 
 func (ms *StorageSQL) StorageOkPing() bool {
- 	db, err := sql.Open("pgx", ms.PostgreSQL)
+	/* db, err := sql.Open("pgx", ms.PostgreSQL)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close() 
-
+	defer db.Close()
+	*/
+	// defer ms.PostgreSQL.Close()
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	if err := db.PingContext(ctx); err != nil {
+	if err := ms.PostgreSQL.PingContext(ctx); err != nil {
 		return false
 	}
 	return true
