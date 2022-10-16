@@ -30,7 +30,7 @@ func main() {
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
-	dlinkFlag := flag.String("d", defDBlink, "Database DSN link")
+	dlinkFlag := flag.String("d", "", "Database DSN link")
 	// пасрсим флаги в переменные
 	flag.Parse()
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
