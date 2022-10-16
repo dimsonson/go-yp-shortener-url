@@ -19,7 +19,7 @@ const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
-	defDBlink      = "postgres://postgres:1818@localhost:5432/postgres"
+	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
 
 // DATABASE_DSN
@@ -63,8 +63,9 @@ func main() {
 	var s services.StorageProvider
 
 	if dOk {
-		s = storage.NewSQLStorage(make(map[string]int), make(map[string]string), dlink)
-		log.Println("server will start with data storage in PostgreeSQL")
+		s = storage.NewSQLStorage(dlink)
+		log.Println("server will start with data storage in PostgreeSQL: ", dlink)
+				
 	} else {
 		// если переменная не валидна, то используем память для хранения id:url
 		if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
@@ -75,6 +76,7 @@ func main() {
 			s = storage.NewJSONStorage(make(map[string]int), make(map[string]string), path)
 			s.LoadFromFileToStorage()
 			log.Println("server will start with data storage in file and memory cash")
+			log.Printf("File storage path: %s\n", path)
 		}
 	}
 	// инициализируем конструкторы
@@ -84,7 +86,6 @@ func main() {
 
 	// запускаем сервер
 	log.Printf("Base URL: %s\n", base)
-	log.Printf("File storage path: %s\n", path)
 	log.Printf("starting server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
@@ -95,7 +96,7 @@ func main() {
 
 // export SERVER_ADDRESS=localhost:8080
 
-// export DATABASE_DSN=postgres://postgres:1818@localhost:5432/postgres
+// export DATABASE_DSN=postgres://postgres:1818@localhost:5432/dbo
 
 // curl -H  -I http://localhost:8080/22kByXO
 

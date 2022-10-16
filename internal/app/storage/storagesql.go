@@ -3,143 +3,186 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+const SQLTimeout = 3 * time.Second
+
 // структура хранилища
 type StorageSQL struct {
-	//UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
-	//IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
-	//pathName string
 	PostgreSQL *sql.DB
 }
 
 // метод записи id:url в хранилище
 func (ms *StorageSQL) PutToStorage(userid int, key string, value string) (err error) {
-	/* // проверяем наличие ключа в хранилище
-	if value, ok := ms.IDURL[key]; ok {
-		return fmt.Errorf("key %s is already in database", value)
-	}
+	// столбец short_url в SQL таблице содержит только иниткальные занчения
+	// создаем контекст для запроса
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+	// создаем текст запроса
+	q := `INSERT INTO sh_urls 
+			VALUES (
+			$1, 
+			$2, 
+			$3
+			)`
+
 	// записываем в хранилице userid, id, URL
-	ms.IDURL[key] = value
-	ms.UserID[key] = userid
-	// открываем файл
-	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
+	res, err := ms.PostgreSQL.ExecContext(ctx, q, userid, key, value)
 	if err != nil {
-		log.Println("storage file opening error: ", err)
 		return err
 	}
-	defer sfile.Close()
-	// кодирование в JSON
-	js, err := json.Marshal(&ms)
-	if err != nil {
-		log.Println("JSON marshalling from struct error: ", err)
-		return err
-	}
-	// запись в файл
-	sfile.Write(js) */
+
+	log.Println("PutToStorage: ", res)
+
 	return nil
 }
 
 // конструктор нового хранилища JSON
-func NewSQLStorage(u map[string]int, s map[string]string, p string) *StorageSQL {
+func NewSQLStorage(p string) *StorageSQL {
 	db, err := sql.Open("pgx", p)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	//defer db.Close()
-	return &StorageSQL{
-		//UserID:   u,
-		//IDURL:    s,
-		//pathName: p,
+	// создание таблицы SQL если не существует
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+	// создаем текст запроса
+	q := `CREATE TABLE IF NOT EXISTS sh_urls (
+				"userid" INTEGER,
+				"short_url" TEXT NOT NULL UNIQUE,
+				"long_url" TEXT
+			)`
 
+	_, err = db.ExecContext(ctx, q)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return &StorageSQL{
 		PostgreSQL: db,
 	}
 }
 
 // метод получения записи из хранилища
 func (ms *StorageSQL) GetFromStorage(key string) (value string, err error) {
-	/* value, ok := ms.IDURL[key]
-	if !ok {
-		return "", fmt.Errorf("key %v not found", key)
-	} */
+	// создаем контекст для запроса
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+	// создаем текст запроса
+	q := `SELECT long_url FROM sh_urls WHERE short_url = $1`
+	// делаем запрос в SQL, получаем строку
+	row := ms.PostgreSQL.QueryRowContext(ctx, q, key)
+	// пишем результат запроса в пременную lenn
+	err = row.Scan(&value)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("value:", value)
+
 	return value, nil
 }
 
 // метод определения длинны хранилища
 func (ms *StorageSQL) LenStorage() (lenn int) {
+	// создаем контекст для запроса
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+	// создаем текст запроса
+	q := `SELECT COUNT(*) FROM sh_urls`
+	// делаем запрос в SQL, получаем строку
+	row := ms.PostgreSQL.QueryRowContext(ctx, q)
+	// пишем результат запроса в пременную lenn
+	err := row.Scan(&lenn)
+	if err != nil {
+		log.Println(err)
+	}
 
-	//lenn = len(ms.IDURL)
+	fmt.Println("Lenn:", lenn)
+
 	return lenn
 }
 
 // метод отбора URLs по UserID
 func (ms *StorageSQL) URLsByUserID(userid int) (userURLs map[string]string, err error) {
-	/* userURLs = make(map[string]string)
-	for k, v := range ms.UserID {
-		if v == userid {
-			userURLs[k] = ms.IDURL[k]
-		}
+	// создаем контекст для запроса
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+	// создаем текст запроса
+	q := `SELECT short_url, long_url FROM sh_urls WHERE userid = $1`
+	// делаем запрос в SQL, получаем строку
+	rows, err := ms.PostgreSQL.QueryContext(ctx, q, userid)
+	if err != nil {
+		log.Println("sql reuest URLsByUserID error :", err)
 	}
+	defer rows.Close()
+	fmt.Println("1ErrorURLsByUserIDService:", err )
+	// пишем результат запроса в map
+	userURLs = make(map[string]string)
+	for rows.Next() {
+		var k, v string
+		err = rows.Scan(&k, &v)
+		if err != nil {
+			log.Println("row scan URLsByUserID error :", err)
+		}
+		userURLs[k] = v
+	}
+	fmt.Println("2ErrorURLsByUserIDService:", err )
+	//err == sql.ErrNoRows
+
 	if len(userURLs) == 0 {
-		err = fmt.Errorf("userid not found in the storage")
-	} */
+		err := fmt.Errorf("no content for this token")
+		return userURLs, err
+	}
+
 	return userURLs, err
 }
 
 func (ms *StorageSQL) LoadFromFileToStorage() {
-	// загрузка базы из JSON
-	/* p := ms.pathName
-	_, pathOk := os.Stat(filepath.Dir(p))
-	if os.IsNotExist(pathOk) {
-		os.MkdirAll(filepath.Dir(p), 0777)
-		log.Printf("folder %s created\n", filepath.Dir(p))
-	}
-	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
-	if err != nil {
-		log.Fatal("file creating error: ", err)
-	}
-	defer sfile.Close()
 
-	fileInfo, _ := os.Stat(p)
-	if fileInfo.Size() != 0 {
-		b, err := io.ReadAll(sfile)
-		if err != nil {
-			log.Println("file storage reading error:", err)
-		}
-		err = json.Unmarshal(b, &ms)
-		if err != nil {
-			log.Println("JSON unmarshalling to struct error:", err)
-		}
-	} */
 }
 
 // посик userid в хранилице
 func (ms *StorageSQL) UserIDExist(userid int) bool {
-	// цикл по map поиск значения без ключа
-	/* for _, v := range ms.UserID {
-		if v == userid {
-			return true
-		}
-	} */
-	return false
+	// поиск userid в базе
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	defer cancel()
+
+	var DBuserid int
+	q := `SELECT userid from sh_urls WHERE userid = $1`
+
+	row := ms.PostgreSQL.QueryRowContext(ctx, q, userid)
+
+	err := row.Scan(&DBuserid)
+	if err != nil {
+		log.Println("SQL request scan error:", err)
+	}
+
+	return DBuserid != 0
+
 }
 
-func (ms *StorageSQL) StorageOkPing() bool {
-	/* db, err := sql.Open("pgx", ms.PostgreSQL)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	*/
-	// defer ms.PostgreSQL.Close()
+func (ms *StorageSQL) StorageOkPing() (bool, error) {
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
 	defer cancel()
-	if err := ms.PostgreSQL.PingContext(ctx); err != nil {
-		return false
+
+	err := ms.PostgreSQL.PingContext(ctx)
+	if err != nil {
+		return false, err
 	}
-	return true
+
+	return true, err
 }

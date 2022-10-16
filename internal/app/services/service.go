@@ -21,7 +21,7 @@ type StorageProvider interface {
 	URLsByUserID(userid int) (userURLs map[string]string, err error)
 	LoadFromFileToStorage()
 	UserIDExist(userid int) bool
-	StorageOkPing() bool
+	StorageOkPing() (bool, error)
 }
 
 // структура конструктора бизнес логики
@@ -86,11 +86,12 @@ func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[s
 	//userid := userToken
 	// используем метод хранилища для получения map URLs по userid
 	userURLsMap, err := sr.storage.URLsByUserID(userid)
-	fmt.Println("userURLsMap:", userURLsMap)
 	if err != nil {
 		log.Println(err)
 		return map[string]string{"": ""}, err
 	}
+	fmt.Println("ServiceUserURLsMap:", userURLsMap)
+	fmt.Println("ErrorServiceUserURLsMap:", err)
 
 	return userURLsMap, err
 }
@@ -177,6 +178,7 @@ func TokenCreateSign(userid int, key []byte) (token string) {
 	return
 }
 
-func (sr *Services) ServiceStorageOkPing() bool {
-	return sr.storage.StorageOkPing()
+func (sr *Services) ServiceStorageOkPing() (bool, error) {
+ok, err := sr.storage.StorageOkPing()
+	return ok, err
 }

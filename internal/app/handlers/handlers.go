@@ -16,7 +16,7 @@ type Services interface {
 	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string)
 	ServiceGetShortURL(id string) (value string, err error)
 	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
-	ServiceStorageOkPing() bool
+	ServiceStorageOkPing() (bool, error)
 }
 
 // структура для конструктура обработчика
@@ -184,13 +184,14 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
 	}
+	fmt.Println("ErrorUserURLsHandler:", err)
 	// создаем и заполняем слайс структур
 	UserURLs := []UserURL{}
 	for k, v := range userURLsMap {
 		k = hn.base + "/" + k
 		UserURLs = append(UserURLs, UserURL{k, v})
 	}
-	fmt.Println("UserURLs:", UserURLs)
+	fmt.Println("UserURLsHandler:", UserURLs)
 	// сериализация тела запроса
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -213,9 +214,11 @@ type UserURL struct {
 
 func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 	var result []byte
-	if !hn.handler.ServiceStorageOkPing() {
+	ok, err := hn.handler.ServiceStorageOkPing() 
+	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		result = []byte("DB ping NOT OK")
+		log.Println(err)
 
 	} else {
 		w.WriteHeader(http.StatusOK)

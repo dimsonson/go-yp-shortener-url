@@ -120,7 +120,7 @@ func (ms *StorageJSON) UserIDExist(userid int) bool {
 	return false
 }
 
-func (ms *StorageJSON) StorageOkPing() bool {
+func (ms *StorageJSON) StorageOkPing() (bool, error) {
 	
-	return true
+	return true, nil
 }
