@@ -62,7 +62,7 @@ func main() {
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
 
-	if dOk {
+	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
 		log.Println("server will start with data storage in PostgreeSQL: ", dlink)
 				
