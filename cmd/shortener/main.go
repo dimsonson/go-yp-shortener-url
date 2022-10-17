@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
@@ -58,21 +59,23 @@ func main() {
 
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
+	var d *sql.DB
 
 	if dlink != "" {
-		s = storage.NewSQLStorage(dlink)
-		log.Println("server will start with data storage in PostgreeSQL:", ColorYellow, dlink, ColorReset)
-		defer s.StorageConnectionClose()
+		s, d = storage.NewSQLStorage(dlink)
+		log.Println("server will start with data storage "+ColorYellow+"in PostgreSQL:", dlink, ColorReset)
+		//defer s.StorageConnectionClose()
+		defer d.Close()
 	} else {
 		// если переменная не валидна, то используем память для хранения id:url
 		if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
 			s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
-			log.Println("server will start with" + ColorYellow + "data storage in memory" + ColorReset)
+			log.Println("server will start with data storage" + ColorYellow + "in memory" + ColorReset)
 		} else {
 			// иначе используем для хранения id:url файл
 			s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
 			s.LoadFromFileToStorage()
-			log.Println(ColorYellow + "server will start with" + ColorYellow + "data storage in file and memory cash" + ColorReset)
+			log.Println("server will start with data storage" + ColorYellow + "in file and memory cash" + ColorReset)
 			log.Printf("File storage path: %s\n", path)
 		}
 	}

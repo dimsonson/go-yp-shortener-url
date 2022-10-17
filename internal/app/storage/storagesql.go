@@ -5,13 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-const StorageTimeout = 3 * time.Second
 
 // структура хранилища
 type StorageSQL struct {
@@ -41,7 +38,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 }
 
 // конструктор нового хранилища JSON
-func NewSQLStorage(p string) *StorageSQL {
+func NewSQLStorage(p string) (*StorageSQL, *sql.DB) {
 	db, err := sql.Open("pgx", p)
 	if err != nil {
 		log.Println(err)
@@ -65,7 +62,7 @@ func NewSQLStorage(p string) *StorageSQL {
 
 	return &StorageSQL{
 		PostgreSQL: db,
-	}
+	}, db
 }
 
 // метод получения записи из хранилища
@@ -77,6 +74,7 @@ func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value str
 	// пишем результат запроса в пременную lenn
 	err = row.Scan(&value)
 	if err != nil {
+		log.Println("SQL request scan error:", err)
 		return "", err
 	}
 
@@ -96,9 +94,7 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 	if err != nil {
 		log.Println(err)
 	}
-
 	fmt.Println("Lenn:", lenn)
-
 	return lenn
 }
 
@@ -127,13 +123,12 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 	// проверяем на ошибки
 	err = rows.Err()
 	if err != nil {
+		log.Println("SQL request scan error:", err)
+	}
+	if err == sql.ErrNoRows {
+		err := fmt.Errorf("no content for this token")
 		return nil, err
 	}
-	if len(userURLs) == 0 {
-		err := fmt.Errorf("no content for this token")
-		return userURLs, err
-	}
-
 	return userURLs, err
 }
 
@@ -149,7 +144,10 @@ func (ms *StorageSQL) UserIDExist(ctx context.Context, userid int) bool {
 	if err != nil {
 		log.Println("SQL request scan error:", err)
 	}
-	return DBuserid != 0
+	if err == sql.ErrNoRows {
+		return false
+	}
+	return true
 }
 
 // пинг хранилища для api/user/urls
