@@ -1,5 +1,7 @@
 package settings
 
+import "time"
+
 // длинна укороченной ссылки без первого слеш
 const KeyLeght int = 5 //значение должно быть больше 0
 
@@ -8,3 +10,6 @@ const UserIDLeght int = 16 //значение должно быть больше
 
 // ключ подписи
 const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
+
+// timeout запроса
+const StorageTimeout = 3 * time.Second

@@ -1,17 +1,18 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 )
 
 // структура хранилища в памяти
 type StorageMap struct {
-	UserID map[string]int 
+	UserID map[string]int
 	IDURL  map[string]string
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(userid int, key string, value string) (err error) {
+func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, value string) (err error) {
 	if _, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key is already in database")
 	}
@@ -29,7 +30,7 @@ func NewMapStorage(u map[string]int, s map[string]string) *StorageMap {
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) GetFromStorage(key string) (value string, err error) {
+func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value string, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {
@@ -39,13 +40,13 @@ func (ms *StorageMap) GetFromStorage(key string) (value string, err error) {
 }
 
 // метод определения длинны хранилища
-func (ms *StorageMap) LenStorage() (lenn int) {
+func (ms *StorageMap) LenStorage(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) URLsByUserID(userid int) (userURLs map[string]string, err error) {
+func (ms *StorageMap) URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error) {
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -63,7 +64,7 @@ func (ms *StorageMap) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageMap) UserIDExist(userid int) bool {
+func (ms *StorageMap) UserIDExist(ctx context.Context, userid int) bool {
 	// цикл по map поиск значения без ключа
 	for _, v := range ms.UserID {
 		if v == userid {
@@ -73,7 +74,11 @@ func (ms *StorageMap) UserIDExist(userid int) bool {
 	return false
 }
 
-func (ms *StorageMap) StorageOkPing() (bool, error) {
-	
+func (ms *StorageMap) StorageOkPing(ctx context.Context) (bool, error) {
+
 	return true, nil
+}
+
+func (ms *StorageMap) StorageConnectionClose() {
+
 }

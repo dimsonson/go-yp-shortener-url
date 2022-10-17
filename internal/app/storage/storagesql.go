@@ -10,7 +10,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-const SQLTimeout = 3 * time.Second
+const StorageTimeout = 3 * time.Second
 
 // структура хранилища
 type StorageSQL struct {
@@ -18,12 +18,8 @@ type StorageSQL struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageSQL) PutToStorage(userid int, key string, value string) (err error) {
+func (ms *StorageSQL) PutToStorage(ctx context.Context,userid int, key string, value string) (err error) {
 	// столбец short_url в SQL таблице содержит только иниткальные занчения
-	// создаем контекст для запроса
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
 			VALUES (
@@ -52,7 +48,7 @@ func NewSQLStorage(p string) *StorageSQL {
 	//defer db.Close()
 	// создание таблицы SQL если не существует
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
+	ctx, cancel := context.WithTimeout(ctx, StorageTimeout)
 	defer cancel()
 	// создаем текст запроса
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
@@ -72,11 +68,7 @@ func NewSQLStorage(p string) *StorageSQL {
 }
 
 // метод получения записи из хранилища
-func (ms *StorageSQL) GetFromStorage(key string) (value string, err error) {
-	// создаем контекст для запроса
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
+func (ms *StorageSQL) GetFromStorage(ctx context.Context,key string) (value string, err error) {
 	// создаем текст запроса
 	q := `SELECT long_url FROM sh_urls WHERE short_url = $1`
 	// делаем запрос в SQL, получаем строку
@@ -93,11 +85,7 @@ func (ms *StorageSQL) GetFromStorage(key string) (value string, err error) {
 }
 
 // метод определения длинны хранилища
-func (ms *StorageSQL) LenStorage() (lenn int) {
-	// создаем контекст для запроса
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
+func (ms *StorageSQL) LenStorage(ctx context.Context,) (lenn int) {
 	// создаем текст запроса
 	q := `SELECT COUNT(*) FROM sh_urls`
 	// делаем запрос в SQL, получаем строку
@@ -114,11 +102,7 @@ func (ms *StorageSQL) LenStorage() (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageSQL) URLsByUserID(userid int) (userURLs map[string]string, err error) {
-	// создаем контекст для запроса
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
+func (ms *StorageSQL) URLsByUserID(ctx context.Context,userid int) (userURLs map[string]string, err error) {
 	// создаем текст запроса
 	q := `SELECT short_url, long_url FROM sh_urls WHERE userid = $1`
 	// делаем запрос в SQL, получаем строку
@@ -127,7 +111,7 @@ func (ms *StorageSQL) URLsByUserID(userid int) (userURLs map[string]string, err 
 		log.Println("sql reuest URLsByUserID error :", err)
 	}
 	defer rows.Close()
-	fmt.Println("1ErrorURLsByUserIDService:", err )
+	fmt.Println("1ErrorURLsByUserIDService:", err)
 	// пишем результат запроса в map
 	userURLs = make(map[string]string)
 	for rows.Next() {
@@ -138,7 +122,7 @@ func (ms *StorageSQL) URLsByUserID(userid int) (userURLs map[string]string, err 
 		}
 		userURLs[k] = v
 	}
-	fmt.Println("2ErrorURLsByUserIDService:", err )
+	fmt.Println("2ErrorURLsByUserIDService:", err)
 	//err == sql.ErrNoRows
 
 	if len(userURLs) == 0 {
@@ -154,35 +138,25 @@ func (ms *StorageSQL) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageSQL) UserIDExist(userid int) bool {
-	// поиск userid в базе
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
-
+func (ms *StorageSQL) UserIDExist(ctx context.Context,userid int) bool {
 	var DBuserid int
 	q := `SELECT userid from sh_urls WHERE userid = $1`
-
 	row := ms.PostgreSQL.QueryRowContext(ctx, q, userid)
-
 	err := row.Scan(&DBuserid)
 	if err != nil {
 		log.Println("SQL request scan error:", err)
 	}
-
 	return DBuserid != 0
-
 }
 
-func (ms *StorageSQL) StorageOkPing() (bool, error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, SQLTimeout)
-	defer cancel()
-
+func (ms *StorageSQL) StorageOkPing(ctx context.Context,) (bool, error) {
 	err := ms.PostgreSQL.PingContext(ctx)
 	if err != nil {
 		return false, err
 	}
-
 	return true, err
+}
+
+func (ms *StorageSQL) StorageConnectionClose() {
+	ms.PostgreSQL.Close()
 }

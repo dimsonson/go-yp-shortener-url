@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/binary"
@@ -15,13 +16,14 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(userid int, key string, value string) (err error)
-	GetFromStorage(key string) (value string, err error)
-	LenStorage() (lenn int)
-	URLsByUserID(userid int) (userURLs map[string]string, err error)
+	PutToStorage(ctx context.Context, userid int, key string, value string) (err error)
+	GetFromStorage(ctx context.Context, key string) (value string, err error)
+	LenStorage(ctx context.Context) (lenn int)
+	URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error)
 	LoadFromFileToStorage()
-	UserIDExist(userid int) bool
-	StorageOkPing() (bool, error)
+	UserIDExist(ctx context.Context, userid int) bool
+	StorageOkPing(ctx context.Context) (bool, error)
+	StorageConnectionClose()
 }
 
 // структура конструктора бизнес логики
@@ -37,7 +39,7 @@ func NewService(s StorageProvider) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string) {
+func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string) {
 	// создаем и присваиваем значение короткой ссылки
 	key, err := RandSeq(settings.KeyLeght)
 	if err != nil {
@@ -46,13 +48,13 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 	var userid int
 	if userTokenIn == "" {
 		log.Println(err)
-		userid = sr.storage.LenStorage()
+		userid = sr.storage.LenStorage(ctx)
 	} else {
 		userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
 		// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
-		if err != nil || !sr.storage.UserIDExist(userid) {
+		if err != nil || !sr.storage.UserIDExist(ctx, userid) {
 			log.Println(err, "or userid doesnt exist in storage")
-			userid = sr.storage.LenStorage()
+			userid = sr.storage.LenStorage(ctx)
 		}
 	}
 
@@ -60,16 +62,16 @@ func (sr *Services) ServiceCreateShortURL(url string, userTokenIn string) (key s
 	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey))
 
 	// добавляем уникальный префикс к ключу
-	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(), key)
+	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(userid, key, url)
+	sr.storage.PutToStorage(ctx, userid, key, url)
 	return key, userTokenOut
 }
 
 // метод возврат URL по id
-func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
+func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value string, err error) {
 	// используем метод хранилища
-	value, err = sr.storage.GetFromStorage(id)
+	value, err = sr.storage.GetFromStorage(ctx, id)
 	if err != nil {
 		log.Println("id not found:", err)
 	}
@@ -77,7 +79,7 @@ func (sr *Services) ServiceGetShortURL(id string) (value string, err error) {
 }
 
 // метод возврат всех URLs по userid
-func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error) {
+func (sr *Services) ServiceGetUserShortURLs(ctx context.Context,userToken string) (UserURLsMap map[string]string, err error) {
 	//
 	userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
 	if err != nil {
@@ -85,7 +87,7 @@ func (sr *Services) ServiceGetUserShortURLs(userToken string) (UserURLsMap map[s
 	}
 	//userid := userToken
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err := sr.storage.URLsByUserID(userid)
+	userURLsMap, err := sr.storage.URLsByUserID(ctx, userid)
 	if err != nil {
 		log.Println(err)
 		return map[string]string{"": ""}, err
@@ -178,7 +180,7 @@ func TokenCreateSign(userid int, key []byte) (token string) {
 	return
 }
 
-func (sr *Services) ServiceStorageOkPing() (bool, error) {
-ok, err := sr.storage.StorageOkPing()
+func (sr *Services) ServiceStorageOkPing(ctx context.Context) (bool, error) {
+	ok, err := sr.storage.StorageOkPing(ctx)
 	return ok, err
 }

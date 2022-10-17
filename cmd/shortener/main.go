@@ -22,9 +22,6 @@ const (
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
 
-// DATABASE_DSN
-// -d
-
 func main() {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
@@ -46,8 +43,8 @@ func main() {
 		base = *baseFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	dlink, dOk := os.LookupEnv("DATABASE_DSN")
-	if !dOk {
+	dlink, ok := os.LookupEnv("DATABASE_DSN")
+	if !ok {
 		log.Println("eviroment variable DATABASE_DSN is not exist", dlink)
 		dlink = *dlinkFlag
 	}
@@ -64,18 +61,18 @@ func main() {
 
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
-		log.Println("server will start with data storage in PostgreeSQL: ", dlink)
-				
+		log.Println("server will start with data storage in PostgreeSQL:", ColorYellow, dlink, ColorReset)
+		defer s.StorageConnectionClose()
 	} else {
 		// если переменная не валидна, то используем память для хранения id:url
 		if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
 			s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
-			log.Println("server will start with data storage in memory")
+			log.Println("server will start with" + ColorYellow + "data storage in memory" + ColorReset)
 		} else {
 			// иначе используем для хранения id:url файл
-			s = storage.NewJSONStorage(make(map[string]int), make(map[string]string), path)
+			s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
 			s.LoadFromFileToStorage()
-			log.Println("server will start with data storage in file and memory cash")
+			log.Println(ColorYellow + "server will start with" + ColorYellow + "data storage in file and memory cash" + ColorReset)
 			log.Printf("File storage path: %s\n", path)
 		}
 	}
@@ -85,10 +82,19 @@ func main() {
 	r := httprouters.NewRouter(h)
 
 	// запускаем сервер
-	log.Printf("Base URL: %s\n", base)
-	log.Printf("starting server on %s\n", addr)
+	log.Println("base URL:", ColorGreen, base, ColorReset)
+	log.Println("starting server on:", ColorBlue, addr, ColorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
+
+const (
+	ColorBlack  = "\u001b[30m"
+	ColorRed    = "\u001b[31m"
+	ColorGreen  = "\u001b[32m"
+	ColorYellow = "\u001b[33m"
+	ColorBlue   = "\u001b[34m"
+	ColorReset  = "\u001b[0m"
+)
 
 // export FILE_STORAGE_PATH=db/keyvalue.json
 

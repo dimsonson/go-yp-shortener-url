@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,15 +9,16 @@ import (
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/go-chi/chi/v5"
 )
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(url string, userTokenIn string) (key string, userTokenOut string)
-	ServiceGetShortURL(id string) (value string, err error)
-	ServiceGetUserShortURLs(userToken string) (UserURLsMap map[string]string, err error)
-	ServiceStorageOkPing() (bool, error)
+	ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string)
+	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
+	ServiceGetUserShortURLs(ctx context.Context, userToken string) (UserURLsMap map[string]string, err error)
+	ServiceStorageOkPing(ctx context.Context) (bool, error)
 }
 
 // структура для конструктура обработчика
@@ -58,7 +60,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-
 	// читаем куку с userid
 	var userToken string
 	userCookie, err := r.Cookie("token")
@@ -68,10 +69,12 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		userToken = userCookie.Value
 	}
 	fmt.Println("userCookie.Value:", userToken)
-
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew := hn.handler.ServiceCreateShortURL(b, userToken)
-
+	key, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -83,7 +86,6 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		// установим куку в ответ
 		http.SetCookie(w, cookie)
 	}
-
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -100,8 +102,13 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
 	}
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
+
 	// получаем ссылку по id
-	value, err := hn.handler.ServiceGetShortURL(id)
+	value, err := hn.handler.ServiceGetShortURL(ctx, id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
@@ -141,10 +148,12 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		userToken = userCookie.Value
 	}
 	fmt.Println("userCookie.Value:", userToken)
-
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew := hn.handler.ServiceCreateShortURL(dc.URL, userToken)
-
+	key, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -169,7 +178,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 
 // обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
 func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
-
 	// читаем куку с userid
 	userCookie, err := r.Cookie("token")
 	if err != nil {
@@ -178,8 +186,12 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("userCookie.Value:", userCookie.Value)
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
 	// получаем map всех URLs по usertoken
-	userURLsMap, err := hn.handler.ServiceGetUserShortURLs(userCookie.Value)
+	userURLsMap, err := hn.handler.ServiceGetUserShortURLs(ctx, userCookie.Value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
@@ -198,23 +210,22 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// сериализуем и пишем тело ответа
 	json.NewEncoder(w).Encode(UserURLs)
-	/*
-		 	if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-	*/
 }
 
-// структура для создания среза surl:url и дельнейшего ecode
+// структура для создания среза surl:url и дельнейшего encode
 type UserURL struct {
 	ShortURL    string `json:"short_url,omitempty"`
 	OriginalURL string `json:"original_url,omitempty"`
 }
 
 func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
+
 	var result []byte
-	ok, err := hn.handler.ServiceStorageOkPing() 
+	ok, err := hn.handler.ServiceStorageOkPing(ctx)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		result = []byte("DB ping NOT OK")

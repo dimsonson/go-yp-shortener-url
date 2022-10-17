@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,14 +11,14 @@ import (
 )
 
 // структура хранилища
-type StorageJSON struct {
+type StorageFile struct {
 	UserID   map[string]int    `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	pathName string
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageJSON) PutToStorage(userid int, key string, value string) (err error) {
+func (ms *StorageFile) PutToStorage(ctx context.Context, userid int, key string, value string) (err error) {
 	// проверяем наличие ключа в хранилище
 	if value, ok := ms.IDURL[key]; ok {
 		return fmt.Errorf("key %s is already in database", value)
@@ -44,9 +45,9 @@ func (ms *StorageJSON) PutToStorage(userid int, key string, value string) (err e
 }
 
 // конструктор нового хранилища JSON
-func NewJSONStorage(u map[string]int, s map[string]string, p string) *StorageJSON {
+func NewFileStorage(u map[string]int, s map[string]string, p string) *StorageFile {
 
-	return &StorageJSON{
+	return &StorageFile{
 		UserID:   u,
 		IDURL:    s,
 		pathName: p,
@@ -54,7 +55,7 @@ func NewJSONStorage(u map[string]int, s map[string]string, p string) *StorageJSO
 }
 
 // метод получения записи из хранилища
-func (ms *StorageJSON) GetFromStorage(key string) (value string, err error) {
+func (ms *StorageFile) GetFromStorage(ctx context.Context, key string) (value string, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
 		return "", fmt.Errorf("key %v not found", key)
@@ -63,13 +64,13 @@ func (ms *StorageJSON) GetFromStorage(key string) (value string, err error) {
 }
 
 // метод определения длинны хранилища
-func (ms *StorageJSON) LenStorage() (lenn int) {
+func (ms *StorageFile) LenStorage(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageJSON) URLsByUserID(userid int) (userURLs map[string]string, err error) {
+func (ms *StorageFile) URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error) {
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -82,7 +83,7 @@ func (ms *StorageJSON) URLsByUserID(userid int) (userURLs map[string]string, err
 	return userURLs, err
 }
 
-func (ms *StorageJSON) LoadFromFileToStorage() {
+func (ms *StorageFile) LoadFromFileToStorage() {
 	// загрузка базы из JSON
 	p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
@@ -110,7 +111,7 @@ func (ms *StorageJSON) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageJSON) UserIDExist(userid int) bool {
+func (ms *StorageFile) UserIDExist(ctx context.Context, userid int) bool {
 	// цикл по map поиск значения без ключа
 	for _, v := range ms.UserID {
 		if v == userid {
@@ -120,7 +121,11 @@ func (ms *StorageJSON) UserIDExist(userid int) bool {
 	return false
 }
 
-func (ms *StorageJSON) StorageOkPing() (bool, error) {
-	
+func (ms *StorageFile) StorageOkPing(ctx context.Context) (bool, error) {
+
 	return true, nil
+}
+
+func (ms *StorageFile) StorageConnectionClose() {
+
 }
