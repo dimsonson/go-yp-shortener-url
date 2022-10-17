@@ -9,6 +9,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -74,13 +75,17 @@ func TestHandlerGetShortURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
+			ctx := context.Background()
+			ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
+			defer cancel()
+
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
 			r := httprouters.NewRouter(h)
 			//	h := http.HandlerFunc(handlers.NewHandler())
-			s.PutToStorage(1, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+			s.PutToStorage(ctx, 1, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))

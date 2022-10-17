@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	//"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
@@ -27,7 +29,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 		metod    string
 		endpoint string
 		cookie   http.Cookie
-		id int
+		id       int
 		body     string
 	}
 
@@ -39,7 +41,6 @@ func TestHandlerGetUserURLs(t *testing.T) {
 	}
 	cookBad := http.Cookie{}
 
-	
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name string
@@ -53,7 +54,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 				metod:    "GET",
 				endpoint: "/api/user/urls",
 				cookie:   cook,
-				id : 0,
+				id:       0,
 				body:     `{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`,
 			},
 			want: want{
@@ -68,7 +69,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 				metod:    "GET",
 				endpoint: "/api/user/urls",
 				cookie:   cookBad,
-				id : 5,
+				id:       5,
 				body:     "",
 			},
 			want: want{
@@ -78,7 +79,6 @@ func TestHandlerGetUserURLs(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		
 	}
 	for _, tt := range tests {
 		// запускаем каждый тест
@@ -95,9 +95,13 @@ func TestHandlerGetUserURLs(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
+			ctx := context.Background()
+			ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
+			defer cancel()
+
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
-			s.PutToStorage(tt.req.id, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+			s.PutToStorage(ctx, tt.req.id, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
 			//r := httprouters.NewRouter(h)

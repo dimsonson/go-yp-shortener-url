@@ -124,8 +124,11 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		userURLs[k] = v
 	}
 	fmt.Println("2ErrorURLsByUserIDService:", err)
-	//err == sql.ErrNoRows
-
+	// проверяем на ошибки
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
 	if len(userURLs) == 0 {
 		err := fmt.Errorf("no content for this token")
 		return userURLs, err

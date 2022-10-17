@@ -3,6 +3,7 @@ package httprouters_test
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +26,10 @@ func TestNewRouter(t *testing.T) {
 	r := httprouters.NewRouter(h)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
-
-	s.PutToStorage(0,"xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
+	defer cancel()
+	s.PutToStorage(ctx, 0, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
 	resp1, _ := CreateURLRequest(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
@@ -157,7 +161,6 @@ func CreateURLsList(t *testing.T, ts *httptest.Server, method, path string) (*ht
 	w := gzip.NewWriter(&b)
 	w.Write([]byte("https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"))
 	w.Close()
-
 
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader(b.String()))
 	require.NoError(t, err)
