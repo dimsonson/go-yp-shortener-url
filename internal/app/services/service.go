@@ -184,3 +184,34 @@ func (sr *Services) ServiceStorageOkPing(ctx context.Context) (bool, error) {
 	ok, err := sr.storage.StorageOkPing(ctx)
 	return ok, err
 }
+
+
+// ВОПРОС ИССЛЕДУЕТСЯ метод создание пары id : URL
+func (sr *Services) ServiceCreateBatchURLs(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string) {
+	// создаем и присваиваем значение короткой ссылки
+	key, err := RandSeq(settings.KeyLeght)
+	if err != nil {
+		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
+	}
+	var userid int
+	if userTokenIn == "" {
+		log.Println(err)
+		userid = sr.storage.LenStorage(ctx)
+	} else {
+		userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
+		// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
+		if err != nil || !sr.storage.UserIDExist(ctx, userid) {
+			log.Println(err, "or userid doesnt exist in storage")
+			userid = sr.storage.LenStorage(ctx)
+		}
+	}
+
+	// подписание токена для возарата в ответе
+	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey))
+
+	// добавляем уникальный префикс к ключу
+	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
+	// создаем пару ключ-значение в базе
+	sr.storage.PutToStorage(ctx, userid, key, url)
+	return key, userTokenOut
+}

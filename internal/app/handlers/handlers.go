@@ -237,3 +237,77 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(result)
 }
+
+// обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
+func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
+	// десериализация тела запроса
+	dc := DecodeBatchJSON{}
+	err := json.NewDecoder(r.Body).Decode(&dc)
+	if err != nil {
+		log.Printf("Unmarshal error: %s", err)
+		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
+	}
+	fmt.Println("dc:::", dc)
+
+	// читаем куку с userid
+	var userToken string
+	userCookie, err := r.Cookie("token")
+	if err != nil {
+		log.Println("Request does not consist token cookie - err:", err)
+	} else {
+		userToken = userCookie.Value
+	}
+	fmt.Println("userCookie.Value:", userToken)
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
+	// сериализация тела ответа
+	ec := []EncodeBatchJSON{}
+	// создаем userid token
+	_, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, "", userToken)
+	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
+	for _, v := range dc {
+		// создаем ключ и userid token
+		key, _ := hn.handler.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
+		// валидация URL
+		if !govalidator.IsURL(v.OriginalURL) {
+			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
+			return
+		}
+		// собираем long url
+		key = hn.base + "/" + key
+		// добавляем структуру в слайс
+		ec = append(ec, EncodeBatchJSON{
+			CorrelationID: v.CorrelationID,
+			ShortURL:      key,
+		})
+	}
+	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
+	if err != nil || userTokenNew != userToken {
+		cookie := &http.Cookie{
+			Name:   "token",
+			Value:  userTokenNew,
+			MaxAge: 300,
+		}
+		fmt.Println("cookie:  ", cookie)
+		// установим куку в ответ
+		http.SetCookie(w, cookie)
+	}
+	//устанавливаем заголовок Content-Type
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	//устанавливаем статус-код 201
+	w.WriteHeader(http.StatusCreated)
+	// пишем тело ответа
+	json.NewEncoder(w).Encode(ec)
+}
+// слайс структур декодирования JSON из POST запроса
+type DecodeBatchJSON []struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	OriginalURL   string `json:"original_url,omitempty"`
+}
+// структура кодирования JSON для POST Batch ответа
+type EncodeBatchJSON struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	ShortURL      string `json:"short_url,omitempty"`
+}
