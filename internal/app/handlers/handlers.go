@@ -239,6 +239,7 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
+// посмотреть вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
 	// десериализация тела запроса
 	dc := DecodeBatchJSON{}
