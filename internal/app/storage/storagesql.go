@@ -54,7 +54,7 @@ func NewSQLStorage(p string) (*StorageSQL, *sql.DB) {
 				"userid" INTEGER,
 				"short_url" TEXT NOT NULL UNIQUE,
 				"long_url" TEXT NOT NULL UNIQUE
-			)`
+				)`
 
 	_, err = db.ExecContext(ctx, q)
 	if err != nil {
