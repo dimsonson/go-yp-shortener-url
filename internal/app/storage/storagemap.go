@@ -12,13 +12,13 @@ type StorageMap struct {
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, value string) (err error) {
+func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error) {
 	if _, ok := ms.IDURL[key]; ok {
-		return fmt.Errorf("key is already in database")
+		return //fmt.Errorf("key is already in database", err)
 	}
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
-	return nil
+	return //nil
 }
 
 // конструктор хранилища в памяти

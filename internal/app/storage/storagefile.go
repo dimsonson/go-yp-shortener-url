@@ -18,10 +18,10 @@ type StorageFile struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageFile) PutToStorage(ctx context.Context, userid int, key string, value string) (err error) {
+func (ms *StorageFile) PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error) {
 	// проверяем наличие ключа в хранилище
-	if value, ok := ms.IDURL[key]; ok {
-		return fmt.Errorf("key %s is already in database", value)
+	if _, ok := ms.IDURL[key]; ok {
+		return //fmt.Errorf("key %s is already in database", value)
 	}
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
@@ -30,18 +30,18 @@ func (ms *StorageFile) PutToStorage(ctx context.Context, userid int, key string,
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
 		log.Println("storage file opening error: ", err)
-		return err
+		return //err
 	}
 	defer sfile.Close()
 	// кодирование в JSON
 	js, err := json.Marshal(&ms)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
-		return err
+		return //err
 	}
 	// запись в файл
 	sfile.Write(js)
-	return nil
+	return //nil
 }
 
 // конструктор нового хранилища JSON

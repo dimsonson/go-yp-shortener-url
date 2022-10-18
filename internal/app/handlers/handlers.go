@@ -15,7 +15,7 @@ import (
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string)
+	ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error)
 	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
 	ServiceGetUserShortURLs(ctx context.Context, userToken string) (UserURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
@@ -74,7 +74,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
+	key, userTokenNew, err1 := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -87,9 +87,15 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.SetCookie(w, cookie)
 	}
 	//устанавливаем заголовок Content-Type
+
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
-	w.WriteHeader(http.StatusCreated)
+	if err1 != nil {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
+
 	// пишем тело ответа
 	w.Write([]byte(hn.base + "/" + key))
 }
@@ -153,7 +159,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
+	key, userTokenNew, err1 := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -171,7 +177,11 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
-	w.WriteHeader(http.StatusCreated)
+	if err1 != nil {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
 }
@@ -266,11 +276,11 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// сериализация тела ответа
 	ec := []EncodeBatchJSON{}
 	// создаем userid token
-	_, userTokenNew := hn.handler.ServiceCreateShortURL(ctx, "", userToken)
+	_, userTokenNew, _ := hn.handler.ServiceCreateShortURL(ctx, "", userToken)
 	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
 	for _, v := range dc {
 		// создаем ключ и userid token
-		key, _ := hn.handler.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
+		key, _, _ := hn.handler.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
 		// валидация URL
 		if !govalidator.IsURL(v.OriginalURL) {
 			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
@@ -302,11 +312,13 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
 }
+
 // слайс структур декодирования JSON из POST запроса
 type DecodeBatchJSON []struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	OriginalURL   string `json:"original_url,omitempty"`
 }
+
 // структура кодирования JSON для POST Batch ответа
 type EncodeBatchJSON struct {
 	CorrelationID string `json:"correlation_id,omitempty"`

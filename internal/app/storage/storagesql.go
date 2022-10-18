@@ -17,7 +17,7 @@ type StorageSQL struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, value string) (err error) {
+func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error) {
 	// столбец short_url в SQL таблице содержит только иниткальные занчения
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
@@ -30,12 +30,24 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 	// записываем в хранилице userid, id, URL
 	res, err := ms.PostgreSQL.ExecContext(ctx, q, userid, key, value)
 	if err != nil {
-		return err
+		fmt.Println("PutToStorageErr: ", err)
+		//	return err
+		q := `SELECT short_url FROM sh_urls WHERE  long_url = $1`
+
+		// записываем в хранилице userid, id, URL
+		row := ms.PostgreSQL.QueryRowContext(ctx, q, value)
+		// пишем результат запроса в пременную lenn
+		err1 := row.Scan(&existKey)
+		if err1 != nil {
+			log.Println("SQL request scan error:", err1)
+			return 
+		}
 	}
 
-	log.Println("PutToStorage: ", res)
+	fmt.Println("PutToStorage: ", res)
+	fmt.Println("PutToStorageErr: ", err)
 
-	return nil
+	return 
 }
 
 // конструктор нового хранилища JSON

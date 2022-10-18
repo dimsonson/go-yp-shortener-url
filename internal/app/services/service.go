@@ -16,7 +16,7 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(ctx context.Context, userid int, key string, value string) (err error)
+	PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error)
 	GetFromStorage(ctx context.Context, key string) (value string, err error)
 	LenStorage(ctx context.Context) (lenn int)
 	URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error)
@@ -39,9 +39,9 @@ func NewService(s StorageProvider) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string) {
+func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error) {
 	// создаем и присваиваем значение короткой ссылки
-	key, err := RandSeq(settings.KeyLeght)
+	key, err = RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
@@ -64,8 +64,12 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userT
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 	// создаем пару ключ-значение в базе
-	sr.storage.PutToStorage(ctx, userid, key, url)
-	return key, userTokenOut
+	 existKey, err := sr.storage.PutToStorage(ctx, userid, key, url) 
+	 if err != nil {
+		log.Println("SQL", err)
+		key = existKey
+	}
+	return key, userTokenOut, err
 }
 
 // метод возврат URL по id
