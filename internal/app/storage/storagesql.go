@@ -99,6 +99,7 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
+// посмотреть возможность использования SQLx
 func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error) {
 	// создаем текст запроса
 	q := `SELECT short_url, long_url FROM sh_urls WHERE userid = $1`
