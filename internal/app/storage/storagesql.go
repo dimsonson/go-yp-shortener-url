@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -52,7 +53,7 @@ func NewSQLStorage(p string) (*StorageSQL, *sql.DB) {
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
 				"userid" INTEGER,
 				"short_url" TEXT NOT NULL UNIQUE,
-				"long_url" TEXT
+				"long_url" TEXT NOT NULL UNIQUE
 			)`
 
 	_, err = db.ExecContext(ctx, q)
@@ -121,12 +122,12 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		userURLs[k] = v
 	}
 	fmt.Println("2ErrorURLsByUserIDService:", err)
-	// проверяем на ошибки
+	// проверяем итерации на ошибки
 	err = rows.Err()
 	if err != nil {
 		log.Println("SQL request scan error:", err)
 	}
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err := fmt.Errorf("no content for this token")
 		return nil, err
 	}
@@ -145,7 +146,7 @@ func (ms *StorageSQL) UserIDExist(ctx context.Context, userid int) bool {
 	if err != nil {
 		log.Println("SQL request scan error:", err)
 	}
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return false
 	}
 	return true
