@@ -8,7 +8,8 @@ import (
 	"log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
-	_ "github.com/jackc/pgx/v5/stdlib"
+
+	_ "github.com/jackc/pgx/v5"
 )
 
 // структура хранилища
@@ -28,54 +29,54 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 			)`
 
 	// записываем в хранилице userid, id, URL
-	res, err := ms.PostgreSQL.ExecContext(ctx, q, userid, key, value)
+	_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, key, value)
 	if err != nil {
-		fmt.Println("PutToStorageErr: ", err)
-		//	return err
+		log.Println("SQL request error:", err)
+		//var pgErr pgconn.PgError
+		//errors.As(err, &pgErr)
+		//if errors.Is(err,  {
+		log.Println("Inside", err) // => syntax error at end of input
+		//log.Println(pgErr.Code)
+		//if
+
+		// создаем текст запроса
 		q := `SELECT short_url FROM sh_urls WHERE  long_url = $1`
-
-		// записываем в хранилице userid, id, URL
-		row := ms.PostgreSQL.QueryRowContext(ctx, q, value)
-		// пишем результат запроса в пременную lenn
-		err1 := row.Scan(&existKey)
-		if err1 != nil {
-			log.Println("SQL request scan error:", err1)
-			return 
+		// запрос в хранилище на корокий URL по длинному URL,пишем результат запроса в пременную existKey
+		err := ms.PostgreSQL.QueryRowContext(ctx, q, value).Scan(&existKey)
+		if err != nil {
+			log.Println("SQL request scan error:", err)
 		}
+		//}
 	}
-
-	fmt.Println("PutToStorage: ", res)
-	fmt.Println("PutToStorageErr: ", err)
-
-	return 
+	return
 }
 
-// конструктор нового хранилища JSON
-func NewSQLStorage(p string) (*StorageSQL, *sql.DB) {
+// конструктор нового хранилища PostgreSQL
+func NewSQLStorage(p string) *StorageSQL {
+	// открываем базу данных
 	db, err := sql.Open("pgx", p)
 	if err != nil {
-		log.Println(err)
+		log.Println("database opening error:", err)
 	}
-	//defer db.Close()
-	// создание таблицы SQL если не существует
+	// создание контекста и оснащение его таймаутом
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
 	defer cancel()
 	// создаем текст запроса
+	// возможно ли имя таблицы вывести в файл settings?
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
 				"userid" INTEGER,
 				"short_url" TEXT NOT NULL UNIQUE,
 				"long_url" TEXT NOT NULL UNIQUE
 				)`
-
+	// создаем таблицу в SQL базе, если не существует
 	_, err = db.ExecContext(ctx, q)
 	if err != nil {
 		log.Println(err)
 	}
-
 	return &StorageSQL{
 		PostgreSQL: db,
-	}, db
+	}
 }
 
 // метод получения записи из хранилища
