@@ -58,7 +58,7 @@ func main() {
 
 	// задаем переменную провайдера хранилища
 	var s services.StorageProvider
-	// var d *sql.DB
+	// var d *pgxpool.Pool
 
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
