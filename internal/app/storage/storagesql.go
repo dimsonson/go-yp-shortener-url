@@ -33,29 +33,29 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 	_, err = ms.PostgreSQL.Exec(ctx, q, userid, key, value)
 
 	if err != nil {
+		log.Println("insert request PutToStorage scan error:", err)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case pgerrcode.UniqueViolation:
-				log.Println("correctly matched ")
-				log.Println(pgErr.Code)
+				log.Println("correctly matched ", pgErr.Code)
 				// создаем текст запроса
 				q := `SELECT short_url FROM sh_urls WHERE  long_url = $1`
 				// запрос в хранилище на корокий URL по длинному URL,
 				// пишем результат запроса в пременную existKey
 				err := ms.PostgreSQL.QueryRow(ctx, q, value).Scan(&existKey)
 				if err != nil {
-					log.Println("SQL request scan error:", err)
+					log.Println("PutToStorage select request scan error:", err)
 				}
 			}
 		}
 	}
-
 	return
 }
 
 // конструктор нового хранилища PostgreSQL
 func NewSQLStorage(p string) *StorageSQL {
+	// создаем контекст и оснащаем его таймаутом
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
 	defer cancel()
@@ -64,8 +64,6 @@ func NewSQLStorage(p string) *StorageSQL {
 	if err != nil {
 		log.Println("database opening error:", err)
 	}
-	// создание контекста и оснащение его таймаутом
-
 	// создаем текст запроса
 	// возможно ли имя таблицы вывести в файл settings?
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
@@ -76,7 +74,7 @@ func NewSQLStorage(p string) *StorageSQL {
 	// создаем таблицу в SQL базе, если не существует
 	_, err = dbpool.Exec(ctx, q)
 	if err != nil {
-		log.Println(err)
+		log.Println("request NewSQLStorage to sql db returned error:", err)
 	}
 	return &StorageSQL{
 		PostgreSQL: dbpool,
@@ -89,31 +87,27 @@ func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value str
 	q := `SELECT long_url FROM sh_urls WHERE short_url = $1`
 	// делаем запрос в SQL, получаем строку
 	row := ms.PostgreSQL.QueryRow(ctx, q, key)
-	// пишем результат запроса в пременную lenn
+	// пишем результат запроса в пременную value
 	err = row.Scan(&value)
 	if err != nil {
-		log.Println("SQL request scan error:", err)
-		return "", err
+		log.Println("scan GetFromStorage to value variable returned error:", err)
+		return
 	}
-
-	fmt.Println("value:", value)
-
-	return value, nil
+	return
 }
 
 // метод определения длинны хранилища
 func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 	// создаем текст запроса
-	q := `SELECT COUNT(*) FROM sh_urls`
+	q := `SELECT COUNT (*) FROM sh_urls`
 	// делаем запрос в SQL, получаем строку
 	row := ms.PostgreSQL.QueryRow(ctx, q)
 	// пишем результат запроса в пременную lenn
 	err := row.Scan(&lenn)
 	if err != nil {
-		log.Println(err)
+		log.Println("scan LenStorage to lenn variable returned error:", err)
 	}
-	fmt.Println("Lenn:", lenn)
-	return lenn
+	return
 }
 
 // метод отбора URLs по UserID
@@ -127,7 +121,6 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		log.Println("sql reuest URLsByUserID error :", err)
 	}
 	defer rows.Close()
-	fmt.Println("1ErrorURLsByUserIDService:", err)
 	// пишем результат запроса в map
 	userURLs = make(map[string]string)
 	for rows.Next() {
@@ -138,17 +131,16 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		}
 		userURLs[k] = v
 	}
-	fmt.Println("2ErrorURLsByUserIDService:", err)
 	// проверяем итерации на ошибки
 	err = rows.Err()
 	if err != nil {
-		log.Println("SQL request scan error:", err)
+		log.Println("request URLsByUserID iteration scan error:", err)
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		err := fmt.Errorf("no content for this token")
 		return nil, err
 	}
-	return userURLs, err
+	return 
 }
 
 func (ms *StorageSQL) LoadFromFileToStorage() {
