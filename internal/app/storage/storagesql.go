@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -137,10 +136,10 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		log.Println("request URLsByUserID iteration scan error:", err)
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		err := fmt.Errorf("no content for this token")
+		err := errors.New("request URLsByUserID has no content for this token")
 		return nil, err
 	}
-	return 
+	return
 }
 
 func (ms *StorageSQL) LoadFromFileToStorage() {
@@ -153,7 +152,7 @@ func (ms *StorageSQL) UserIDExist(ctx context.Context, userid int) bool {
 	row := ms.PostgreSQL.QueryRow(ctx, q, userid)
 	err := row.Scan(&DBuserid)
 	if err != nil {
-		log.Println("SQL request scan error:", err)
+		log.Println("request UserIDExist returned scan error:", err)
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false

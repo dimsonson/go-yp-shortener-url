@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -68,13 +67,12 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	} else {
 		userToken = userCookie.Value
 	}
-	fmt.Println("userCookie.Value:", userToken)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew, err1 := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
+	key, userTokenNew, err := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -82,20 +80,17 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 			Value:  userTokenNew,
 			MaxAge: 300,
 		}
-		fmt.Println("cookie:  ", cookie)
 		// установим куку в ответ
 		http.SetCookie(w, cookie)
 	}
 	//устанавливаем заголовок Content-Type
-
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
-	if err1 != nil {
+	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)
 	}
-
 	// пишем тело ответа
 	w.Write([]byte(hn.base + "/" + key))
 }
@@ -112,7 +107,6 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-
 	// получаем ссылку по id
 	value, err := hn.handler.ServiceGetShortURL(ctx, id)
 	if err != nil {
@@ -153,13 +147,12 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	} else {
 		userToken = userCookie.Value
 	}
-	fmt.Println("userCookie.Value:", userToken)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-	// создаем ключ и userid token
-	key, userTokenNew, err1 := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
+	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
+	key, userTokenNew, err := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -167,7 +160,6 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 			Value:  userTokenNew,
 			MaxAge: 300,
 		}
-		fmt.Println("cookie:  ", cookie)
 		// установим куку в ответ
 		http.SetCookie(w, cookie)
 	}
@@ -177,7 +169,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
-	if err1 != nil {
+	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)
@@ -195,7 +187,6 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
 	}
-	fmt.Println("userCookie.Value:", userCookie.Value)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
@@ -206,14 +197,12 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
 	}
-	fmt.Println("ErrorUserURLsHandler:", err)
 	// создаем и заполняем слайс структур
 	UserURLs := []UserURL{}
 	for k, v := range userURLsMap {
 		k = hn.base + "/" + k
 		UserURLs = append(UserURLs, UserURL{k, v})
 	}
-	fmt.Println("UserURLsHandler:", UserURLs)
 	// сериализация тела запроса
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
@@ -233,14 +222,13 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-
+	// создаем переменную для визуального возврата пользователю в теле отвта
 	var result []byte
 	ok, err := hn.handler.ServiceStorageOkPing(ctx)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		result = []byte("DB ping NOT OK")
 		log.Println(err)
-
 	} else {
 		w.WriteHeader(http.StatusOK)
 		result = []byte("DB ping OK")
@@ -249,7 +237,7 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
-// посмотреть вариант записи через отдельный метод хранилища с стейтментами
+// посмотреть в будущем вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
 	// десериализация тела запроса
 	dc := DecodeBatchJSON{}
@@ -258,8 +246,6 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
-	fmt.Println("dc:::", dc)
-
 	// читаем куку с userid
 	var userToken string
 	userCookie, err := r.Cookie("token")
@@ -268,7 +254,6 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	} else {
 		userToken = userCookie.Value
 	}
-	fmt.Println("userCookie.Value:", userToken)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
@@ -301,8 +286,6 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 			Value:  userTokenNew,
 			MaxAge: 300,
 		}
-		fmt.Println("cookie:  ", cookie)
-		// установим куку в ответ
 		http.SetCookie(w, cookie)
 	}
 	//устанавливаем заголовок Content-Type
