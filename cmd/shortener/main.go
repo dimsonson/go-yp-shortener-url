@@ -37,6 +37,7 @@ func main() {
 	dlink, path, base, addr := flagsVars()
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
+	defer s.StorageConnectionClose()
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
@@ -86,7 +87,6 @@ func newStrorageProvider(dlink, path string) services.StorageProvider {
 	if dlink != "" {
 		s := storage.NewSQLStorage(dlink)
 		log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
-		defer s.StorageConnectionClose()
 		return s
 	}
 	// иначе если есть path используем для хранения файл
@@ -102,3 +102,13 @@ func newStrorageProvider(dlink, path string) services.StorageProvider {
 	log.Println("server will start with data storage " + colorYellow + "in memory" + colorReset)
 	return s
 }
+
+
+
+// export FILE_STORAGE_PATH=db/keyvalue.json
+
+// export BASE_URL=http://localhost:8080
+
+// export SERVER_ADDRESS=localhost:8080
+
+// export DATABASE_DSN=postgres://postgres:1818@localhost:5432/dbo
