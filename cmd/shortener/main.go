@@ -28,7 +28,7 @@ func main() {
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
 	dlinkFlag := flag.String("d", "", "Database DSN link")
-	// пасрсим флаги в переменные
+	// парсим флаги в переменные
 	flag.Parse()
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	addr, ok := os.LookupEnv("SERVER_ADDRESS")
@@ -62,19 +62,19 @@ func main() {
 
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
-		log.Println("server will start with data storage "+ColorYellow+"in PostgreSQL:", dlink, ColorReset)
+		log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
 		defer s.StorageConnectionClose()
 		//defer d.Close()
 	} else {
 		// если переменная не валидна, то используем память для хранения id:url
-		if (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
+		if path == "" || (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
 			s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
-			log.Println("server will start with data storage" + ColorYellow + "in memory" + ColorReset)
+			log.Println("server will start with data storage" + colorYellow + "in memory" + colorReset)
 		} else {
 			// иначе используем для хранения id:url файл
 			s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
 			s.LoadFromFileToStorage()
-			log.Println("server will start with data storage" + ColorYellow + "in file and memory cash" + ColorReset)
+			log.Println("server will start with data storage" + colorYellow + "in file and memory cash" + colorReset)
 			log.Printf("File storage path: %s\n", path)
 		}
 	}
@@ -84,17 +84,17 @@ func main() {
 	r := httprouters.NewRouter(h)
 
 	// запускаем сервер
-	log.Println("base URL:", ColorGreen, base, ColorReset)
-	log.Println("starting server on:", ColorBlue, addr, ColorReset)
+	log.Println("base URL:", colorGreen, base, colorReset)
+	log.Println("starting server on:", colorBlue, addr, colorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
 // константы цветового вывода в консоль
 const (
-	ColorBlack  = "\u001b[30m"
-	ColorRed    = "\u001b[31m"
-	ColorGreen  = "\u001b[32m"
-	ColorYellow = "\u001b[33m"
-	ColorBlue   = "\u001b[34m"
-	ColorReset  = "\u001b[0m"
+	colorBlack  = "\u001b[30m"
+	colorRed    = "\u001b[31m"
+	colorGreen  = "\u001b[32m"
+	colorYellow = "\u001b[33m"
+	colorBlue   = "\u001b[34m"
+	colorReset  = "\u001b[0m"
 )
