@@ -51,7 +51,7 @@ func main() {
 
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) || path == "" {
+	if !ok || (!govalidator.IsUnixFilePath(path) || !govalidator.IsWinFilePath(path)) || path == "" {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
@@ -61,24 +61,34 @@ func main() {
 	// var d *pgxpool.Pool
 
 	if dlink != "" {
-		s = storage.NewSQLStorage(dlink)
+		/* s = storage.NewSQLStorage(dlink)
 		log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
 		defer s.StorageConnectionClose()
-		//defer d.Close()
-	} else {
-		// если переменная не валидна, то используем память для хранения id:url
-		if path == "" || (!govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
-			s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
-			log.Println("server will start with data storage" + colorYellow + "in memory" + colorReset)
-		} else {
-			// иначе используем для хранения id:url файл
-			s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
-			s.LoadFromFileToStorage()
-			log.Println("server will start with data storage" + colorYellow + "in file and memory cash" + colorReset)
-			log.Printf("File storage path: %s\n", path)
-		}
+		//defer d.Close() */
+		//return 
+		s = sqlStorageInit(dlink)  
 	}
+
+	// если переменная не валидна, то используем память для хранения id:url
+	if dlink == "" && (path == "" || (!govalidator.IsUnixFilePath(path) || !govalidator.IsWinFilePath(path))) {
+		/* s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
+		log.Println("server will start with data storage" + colorYellow + "in memory" + colorReset) */
+		s = memoryStrorageInit() 
+	}
+
+	if dlink == "" && (path != "" || (govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path))) {
+		// иначе используем для хранения id:url файл
+		/* s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
+		s.LoadFromFileToStorage()
+		log.Println("server will start with data storage" + colorYellow + "in file and memory cash" + colorReset)
+		log.Printf("File storage path: %s\n", path) */
+		//return 
+		s = fileStrorageInit(path)
+
+	}
+
 	// инициализируем конструкторы
+	
 	srvs := services.NewService(s)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
@@ -98,3 +108,25 @@ const (
 	colorBlue   = "\u001b[34m"
 	colorReset  = "\u001b[0m"
 )
+
+func memoryStrorageInit() services.StorageProvider {
+	s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+	log.Println("server will start with data storage" + colorYellow + "in memory" + colorReset)
+	return s
+}
+
+func sqlStorageInit(dlink string) services.StorageProvider {
+	s := storage.NewSQLStorage(dlink)
+	log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
+	defer s.StorageConnectionClose()
+	//defer d.Close()
+	return s
+}
+
+func fileStrorageInit(path string) services.StorageProvider {
+	s := storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
+	s.LoadFromFileToStorage()
+	log.Println("server will start with data storage" + colorYellow + "in file and memory cash" + colorReset)
+	log.Printf("File storage path: %s\n", path)
+	return s
+}
