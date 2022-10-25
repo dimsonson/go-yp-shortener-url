@@ -44,21 +44,12 @@ func middlewareGzip(next http.Handler) http.Handler {
 		// проверяем, что запрос содежит сжатые данные
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			// читаем и распаковываем тело запроса с gzip
-			
-			gzR, _ := gzip.NewReader(r.Body)
- 
-			r.Body = gzipReader{gzipReader: gzR, gzipBody: r.Body}
-			
-		    gzR.Close() 
-			r.Body.Close()
-
-			/* var err error
-		 	r.Body, err = gzip.NewReader(r.Body)
+			gzR, err := gzip.NewReader(r.Body)
 			if err != nil {
-				log.Println("request body decoding error", err)
-				next.ServeHTTP(w, r)
-				return
-			}  */
+				log.Println("gzip error: ", err)
+			}
+ 			r.Body = gzipReader{gzipReader: gzR, gzipBody: r.Body}
+			defer gzR.Close() 
 			defer r.Body.Close()
 		}
 		// проверяем, что клиент поддерживает gzip-сжатие
