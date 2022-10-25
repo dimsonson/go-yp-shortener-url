@@ -11,7 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	//_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // переменные по умолчанию
