@@ -50,6 +50,19 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 	return existKey, err
 }
 
+/* // метод пакетной записи id:url в хранилище
+func (ms *StorageSQL) PutBatchToStorage(ctx context.Context,
+	DecodeBatch []struct {
+		CorrelationID string
+		OriginalURL   string
+	}) (existKey string, err error) {
+
+
+
+
+	return existKey, err
+} */
+
 // конструктор нового хранилища PostgreSQL
 func NewSQLStorage(p string) *StorageSQL {
 	// создаем контекст и оснащаем его таймаутом

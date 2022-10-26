@@ -15,6 +15,7 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	rout.Use(middleware.Recoverer)
 	// дополнительный middleware
 	rout.Use(middlewareGzip)
+	rout.Use(middlewareCookie)
 
 	// маршрут POST "/api/shorten/batch" пакетная выдача коротких ссылок
 	rout.Post("/api/shorten/batch", hn.HandlerCreateBatchJSON)

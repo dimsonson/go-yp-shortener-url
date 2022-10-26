@@ -47,7 +47,7 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userT
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	var userid int
-	if userTokenIn == "" {
+	/* if userTokenIn == "" {
 		log.Println("userTokenIn is empty")
 		userid = sr.storage.LenStorage(ctx)
 	} else {
@@ -59,7 +59,7 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userT
 		}
 	}
 	// подписание токена для возарата в ответе
-	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey))
+	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey)) */ 
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 	// создаем запись userid-ключ-значение в базе
@@ -71,6 +71,13 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userT
 	return key, userTokenOut, err
 }
 
+/* // метод создание пакета пар id : URL
+func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error) {
+	// создаем и присваиваем значение короткой ссылки
+
+	return key, userTokenOut, err
+}
+*/
 // метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value string, err error) {
 	// используем метод хранилища
@@ -79,7 +86,7 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value st
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
 	return value, err
-}
+} 
 
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userToken string) (userURLsMap map[string]string, err error) {

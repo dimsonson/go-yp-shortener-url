@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -46,6 +47,9 @@ type EncodeJSON struct {
 
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
+	//
+	fmt.Println("ctx :", r.Context().Value("uuid"))
+
 	// читаем Body
 	bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -53,6 +57,9 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
+	
+
 	b := string(bs)
 	// валидация URL
 	if !govalidator.IsURL(b) {
@@ -127,6 +134,7 @@ func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 
 // обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
+
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
@@ -262,6 +270,8 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	ec := []EncodeBatchJSON{}
 	// создаем userid token
 	_, userTokenNew, _ := hn.service.ServiceCreateShortURL(ctx, "", userToken)
+
+	// отправляем слайс структур в
 	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
 	for _, v := range dc {
 		// создаем ключ и userid token
