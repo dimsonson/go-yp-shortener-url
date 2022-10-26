@@ -22,7 +22,7 @@ type Services interface {
 
 // структура для конструктура обработчика
 type Handler struct {
-	handler Services
+	service Services
 	base    string
 }
 
@@ -72,7 +72,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew, err := hn.handler.ServiceCreateShortURL(ctx, b, userToken)
+	key, userTokenNew, err := hn.service.ServiceCreateShortURL(ctx, b, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -108,7 +108,7 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// не забываем освободить ресурс
 	defer cancel()
 	// получаем ссылку по id
-	value, err := hn.handler.ServiceGetShortURL(ctx, id)
+	value, err := hn.service.ServiceGetShortURL(ctx, id)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
@@ -152,7 +152,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
-	key, userTokenNew, err := hn.handler.ServiceCreateShortURL(ctx, dc.URL, userToken)
+	key, userTokenNew, err := hn.service.ServiceCreateShortURL(ctx, dc.URL, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
 	if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
@@ -192,7 +192,7 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	// не забываем освободить ресурс
 	defer cancel()
 	// получаем map всех URLs по usertoken
-	userURLsMap, err := hn.handler.ServiceGetUserShortURLs(ctx, userCookie.Value)
+	userURLsMap, err := hn.service.ServiceGetUserShortURLs(ctx, userCookie.Value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
@@ -224,7 +224,7 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	// создаем переменную для визуального возврата пользователю в теле отвта
 	var result []byte
-	ok, err := hn.handler.ServiceStorageOkPing(ctx)
+	ok, err := hn.service.ServiceStorageOkPing(ctx)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		result = []byte("DB ping NOT OK")
@@ -261,11 +261,11 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// сериализация тела ответа
 	ec := []EncodeBatchJSON{}
 	// создаем userid token
-	_, userTokenNew, _ := hn.handler.ServiceCreateShortURL(ctx, "", userToken)
+	_, userTokenNew, _ := hn.service.ServiceCreateShortURL(ctx, "", userToken)
 	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
 	for _, v := range dc {
 		// создаем ключ и userid token
-		key, _, _ := hn.handler.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
+		key, _, _ := hn.service.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
 		// валидация URL
 		if !govalidator.IsURL(v.OriginalURL) {
 			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)

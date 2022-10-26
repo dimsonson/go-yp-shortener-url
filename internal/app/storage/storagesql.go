@@ -27,10 +27,8 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 			$2, 
 			$3
 			)`
-
 	// записываем в хранилице userid, id, URL
 	_, err = ms.PostgreSQL.Exec(ctx, q, userid, key, value)
-
 	if err != nil {
 		log.Println("insert request PutToStorage scan error:", err)
 		var pgErr *pgconn.PgError
@@ -39,7 +37,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 			case pgerrcode.UniqueViolation:
 				log.Println("correctly matched ", pgErr.Code)
 				// создаем текст запроса
-				q := `SELECT short_url FROM sh_urls WHERE  long_url = $1`
+				q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
 				// запрос в хранилище на корокий URL по длинному URL,
 				// пишем результат запроса в пременную existKey
 				err := ms.PostgreSQL.QueryRow(ctx, q, value).Scan(&existKey)
@@ -49,7 +47,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 			}
 		}
 	}
-	return
+	return existKey, err
 }
 
 // конструктор нового хранилища PostgreSQL
@@ -90,9 +88,9 @@ func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value str
 	err = row.Scan(&value)
 	if err != nil {
 		log.Println("scan GetFromStorage to value variable returned error:", err)
-		return
+		return value, err
 	}
-	return
+	return value, err
 }
 
 // метод определения длинны хранилища
@@ -106,7 +104,7 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 	if err != nil {
 		log.Println("scan LenStorage to lenn variable returned error:", err)
 	}
-	return
+	return lenn
 }
 
 // метод отбора URLs по UserID
@@ -139,7 +137,7 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs ma
 		err := errors.New("request URLsByUserID has no content for this token")
 		return nil, err
 	}
-	return
+	return userURLs, err
 }
 
 func (ms *StorageSQL) LoadFromFileToStorage() {
@@ -161,8 +159,8 @@ func (ms *StorageSQL) UserIDExist(ctx context.Context, userid int) bool {
 }
 
 // пинг хранилища для api/user/urls
-func (ms *StorageSQL) StorageOkPing(ctx context.Context) (bool, error) {
-	err := ms.PostgreSQL.Ping(ctx)
+func (ms *StorageSQL) StorageOkPing(ctx context.Context) (ok bool, err error) {
+	err = ms.PostgreSQL.Ping(ctx)
 	if err != nil {
 		return false, err
 	}

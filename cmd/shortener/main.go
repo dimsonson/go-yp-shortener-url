@@ -47,7 +47,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 // парсинг флагов и валидация переменных окружения
-func flagsVars() (string, string, string, string) {
+func flagsVars() (dlink string, path string, base string, addr string) {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
@@ -62,19 +62,19 @@ func flagsVars() (string, string, string, string) {
 		addr = *addrFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	base, ok := os.LookupEnv("BASE_URL")
+	base, ok = os.LookupEnv("BASE_URL")
 	if !ok || !govalidator.IsURL(base) || base == "" {
 		log.Println("eviroment variable BASE_URL is empty or has wrong value ", base)
 		base = *baseFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	dlink, ok := os.LookupEnv("DATABASE_DSN")
+	dlink, ok = os.LookupEnv("DATABASE_DSN")
 	if !ok {
 		log.Println("eviroment variable DATABASE_DSN is not exist", dlink)
 		dlink = *dlinkFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	path, ok := os.LookupEnv("FILE_STORAGE_PATH")
+	path, ok = os.LookupEnv("FILE_STORAGE_PATH")
 	if !ok || (path == "" || !govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
@@ -82,10 +82,10 @@ func flagsVars() (string, string, string, string) {
 	return dlink, path, base, addr
 }
 // создание интерфейса хранилища
-func newStrorageProvider(dlink, path string) services.StorageProvider {
+func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {
-		s := storage.NewSQLStorage(dlink)
+		s = storage.NewSQLStorage(dlink)
 		log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
 		return s
 	}
@@ -93,12 +93,12 @@ func newStrorageProvider(dlink, path string) services.StorageProvider {
 	if path != "" && (govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
 		log.Println("server will start with data storage " + colorYellow + "in file and memory cash" + colorReset)
 		log.Printf("File storage path: %s\n", path)
-		s := storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
+		s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
 		s.LoadFromFileToStorage()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url
-	s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+	s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
 	log.Println("server will start with data storage " + colorYellow + "in memory" + colorReset)
 	return s
 }

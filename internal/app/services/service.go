@@ -17,10 +17,10 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error)
-	GetFromStorage(ctx context.Context, key string) (value string, err error)
-	LenStorage(ctx context.Context) (lenn int)
-	URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error)
+	PutToStorage(ctx context.Context, userid int, key string, value string) (string, error)
+	GetFromStorage(ctx context.Context, key string) (string, error)
+	LenStorage(ctx context.Context) (int)
+	URLsByUserID(ctx context.Context, userid int) (map[string]string, error)
 	LoadFromFileToStorage()
 	UserIDExist(ctx context.Context, userid int) bool
 	StorageOkPing(ctx context.Context) (bool, error)
@@ -87,19 +87,19 @@ func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userToken strin
 	userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
 	if err != nil {
 		log.Println("token sign check returned error:", err)
-		return
+		return nil, err
 	}
 	// используем метод хранилища для получения map URLs по userid
 	userURLsMap, err = sr.storage.URLsByUserID(ctx, userid)
 	if err != nil {
 		log.Println("request sr.storage.URLsByUserID returned error:", err)
-		return
+		return userURLsMap, err
 	}
-	return
+	return userURLsMap, err
 }
 
 // функция генерации случайной последовательности знаков
-func RandSeq(n int) (string, error) {
+func RandSeq(n int) (random string, ok error) {
 	if n < 1 {
 		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
 		return "", err
@@ -110,14 +110,15 @@ func RandSeq(n int) (string, error) {
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
-	return string(b), nil
+	random = string(b)
+	return random, nil
 }
 
 // генерация и кодирование криптостойкого слайса байт
-func RandomGenerator(n int) (string, error) {
+func RandomGenerator(n int) (cryproRand string, err error) {
 	// определяем слайс нужной длины
 	b := make([]byte, n)
-	_, err := rand.Read(b) // записываем байты в массив b
+	_, err = rand.Read(b) // записываем байты в массив b
 	if err != nil {
 		return ``, err
 	}
@@ -125,16 +126,16 @@ func RandomGenerator(n int) (string, error) {
 }
 
 // проверка подписи iserid в куке
-func TokenCheckSign(token string, key []byte) (userid int, err error) {
+func TokenCheckSign(token string, key []byte) (id int, err error) {
 	//tokenBytes := make([]byte, 5)
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {
 		log.Printf("error: %v\n", err)
 	}
-	id := binary.BigEndian.Uint32(tokenBytes[:4])
+	id32 := binary.BigEndian.Uint32(tokenBytes[:4])
 
 	idBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(idBytes, id)
+	binary.BigEndian.PutUint32(idBytes, id32)
 
 	h := hmac.New(sha256.New, key)
 	h.Write(tokenBytes[:4])
@@ -145,8 +146,7 @@ func TokenCheckSign(token string, key []byte) (userid int, err error) {
 	if token != tokenNew {
 		err = errors.New("sign incorrect")
 	}
-
-	return int(id), err
+	return int(id32), err
 }
 
 // создание куки с подписанным iserid
@@ -160,10 +160,10 @@ func TokenCreateSign(userid int, key []byte) (token string) {
 	src := append(uid, dst[:]...)
 	token = hex.EncodeToString(src)
 
-	return
+	return token
 }
 
-func (sr *Services) ServiceStorageOkPing(ctx context.Context) (bool, error) {
-	ok, err := sr.storage.StorageOkPing(ctx)
+func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err error) {
+	ok, err = sr.storage.StorageOkPing(ctx)
 	return ok, err
 }

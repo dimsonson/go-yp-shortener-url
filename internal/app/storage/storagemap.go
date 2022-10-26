@@ -18,7 +18,7 @@ func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, 
 	}
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
-	return 
+	return existKey, err
 }
 
 // конструктор хранилища в памяти
