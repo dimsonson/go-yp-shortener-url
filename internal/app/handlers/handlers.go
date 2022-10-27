@@ -45,11 +45,16 @@ type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
 
+type ctxKey string
+const keyUserID ctxKey = "user_id"
+
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
 	//
-	fmt.Println("ctx :", r.Context().Value("uuid"))
-
+	//keyUserID
+	//var a ctxKey = "user_id"
+	//fmt.Println("ctx :", r.Context().Value(keyUserID))
+	fmt.Println("ctx :", r.Context().Value("uid"))
 	// читаем Body
 	bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -79,9 +84,9 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, userTokenNew, err := hn.service.ServiceCreateShortURL(ctx, b, userToken)
+	key, _, err := hn.service.ServiceCreateShortURL(ctx, b, userToken)
 	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
-	if err != nil || userTokenNew != userToken {
+	/* if err != nil || userTokenNew != userToken {
 		cookie := &http.Cookie{
 			Name:   "token",
 			Value:  userTokenNew,
@@ -89,7 +94,7 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		}
 		// установим куку в ответ
 		http.SetCookie(w, cookie)
-	}
+	} */
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	//устанавливаем статус-код 201
