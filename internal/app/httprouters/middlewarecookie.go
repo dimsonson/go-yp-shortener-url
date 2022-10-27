@@ -3,9 +3,7 @@ package httprouters
 import (
 	"context"
 	"crypto/hmac"
-	"crypto/rand"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -28,33 +26,31 @@ func middlewareCookie(next http.Handler) http.Handler {
 			userTokenIn = userCookie.Value
 		}
 
-		
 		// проверяем подпись токена
 		var userid string
 		if userTokenIn == "" {
 			log.Println("userTokenIn is empty")
 			userid = uuid.New().String()
-			} else {
-				userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
-				// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
-				if err != nil {
-					log.Println(err, "or userid doesnt exist in storage")
-					userid = uuid.New().String()
-				}
+		} else {
+			userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
+			// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
+			if err != nil {
+				log.Println(err, "or userid doesnt exist in storage")
+				userid = uuid.New().String()
 			}
-			// наследуем контекcт запроса r *http.Request, оснащая его Timeout
-			ctx  := context.WithValue(r.Context(), "uuid", userid) 
-			//.WithTimeout(r.Context(), settings.StorageTimeout)
-			// не забываем освободить ресурс
-			r = r.WithContext(ctx)
-			
-			//defer cancel()
-			//fmt.Print(ctx)
-			
-			// подписание токена для возарата в ответе
-			userTokenOut := TokenCreateSign(userid, []byte(settings.SignKey))
-		
-			
+		}
+		// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+		ctx := context.WithValue(r.Context(), "uuid", userid)
+		//.WithTimeout(r.Context(), settings.StorageTimeout)
+		// не забываем освободить ресурс
+		r = r.WithContext(ctx)
+
+		//defer cancel()
+		//fmt.Print(ctx)
+
+		// подписание токена для возарата в ответе
+		userTokenOut := TokenCreateSign(userid, []byte(settings.SignKey))
+
 		cookie := &http.Cookie{
 			Name:   "token",
 			Value:  userTokenOut,
@@ -95,52 +91,63 @@ func middlewareCookie(next http.Handler) http.Handler {
 	})
 }
 
-// генерация и кодирование криптостойкого слайса байт
-func RandomGenerator(n int) (cryproRand string, err error) {
-	// определяем слайс нужной длины
-	b := make([]byte, n)
-	_, err = rand.Read(b) // записываем байты в массив b
-	if err != nil {
-		return ``, err
-	}
-	return hex.EncodeToString(b), nil
-}
-
 // проверка подписи iserid в куке
 func TokenCheckSign(token string, key []byte) (id string, err error) {
-	//tokenBytes := make([]byte, 5)
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {
 		log.Printf("error: %v\n", err)
 	}
-	id32 := binary.BigEndian.Uint32(tokenBytes[:36])
 
-	idBytes := make([]byte, 36)
-	binary.BigEndian.PutUint32(idBytes, id32)
+	fmt.Println("TokenCheckSign - token :", token)
+	fmt.Println("TokenCheckSign - tokenBytes", tokenBytes)
+
+	//id64 := binary.BigEndian.Uint64(tokenBytes[:36])
+
+	//fmt.Println("TokenCheckSign - id64", id64)
+
+	//idBytes := make([]byte, 36)
+	idBytes := tokenBytes[:36]
+	//	binary.BigEndian.PutUint64(idBytes, id64)
+
+	fmt.Println("TokenCheckSign - idBytes", idBytes)
 
 	h := hmac.New(sha256.New, key)
-	h.Write(tokenBytes[:36])
+	h.Write(idBytes)
+
+	fmt.Println("TokenCheckSign - h.Write(tokenBytes[:", tokenBytes)
 	newSign := h.Sum(nil)
+	fmt.Println("TokenCheckSign - newSign :", newSign)
 
 	NewTokenBytes := append(idBytes, newSign[:]...)
+	fmt.Println("TokenCheckSign - NewTokenBytes :", NewTokenBytes)
+
 	tokenNew := hex.EncodeToString(NewTokenBytes)
+	fmt.Println("TokenCheckSign - tokenNew :", tokenNew)
 	if token != tokenNew {
 		err = errors.New("sign incorrect")
 	}
-	id = fmt.Sprint(id32)
+	id = fmt.Sprint(idBytes)
+	fmt.Println("TokenCheckSign - err :", err)
 	return id, err
 }
 
 // создание куки с подписанным iserid
 func TokenCreateSign(userid string, key []byte) (token string) {
-
-	uid := make([]byte, 36)
+	fmt.Println("TokenCreateSign - userid :", userid)
+	//uid := make([]byte, 36)
 	//binary.BigEndian.PutUint32(uid, uint32(userid))
 	h := hmac.New(sha256.New, key)
-	h.Write([]byte(uid))
-	dst := h.Sum(nil)
-	src := append(uid, dst[:]...)
-	token = hex.EncodeToString(src)
+	h.Write([]byte(userid))
+	fmt.Println("TokenCreateSign - h.Write([]byte(uid)) :", []byte(userid))
+	sign := h.Sum(nil)
+	fmt.Println("TokenCreateSign - dst :", sign)
+
+	tokenBytes := append([]byte(userid), sign[:]...)
+	fmt.Println("TokenCreateSign - tokenBytes :", tokenBytes)
+
+	token = hex.EncodeToString(tokenBytes)
+
+	fmt.Println("TokenCreateSign - token :", token)
 
 	return token
 }
