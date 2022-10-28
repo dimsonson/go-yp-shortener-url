@@ -16,3 +16,8 @@ const StorageTimeout = 300000 * time.Second
 
 // имя таблицы в базе PosgreSQL
 const SQLTableName = "sh_urls"
+
+// тип для context.WithValue
+type ctxKey string
+// ключ для context.WithValue
+const CtxKeyUserID ctxKey = "uid"

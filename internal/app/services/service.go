@@ -37,8 +37,9 @@ func NewService(s StorageProvider) *Services {
 // метод создание пары id : URL
 func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key string, err error) {
 	// получаем значение из контекста
-	fmt.Println("ctx :", ctx.Value("uid").(string))
-	userid := ctx.Value("uid").(string)
+	//fmt.Println("ctx :", ctx.Value("uid").(string))
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	fmt.Println("ServiceCreateShortURL - ctx :", userid)
 
 	// создаем и присваиваем значение короткой ссылки
 	key, err = RandSeq(settings.KeyLeght)
@@ -60,16 +61,18 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 // метод создание пакета пар id : URL
 func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, reqMap map[string]string) (respMap map[string]string, err error) {
 	// создаем и присваиваем значение короткой ссылки
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	fmt.Println(userid)
 	respMap = make(map[string]string)
-	respMap["01qwer"]="www.yandex.ru"
+	respMap["01qwer"] = "www.yandex.ru"
 
 	return respMap, err
 }
 
 // метод возврат URL по id
-func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value string, err error) {
+func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, err error) {
 	// используем метод хранилища
-	value, err = sr.storage.GetFromStorage(ctx, id)
+	value, err = sr.storage.GetFromStorage(ctx, key)
 	if err != nil {
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
@@ -80,8 +83,8 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value st
 func (sr *Services) ServiceGetUserShortURLs(ctx context.Context) (userURLsMap map[string]string, err error) {
 
 	// получаем значение из контекста
-	fmt.Println("ctx :", ctx.Value("uid").(string))
-	userid := ctx.Value("uid").(string)
+	//fmt.Println("ctx :", ctx.Value("uid").(string))
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
 
 	// используем метод хранилища для получения map URLs по userid
 	userURLsMap, err = sr.storage.URLsByUserID(ctx, userid)
