@@ -100,7 +100,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 			defer cancel()
 
 			// определяем хендлер
-			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+			s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
 			s.PutToStorage(ctx, tt.req.id, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")

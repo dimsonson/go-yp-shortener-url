@@ -66,9 +66,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			// создаем запись в базе url
-			//storage.DB["xyz"] = "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf"
-			//создаем тестирующий запрос
+		
 			req := httptest.NewRequest(tt.req.metod, tt.req.endpoint, nil) //strings.NewReader("http://localhost:8080/"))
 
 			// создаём новый Recorder
@@ -80,7 +78,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 			defer cancel()
 
 			// определяем хендлер
-			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+			s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
 			r := httprouters.NewRouter(h)
@@ -101,16 +99,6 @@ func TestHandlerGetShortURL(t *testing.T) {
 			if resp.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
 			}
-
-			// получаем и проверяем тело ответа
-			/* defer resp.Body.Close()
-			resBody, err := io.ReadAll(resp.Body)
-			if err != nil {
-				t.Fatal(err)
-			} */
-
-			// проверка содержания строки в теле ответа
-			//assert.Containsf(t, string(resBody), tt.want.response, "error message %s", "formatted")
 
 			// заголовок ответа
 			if resp.Header.Get("Content-Type") != tt.want.contentType {
