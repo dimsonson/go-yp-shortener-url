@@ -18,7 +18,7 @@ type StorageSQL struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error) {
+func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
 	// столбец short_url в SQL таблице содержит только уникальные занчения
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
@@ -50,7 +50,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid int, key string, 
 	return existKey, err
 }
 
-/* // метод пакетной записи id:url в хранилище
+// метод пакетной записи id:url в хранилище
 func (ms *StorageSQL) PutBatchToStorage(ctx context.Context,
 	DecodeBatch []struct {
 		CorrelationID string
@@ -61,7 +61,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context,
 
 
 	return existKey, err
-} */
+} 
 
 // конструктор нового хранилища PostgreSQL
 func NewSQLStorage(p string) *StorageSQL {
@@ -77,7 +77,7 @@ func NewSQLStorage(p string) *StorageSQL {
 	// создаем текст запроса
 	// возможно ли имя таблицы вывести в файл settings?
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
-				"userid" INTEGER,
+				"userid" TEXT,
 				"short_url" TEXT NOT NULL UNIQUE,
 				"long_url" TEXT NOT NULL UNIQUE
 				)`
@@ -122,7 +122,7 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 
 // метод отбора URLs по UserID
 // посмотреть возможность использования SQLx
-func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error) {
+func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// создаем текст запроса
 	q := `SELECT short_url, long_url FROM sh_urls WHERE userid = $1`
 	// делаем запрос в SQL, получаем строку
@@ -157,8 +157,8 @@ func (ms *StorageSQL) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageSQL) UserIDExist(ctx context.Context, userid int) bool {
-	var DBuserid int
+func (ms *StorageSQL) UserIDExist(ctx context.Context, userid string) bool {
+	var DBuserid string
 	q := `SELECT userid from sh_urls WHERE userid = $1`
 	row := ms.PostgreSQL.QueryRow(ctx, q, userid)
 	err := row.Scan(&DBuserid)

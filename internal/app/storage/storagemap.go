@@ -7,12 +7,12 @@ import (
 
 // структура хранилища в памяти
 type StorageMap struct {
-	UserID map[string]int
+	UserID map[string]string
 	IDURL  map[string]string
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, value string) (existKey string, err error) {
+func (ms *StorageMap) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
 	if _, ok := ms.IDURL[key]; ok {
 		return 
 	}
@@ -22,7 +22,7 @@ func (ms *StorageMap) PutToStorage(ctx context.Context, userid int, key string, 
 }
 
 // конструктор хранилища в памяти
-func NewMapStorage(u map[string]int, s map[string]string) *StorageMap {
+func NewMapStorage(u map[string]string, s map[string]string) *StorageMap {
 	return &StorageMap{
 		UserID: u,
 		IDURL:  s,
@@ -46,7 +46,7 @@ func (ms *StorageMap) LenStorage(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) URLsByUserID(ctx context.Context, userid int) (userURLs map[string]string, err error) {
+func (ms *StorageMap) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -64,7 +64,7 @@ func (ms *StorageMap) LoadFromFileToStorage() {
 }
 
 // посик userid в хранилице
-func (ms *StorageMap) UserIDExist(ctx context.Context, userid int) bool {
+func (ms *StorageMap) UserIDExist(ctx context.Context, userid string) bool {
 	// цикл по map поиск значения без ключа
 	for _, v := range ms.UserID {
 		if v == userid {

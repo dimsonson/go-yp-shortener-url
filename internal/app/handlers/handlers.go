@@ -3,10 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -15,9 +15,9 @@ import (
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error)
+	ServiceCreateShortURL(ctx context.Context, url string) (key string, err error)
 	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
-	ServiceGetUserShortURLs(ctx context.Context, userToken string) (UserURLsMap map[string]string, err error)
+	ServiceGetUserShortURLs(ctx context.Context) (UserURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
 }
 
@@ -45,16 +45,9 @@ type EncodeJSON struct {
 	Result string `json:"result,omitempty"`
 }
 
-type ctxKey string
-const keyUserID ctxKey = "user_id"
-
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
-	//
-	//keyUserID
-	//var a ctxKey = "user_id"
-	//fmt.Println("ctx :", r.Context().Value(keyUserID))
-	fmt.Println("ctx :", r.Context().Value("uid"))
+
 	// читаем Body
 	bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -62,43 +55,22 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
-	
-
 	b := string(bs)
 	// валидация URL
 	if !govalidator.IsURL(b) {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	// читаем куку с userid
-	var userToken string
-	userCookie, err := r.Cookie("token")
-	if err != nil {
-		log.Println("Request does not consist token cookie - err:", err)
-	} else {
-		userToken = userCookie.Value
-	}
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ и userid token
-	key, _, err := hn.service.ServiceCreateShortURL(ctx, b, userToken)
-	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
-	/* if err != nil || userTokenNew != userToken {
-		cookie := &http.Cookie{
-			Name:   "token",
-			Value:  userTokenNew,
-			MaxAge: 300,
-		}
-		// установим куку в ответ
-		http.SetCookie(w, cookie)
-	} */
+	key, err := hn.service.ServiceCreateShortURL(ctx, b)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	//устанавливаем статус-код 201
-	if err != nil {
+	//устанавливаем статус-код 201 или 409
+	if err != nil && strings.Contains(err.Error(), "23505") {
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)
@@ -152,30 +124,12 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 		return
 	}
-	// читаем куку с userid
-	var userToken string
-	userCookie, err := r.Cookie("token")
-	if err != nil {
-		log.Println("Request does not consist token cookie - err:", err)
-	} else {
-		userToken = userCookie.Value
-	}
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
-	key, userTokenNew, err := hn.service.ServiceCreateShortURL(ctx, dc.URL, userToken)
-	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
-	if err != nil || userTokenNew != userToken {
-		cookie := &http.Cookie{
-			Name:   "token",
-			Value:  userTokenNew,
-			MaxAge: 300,
-		}
-		// установим куку в ответ
-		http.SetCookie(w, cookie)
-	}
+	key, err := hn.service.ServiceCreateShortURL(ctx, dc.URL)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
@@ -193,19 +147,12 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 
 // обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
 func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
-	// читаем куку с userid
-	userCookie, err := r.Cookie("token")
-	if err != nil {
-		log.Println("request does not consist token cookie - err:", err)
-		http.Error(w, err.Error(), http.StatusNoContent)
-		return
-	}
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// получаем map всех URLs по usertoken
-	userURLsMap, err := hn.service.ServiceGetUserShortURLs(ctx, userCookie.Value)
+	userURLsMap, err := hn.service.ServiceGetUserShortURLs(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
@@ -259,28 +206,21 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
-	// читаем куку с userid
-	var userToken string
-	userCookie, err := r.Cookie("token")
-	if err != nil {
-		log.Println("Request does not consist token cookie - err:", err)
-	} else {
-		userToken = userCookie.Value
-	}
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
+
+	//key, _ := hn.service.ServiceCreateBatchShortURLs(ctx, dc)
+
 	// сериализация тела ответа
 	ec := []EncodeBatchJSON{}
-	// создаем userid token
-	_, userTokenNew, _ := hn.service.ServiceCreateShortURL(ctx, "", userToken)
 
 	// отправляем слайс структур в
 	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
 	for _, v := range dc {
 		// создаем ключ и userid token
-		key, _, _ := hn.service.ServiceCreateShortURL(ctx, v.OriginalURL, userToken)
+		key, _ := hn.service.ServiceCreateShortURL(ctx, v.OriginalURL)
 		// валидация URL
 		if !govalidator.IsURL(v.OriginalURL) {
 			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
@@ -293,15 +233,6 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 			CorrelationID: v.CorrelationID,
 			ShortURL:      key,
 		})
-	}
-	// создаем и записываем куку в ответ если ее нет в запросе или она создана сервисом
-	if err != nil || userTokenNew != userToken {
-		cookie := &http.Cookie{
-			Name:   "token",
-			Value:  userTokenNew,
-			MaxAge: 300,
-		}
-		http.SetCookie(w, cookie)
 	}
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")

@@ -11,6 +11,9 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/google/uuid"
 )
+//type UsrContextKey string 
+//var K UsrContextKey = "uid"
+//var k favContextKey 
 
 // middleware функция распаковки-сжатия http алгоритмом gzip
 func middlewareCookie(next http.Handler) http.Handler {
@@ -29,6 +32,7 @@ func middlewareCookie(next http.Handler) http.Handler {
 				Name:   "token",
 				Value:  userTokenOut,
 				MaxAge: 900,
+				
 			}
 			// установим куку в ответ
 			http.SetCookie(w, cookie)
@@ -42,6 +46,7 @@ func middlewareCookie(next http.Handler) http.Handler {
 			userid = string(useridByte)
 		}
 		// наследуем контекст, оснащаем его Value
+		//K = UsrContextKey("uid")
 		ctx := context.WithValue(r.Context(), "uid", userid)
 		// отправляем контекст дальше
 		r = r.WithContext(ctx)
@@ -52,11 +57,12 @@ func middlewareCookie(next http.Handler) http.Handler {
 
 // проверка подписи iserid в куке
 func TokenCheckSign(token string, key []byte) (ok bool) {
+	// декодируем токен из строки в срез байтов
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {
 		log.Printf("DecodeString error: %v\n", err)
 	}
-
+// 
 	idBytes := tokenBytes[:36]
 
 	h := hmac.New(sha256.New, key)

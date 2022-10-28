@@ -2,11 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/binary"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -17,12 +12,12 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(ctx context.Context, userid int, key string, value string) (string, error)
+	PutToStorage(ctx context.Context, userid string, key string, value string) (string, error)
 	GetFromStorage(ctx context.Context, key string) (string, error)
-	LenStorage(ctx context.Context) (int)
-	URLsByUserID(ctx context.Context, userid int) (map[string]string, error)
+	LenStorage(ctx context.Context) int
+	URLsByUserID(ctx context.Context, userid string) (map[string]string, error)
 	LoadFromFileToStorage()
-	UserIDExist(ctx context.Context, userid int) bool
+	UserIDExist(ctx context.Context, userid string) bool
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
 }
@@ -40,26 +35,17 @@ func NewService(s StorageProvider) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error) {
+func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key string, err error) {
+	// получаем значение из контекста
+	fmt.Println("ctx :", ctx.Value("uid").(string))
+	userid := ctx.Value("uid").(string)
+
 	// создаем и присваиваем значение короткой ссылки
 	key, err = RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-	var userid int
-	/* if userTokenIn == "" {
-		log.Println("userTokenIn is empty")
-		userid = sr.storage.LenStorage(ctx)
-	} else {
-		userid, err = TokenCheckSign(userTokenIn, []byte(settings.SignKey))
-		// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
-		if err != nil || !sr.storage.UserIDExist(ctx, userid) {
-			log.Println(err, "or userid doesnt exist in storage")
-			userid = sr.storage.LenStorage(ctx)
-		}
-	}
-	// подписание токена для возарата в ответе
-	userTokenOut = TokenCreateSign(userid, []byte(settings.SignKey)) */ 
+
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 	// создаем запись userid-ключ-значение в базе
@@ -68,16 +54,16 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userT
 		log.Println("request sr.storage.PutToStorage returned error:", err)
 		key = existKey
 	}
-	return key, userTokenOut, err
+	return key, err
 }
 
-/* // метод создание пакета пар id : URL
+// метод создание пакета пар id : URL
 func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error) {
 	// создаем и присваиваем значение короткой ссылки
 
 	return key, userTokenOut, err
 }
-*/
+
 // метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value string, err error) {
 	// используем метод хранилища
@@ -86,16 +72,15 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, id string) (value st
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
 	return value, err
-} 
+}
 
 // метод возврат всех URLs по userid
-func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userToken string) (userURLsMap map[string]string, err error) {
-	// проверяем подпись токена
-	userid, err := TokenCheckSign(userToken, []byte(settings.SignKey))
-	if err != nil {
-		log.Println("token sign check returned error:", err)
-		return nil, err
-	}
+func (sr *Services) ServiceGetUserShortURLs(ctx context.Context) (userURLsMap map[string]string, err error) {
+
+	// получаем значение из контекста
+	fmt.Println("ctx :", ctx.Value("uid").(string))
+	userid := ctx.Value("uid").(string)
+
 	// используем метод хранилища для получения map URLs по userid
 	userURLsMap, err = sr.storage.URLsByUserID(ctx, userid)
 	if err != nil {
@@ -119,55 +104,6 @@ func RandSeq(n int) (random string, ok error) {
 	}
 	random = string(b)
 	return random, nil
-}
-
-// генерация и кодирование криптостойкого слайса байт
-func RandomGenerator(n int) (cryproRand string, err error) {
-	// определяем слайс нужной длины
-	b := make([]byte, n)
-	_, err = rand.Read(b) // записываем байты в массив b
-	if err != nil {
-		return ``, err
-	}
-	return hex.EncodeToString(b), nil
-}
-
-// проверка подписи iserid в куке
-func TokenCheckSign(token string, key []byte) (id int, err error) {
-	//tokenBytes := make([]byte, 5)
-	tokenBytes, err := hex.DecodeString(token)
-	if err != nil {
-		log.Printf("error: %v\n", err)
-	}
-	id32 := binary.BigEndian.Uint32(tokenBytes[:4])
-
-	idBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(idBytes, id32)
-
-	h := hmac.New(sha256.New, key)
-	h.Write(tokenBytes[:4])
-	newSign := h.Sum(nil)
-
-	NewTokenBytes := append(idBytes, newSign[:]...)
-	tokenNew := hex.EncodeToString(NewTokenBytes)
-	if token != tokenNew {
-		err = errors.New("sign incorrect")
-	}
-	return int(id32), err
-}
-
-// создание куки с подписанным iserid
-func TokenCreateSign(userid int, key []byte) (token string) {
-
-	uid := make([]byte, 4)
-	binary.BigEndian.PutUint32(uid, uint32(userid))
-	h := hmac.New(sha256.New, key)
-	h.Write(uid)
-	dst := h.Sum(nil)
-	src := append(uid, dst[:]...)
-	token = hex.EncodeToString(src)
-
-	return token
 }
 
 func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err error) {

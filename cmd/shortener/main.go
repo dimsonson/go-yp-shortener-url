@@ -93,12 +93,12 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	if path != "" && (govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
 		log.Println("server will start with data storage " + colorYellow + "in file and memory cash" + colorReset)
 		log.Printf("File storage path: %s\n", path)
-		s = storage.NewFileStorage(make(map[string]int), make(map[string]string), path)
+		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), path)
 		s.LoadFromFileToStorage()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url
-	s = storage.NewMapStorage(make(map[string]int), make(map[string]string))
+	s = storage.NewMapStorage(make(map[string]string), make(map[string]string))
 	log.Println("server will start with data storage " + colorYellow + "in memory" + colorReset)
 	return s
 }
