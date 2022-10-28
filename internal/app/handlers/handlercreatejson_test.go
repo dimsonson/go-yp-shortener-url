@@ -88,7 +88,7 @@ func TestHandlerCreateShortJSON(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// определяем хендлер
-			s := storage.NewMapStorage(make(map[string]int), make(map[string]string))
+			s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
 			srvs := services.NewService(s)
 			h := handlers.NewHandler(srvs, "")
 			//r := httprouters.NewRouter(h)

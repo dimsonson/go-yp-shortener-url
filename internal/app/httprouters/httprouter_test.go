@@ -29,7 +29,7 @@ func TestNewRouter(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
 	defer cancel()
-	s.PutToStorage(ctx, 0, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+	s.PutToStorage(ctx, "0", "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
 	resp1, _ := CreateURLRequest(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
