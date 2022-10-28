@@ -29,7 +29,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 		metod    string
 		endpoint string
 		cookie   http.Cookie
-		id       int
+		id       string
 		body     string
 	}
 
@@ -54,7 +54,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 				metod:    "GET",
 				endpoint: "/api/user/urls",
 				cookie:   cook,
-				id:       0,
+				id:       "0",
 				body:     `{"url":"https://yandex.ru/search/?text=AToi+go&lr=213"}`,
 			},
 			want: want{
@@ -69,7 +69,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 				metod:    "GET",
 				endpoint: "/api/user/urls",
 				cookie:   cookBad,
-				id:       5,
+				id:       "5",
 				body:     "",
 			},
 			want: want{
