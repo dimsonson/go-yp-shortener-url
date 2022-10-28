@@ -58,10 +58,12 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 }
 
 // метод создание пакета пар id : URL
-func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, url string, userTokenIn string) (key string, userTokenOut string, err error) {
+func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, reqMap map[string]string) (respMap map[string]string, err error) {
 	// создаем и присваиваем значение короткой ссылки
+	respMap = make(map[string]string)
+	respMap["01qwer"]="www.yandex.ru"
 
-	return key, userTokenOut, err
+	return respMap, err
 }
 
 // метод возврат URL по id

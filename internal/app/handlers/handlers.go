@@ -19,6 +19,7 @@ type Services interface {
 	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
 	ServiceGetUserShortURLs(ctx context.Context) (UserURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
+	ServiceCreateBatchShortURLs(ctx context.Context, reqMap map[string]string) (respMap map[string]string, err error)
 }
 
 // структура для конструктура обработчика
@@ -136,7 +137,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "23505") {
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)
@@ -199,6 +200,10 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
 // посмотреть в будущем вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	defer cancel()
 	// десериализация тела запроса
 	dc := DecodeBatchJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
@@ -206,38 +211,35 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
-	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
-	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
-	// не забываем освободить ресурс
-	defer cancel()
-
-	//key, _ := hn.service.ServiceCreateBatchShortURLs(ctx, dc)
-
-	// сериализация тела ответа
-	ec := []EncodeBatchJSON{}
-
-	// отправляем слайс структур в
-	// итерируем по полученнму слайсу структур, пишем в исходящий слайс стркутур
+	reqMap := make(map[string]string)
 	for _, v := range dc {
-		// создаем ключ и userid token
-		key, _ := hn.service.ServiceCreateShortURL(ctx, v.OriginalURL)
-		// валидация URL
 		if !govalidator.IsURL(v.OriginalURL) {
 			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
 			return
 		}
-		// собираем long url
-		key = hn.base + "/" + key
+		reqMap[v.CorrelationID] = v.OriginalURL
+	}
+	// запрос на получение пар кароткий - длинный URL
+	respMap, err := hn.service.ServiceCreateBatchShortURLs(ctx, reqMap)
+	// сериализация тела ответа
+	ec := []EncodeBatchJSON{}
+
+	// итерируем по полученнму map, пишем в исходящий слайс стркутур
+	for k, v := range respMap {
 		// добавляем структуру в слайс
 		ec = append(ec, EncodeBatchJSON{
-			CorrelationID: v.CorrelationID,
-			ShortURL:      key,
+			CorrelationID: k,
+			ShortURL:      v,
 		})
 	}
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
-	//устанавливаем статус-код 201
-	w.WriteHeader(http.StatusCreated)
+	//устанавливаем статус-код 201 или 409
+	if err != nil && strings.Contains(err.Error(), "23505") {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
 }
@@ -253,3 +255,5 @@ type EncodeBatchJSON struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	ShortURL      string `json:"short_url,omitempty"`
 }
+
+type DecodeBatchMap map[string]string
