@@ -279,3 +279,40 @@ POST /api/shorten, принимающий
 Для эффективного проставления флага удаления в базе данных используйте множественное обновление (batch update).
 Используйте паттерн fanIn для максимального наполнения буфера объектов обновления.
 */
+
+
+// метод пакетной записи в базу из буфера
+/* func (ms *StorageSQL) Flush(ctx context.Context, userid string) error {
+	// проверим на всякий случай
+	if ms.PostgreSQL == nil {
+		return errors.New("you haven`t opened the database connection")
+	}
+	tx, err := ms.PostgreSQL.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, v := range ms.buffer {
+		if _, err = stmt.Exec(userid, v.OriginalURL); err != nil {
+			if err = tx.Rollback(); err != nil {
+				log.Fatalf("update drivers: unable to rollback: %v", err)
+			}
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Fatalf("update drivers: unable to commit: %v", err)
+		return err
+	}
+
+	ms.buffer = ms.buffer[:0]
+	return nil
+}
+*/

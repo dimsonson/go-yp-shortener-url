@@ -13,12 +13,11 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(ctx context.Context, userid string, key string, value string) (string, error)
+	PutToStorage(ctx context.Context, key string, value string) (string, error)
 	GetFromStorage(ctx context.Context, key string) (string, error)
 	LenStorage(ctx context.Context) int
-	URLsByUserID(ctx context.Context, userid string) (map[string]string, error)
+	URLsByUserID(ctx context.Context) (map[string]string, error)
 	LoadFromFileToStorage()
-	UserIDExist(ctx context.Context, userid string) bool
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
 	PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error)
@@ -40,40 +39,26 @@ func NewService(s StorageProvider, base string) *Services {
 
 // метод создание пары id : URL
 func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key string, err error) {
-	fmt.Println("ServiceCreateShortURL - url :::", url)
-	// получаем значение из контекста
-	//fmt.Println("ctx :", ctx.Value("uid").(string))
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
-	fmt.Println("ServiceCreateShortURL - ctx :", userid)
-
 	// создаем и присваиваем значение короткой ссылки
 	key, err = RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-	fmt.Println("ServiceCreateShortURL key 1 ::: ", key)
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
-	fmt.Println("ServiceCreateShortURL key 2 ::: ", key)
 	// создаем запись userid-ключ-значение в базе
-	existKey, err := sr.storage.PutToStorage(ctx, userid, key, url)
+	existKey, err := sr.storage.PutToStorage(ctx, key, url)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "23505"):
 		key = existKey
 	case err != nil:
 		return "", err
 	}
-	
-	fmt.Println("ServiceCreateShortURL key::: ", key)
 	return key, err
 }
 
 // метод создание пакета пар id : URL
 func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON) (ec []settings.EncodeBatch, err error) {
-	// создаем и присваиваем значение короткой ссылки
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
-	fmt.Println(userid)
-
 	// добавление shorturl
 	for i := range dc {
 		key, err := RandSeq(settings.KeyLeght)
@@ -83,9 +68,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 		key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 		dc[i].ShortURL = key
 	}
-	fmt.Println("ServiceCreateBatchShortURLs dc", dc)
-
-	//
+	// пишем в базу и получаем слайс с обновленными shorturl в случае конфликта
 	dc, err = sr.storage.PutBatchToStorage(ctx, dc)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "23505"):
@@ -93,7 +76,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	case err != nil:
 		return nil, err
 	}
-	// заполняем слайс ответа EC := make([]settings.EncodeBatch,0)
+	// заполняем слайс ответа 
 	for _, v := range dc {
 		elem := settings.EncodeBatch{
 			CorrelationID: v.CorrelationID,
@@ -101,7 +84,6 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 		}
 		ec = append(ec, elem)
 	}
-	log.Println("HandlerCreateBatchJSON dc: ", dc)
 	return ec, err
 }
 
@@ -117,13 +99,8 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value s
 
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(ctx context.Context) (userURLsMap map[string]string, err error) {
-
-	// получаем значение из контекста
-	//fmt.Println("ctx :", ctx.Value("uid").(string))
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
-
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err = sr.storage.URLsByUserID(ctx, userid)
+	userURLsMap, err = sr.storage.URLsByUserID(ctx)
 	if err != nil {
 		log.Println("request sr.storage.URLsByUserID returned error:", err)
 		return userURLsMap, err

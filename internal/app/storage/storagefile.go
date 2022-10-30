@@ -20,7 +20,9 @@ type StorageFile struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageFile) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
+func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value string) (existKey string, err error) {
+	// получаем значение iserid из контекста
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
@@ -69,7 +71,9 @@ func (ms *StorageFile) LenStorage(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageFile) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageFile) URLsByUserID(ctx context.Context) (userURLs map[string]string, err error) {
+	// получаем значение iserid из контекста
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -109,7 +113,7 @@ func (ms *StorageFile) LoadFromFileToStorage() {
 	}
 }
 
-// посик userid в хранилице
+/* // посик userid в хранилице
 func (ms *StorageFile) UserIDExist(ctx context.Context, userid string) bool {
 	// цикл по map поиск значения без ключа
 	for _, v := range ms.UserID {
@@ -118,7 +122,7 @@ func (ms *StorageFile) UserIDExist(ctx context.Context, userid string) bool {
 		}
 	}
 	return false
-}
+} */
 
 func (ms *StorageFile) StorageOkPing(ctx context.Context) (bool, error) {
 

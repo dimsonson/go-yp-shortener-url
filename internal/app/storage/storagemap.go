@@ -14,7 +14,9 @@ type StorageMap struct {
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
+func (ms *StorageMap) PutToStorage(ctx context.Context, key string, value string) (existKey string, err error) {
+	// получаем значение iserid из контекста
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
 	existKey = key
@@ -46,7 +48,9 @@ func (ms *StorageMap) LenStorage(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageMap) URLsByUserID(ctx context.Context) (userURLs map[string]string, err error) {
+	// получаем значение iserid из контекста
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
