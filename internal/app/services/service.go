@@ -51,14 +51,15 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
-
+	fmt.Println("ServiceCreateShortURL key 1 ::: ", key)
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
+	fmt.Println("ServiceCreateShortURL key 2 ::: ", key)
 	// создаем запись userid-ключ-значение в базе
-	key, err = sr.storage.PutToStorage(ctx, userid, key, url)
+	existKey, err := sr.storage.PutToStorage(ctx, userid, key, url)
 	if err != nil {
 		log.Println("request sr.storage.PutToStorage returned error:", err)
-		//key = existKey
+		key = existKey
 	}
 	fmt.Println("ServiceCreateShortURL key::: ", key)
 	return key, err
