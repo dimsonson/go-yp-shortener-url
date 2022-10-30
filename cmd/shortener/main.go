@@ -46,6 +46,7 @@ func main() {
 	log.Println("starting server on:", colorBlue, addr, colorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
+
 // парсинг флагов и валидация переменных окружения
 func flagsVars() (dlink string, path string, base string, addr string) {
 	// описываем флаги
@@ -81,6 +82,7 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 	}
 	return dlink, path, base, addr
 }
+
 // создание интерфейса хранилища
 func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
@@ -102,7 +104,6 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	log.Println("server will start with data storage " + colorYellow + "in memory" + colorReset)
 	return s
 }
-
 
 // export FILE_STORAGE_PATH=db/keyvalue.json
 
@@ -272,14 +273,13 @@ POST /api/shorten, принимающий
 Задание для трека «Сервис сокращения URL»
 Сделайте в таблице базы данных с сокращёнными URL дополнительное поле с флагом, указывающим на то, что URL должен считаться удалённым.
 Далее добавьте в сервис новый асинхронный хендлер DELETE /api/user/urls, который принимает список идентификаторов сокращённых URL для удаления в формате:
-[ "a", "b", "c", "d", ...] 
+[ "a", "b", "c", "d", ...]
 В случае успешного приёма запроса хендлер должен возвращать HTTP-статус 202 Accepted. Фактический результат удаления может происходить позже — каким-либо образом оповещать пользователя об успешности или неуспешности не нужно.
 Успешно удалить URL может пользователь, его создавший. При запросе удалённого URL с помощью хендлера GET /{id} нужно вернуть статус 410 Gone.
 Совет:
 Для эффективного проставления флага удаления в базе данных используйте множественное обновление (batch update).
 Используйте паттерн fanIn для максимального наполнения буфера объектов обновления.
 */
-
 
 // метод пакетной записи в базу из буфера
 /* func (ms *StorageSQL) Flush(ctx context.Context, userid string) error {

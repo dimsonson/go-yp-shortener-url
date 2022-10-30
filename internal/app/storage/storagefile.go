@@ -113,17 +113,6 @@ func (ms *StorageFile) LoadFromFileToStorage() {
 	}
 }
 
-/* // посик userid в хранилице
-func (ms *StorageFile) UserIDExist(ctx context.Context, userid string) bool {
-	// цикл по map поиск значения без ключа
-	for _, v := range ms.UserID {
-		if v == userid {
-			return true
-		}
-	}
-	return false
-} */
-
 func (ms *StorageFile) StorageOkPing(ctx context.Context) (bool, error) {
 
 	return true, nil

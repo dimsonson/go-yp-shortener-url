@@ -12,10 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-//type UsrContextKey string
-//var K UsrContextKey = "uid"
-//var k favContextKey
-
 // middleware функция распаковки-сжатия http алгоритмом gzip
 func middlewareCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +42,6 @@ func middlewareCookie(next http.Handler) http.Handler {
 			userid = string(useridByte)
 		}
 		// наследуем контекст, оснащаем его Value
-		//K = UsrContextKey("uid")
 		ctx := context.WithValue(r.Context(), settings.CtxKeyUserID , userid)
 		// отправляем контекст дальше
 		r = r.WithContext(ctx)

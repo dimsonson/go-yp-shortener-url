@@ -217,14 +217,11 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
-	log.Println("HandlerCreateBatchJSON dc: ", dc)
-
 	// запрос на получение correlation_id  - original_url
 	ec, err := hn.service.ServiceCreateBatchShortURLs(ctx, dc)
 	if err != nil {
 		log.Println(err) // подумать над обработкой
 	}
-
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409

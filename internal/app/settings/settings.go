@@ -36,11 +36,6 @@ type EncodeBatch struct {
 	ShortURL      string `json:"short_url,omitempty"`
 } 
 
-/* type EncodeBatchJSON []struct {
-	CorrelationID string `json:"correlation_id,omitempty"`
-	ShortURL      string `json:"short_url,omitempty"`
-} */
-
-
-// длинна буфера при записи пакета url в SQL базу
+// длинна буфера при записи пакета url в SQL базу 
+// для 14 спринта
 const BufferBatchSQL int = 1000 
