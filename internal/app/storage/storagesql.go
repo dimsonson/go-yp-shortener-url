@@ -34,7 +34,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key strin
 	// записываем в хранилице userid, id, URL
 	_, err = ms.PostgreSQL.Exec(ctx, q, userid, key, value)
 	if err != nil {
-		log.Println("insert request PutToStorage scan error:", err)
+		log.Println("insert SQL request PutToStorage scan error:", err)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
@@ -67,7 +67,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 		// добавляем значения в транзакцию
 		if _, err = ms.PostgreSQL.Exec(ctx, q, userid, v.ShortURL, v.OriginalURL); err != nil {
 			if err != nil {
-				log.Println("insert request PutToStorage scan error:", err)
+				log.Println("insert request PutBatchToStorage scan error:", err)
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) {
 					switch pgErr.Code {
@@ -79,7 +79,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 						// пишем результат запроса в пременную existKey
 						err := ms.PostgreSQL.QueryRow(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
 						if err != nil {
-							log.Println("PutToStorage select request scan error:", err)
+							log.Println("PutBatchToStorage select request scan error:", err)
 						}
 					}
 				}
