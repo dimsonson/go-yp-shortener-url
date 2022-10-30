@@ -92,7 +92,7 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
-	// не забываем освободить ресурс
+	// освобождаем ресурс
 	defer cancel()
 	// получаем ссылку по id
 	value, err := hn.service.ServiceGetShortURL(ctx, id)

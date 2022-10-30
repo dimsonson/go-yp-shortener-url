@@ -15,11 +15,9 @@ type StorageMap struct {
 
 // метод записи в хранилище в памяти
 func (ms *StorageMap) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
-	if _, ok := ms.IDURL[key]; ok {
-		return
-	}
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
+	existKey = key
 	return existKey, err
 }
 

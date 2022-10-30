@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -22,13 +21,10 @@ type StorageFile struct {
 
 // метод записи id:url в хранилище
 func (ms *StorageFile) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
-	// проверяем наличие ключа в хранилище
-	if v, ok := ms.IDURL[key]; ok {
-		return v, errors.New("key %s is already in database err: 23505")
-	}
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
+	existKey = key
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
@@ -44,7 +40,7 @@ func (ms *StorageFile) PutToStorage(ctx context.Context, userid string, key stri
 	}
 	// запись в файл
 	sfile.Write(js)
-	return //nil
+	return existKey, err
 }
 
 // конструктор нового хранилища JSON
