@@ -217,31 +217,14 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
+	log.Println("HandlerCreateBatchJSON dc: ", dc)
 
-	/* 	reqMap := make(map[string]string)
-	   	for _, v := range dc {
-	   		if !govalidator.IsURL(v.OriginalURL) {
-	   			http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)
-	   			return
-	   		}
-	   		reqMap[v.CorrelationID] = v.OriginalURL
-	   	} */
-	// запрос на получение пар кароткий - длинный URL
+	// запрос на получение correlation_id  - original_url
 	ec, err := hn.service.ServiceCreateBatchShortURLs(ctx, dc)
 	if err != nil {
 		log.Println(err) // подумать над обработкой
 	}
-	// сериализация тела ответа
-	//	ec := []EncodeBatchJSON{}
 
-	// итерируем по полученнму map, пишем в исходящий слайс стркутур
-	/* 	for k, v := range respMap {
-		// добавляем структуру в слайс
-		ec = append(ec, EncodeBatchJSON{
-			CorrelationID: k,
-			ShortURL:      v,
-		})
-	} */
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
@@ -256,17 +239,3 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
 }
-
-// слайс структур декодирования JSON из POST запроса
-/* type DecodeBatchJSON []struct {
-	CorrelationID string `json:"correlation_id,omitempty"`
-	OriginalURL   string `json:"original_url,omitempty"`
-}
-
-// структура кодирования JSON для POST Batch ответа
-type EncodeBatchJSON struct {
-	CorrelationID string `json:"correlation_id,omitempty"`
-	ShortURL      string `json:"short_url,omitempty"`
-} */
-
-type DecodeBatchMap map[string]string

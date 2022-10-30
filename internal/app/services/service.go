@@ -65,6 +65,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	fmt.Println(userid)
 
+	// добавление shorturl
 	for i := range dc {
 		key, err := RandSeq(settings.KeyLeght)
 		if err != nil {
@@ -74,12 +75,14 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 		dc[i].ShortURL = key
 	}
 	fmt.Println("ServiceCreateBatchShortURLs dc", dc)
+
+	//  
 	err = sr.storage.PutBatchToStorage(ctx, dc)
 	if err != nil {
 		return nil, err
 	}
-	//ecEx := settings.EncodeBatch{}
-	//EC := make([]settings.EncodeBatch,0)
+	
+	// заполняем слайс ответа EC := make([]settings.EncodeBatch,0)
 	for _, v := range dc {
 		elem := settings.EncodeBatch{
 			CorrelationID: v.CorrelationID,
@@ -87,7 +90,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 		}
 		ec = append(ec, elem)
 	}
-
+	log.Println("HandlerCreateBatchJSON dc: ", dc)
 	/* for _, v := range dc {
 		elem := struct {
 			CorrelationID string `json:"correlation_id,omitempty"`
