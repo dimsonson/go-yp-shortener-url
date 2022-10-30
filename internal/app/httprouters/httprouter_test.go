@@ -21,49 +21,50 @@ import (
 
 func TestNewRouter(t *testing.T) {
 	s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
-	srvs := services.NewService(s)
-	h := handlers.NewHandler(srvs, "")
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, settings.CtxKeyUserID , "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
+	srvs := services.NewService(s, "http://localhost:8080")
+	h := handlers.NewHandler(srvs, "http://localhost:8080")
 	r := httprouters.NewRouter(h)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
-	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
 	defer cancel()
-	s.PutToStorage(ctx, "0", "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+	s.PutToStorage(ctx, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
 
-	resp1, _ := CreateURLRequest(t, ts, "POST", "/")
-	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
+	CreateURLRequest, _ := CreateURLRequest(t, ts, "POST", "/")
+	assert.Equal(t, http.StatusCreated, CreateURLRequest.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp1.Body.Close()
+	defer CreateURLRequest.Body.Close()
 
-	resp2, _ := GetShortURLRequest(t, ts, "GET", "/xyz")
-	assert.Equal(t, http.StatusOK, resp2.StatusCode)
+	GetShortURLRequestOK, _ := GetShortURLRequest(t, ts, "GET", "/xyz")
+	assert.Equal(t, http.StatusOK, GetShortURLRequestOK.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp2.Body.Close()
+	defer GetShortURLRequestOK.Body.Close()
 
-	resp, _ := GetShortURLRequest(t, ts, "PATCH", "/")
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	defer resp.Body.Close()
+	GetShortURLRequestBad, _ := GetShortURLRequest(t, ts, "PATCH", "/")
+	assert.Equal(t, http.StatusBadRequest, GetShortURLRequestBad.StatusCode)
+	defer GetShortURLRequestBad.Body.Close()
 
-	resp3, _ := CreateURLRequestJSON(t, ts, "POST", "/api/shorten")
-	assert.Equal(t, http.StatusCreated, resp3.StatusCode)
+	CreateURLRequestJSON, _ := CreateURLRequestJSON(t, ts, "POST", "/api/shorten")
+	assert.Equal(t, http.StatusCreated, CreateURLRequestJSON.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp3.Body.Close()
+	defer CreateURLRequestJSON.Body.Close()
 
-	resp4, _ := CreateURLRequestCompress(t, ts, "POST", "/")
-	assert.Equal(t, http.StatusCreated, resp4.StatusCode)
+	CreateURLRequestCompress, _ := CreateURLRequestCompress(t, ts, "POST", "/")
+	assert.Equal(t, http.StatusCreated, CreateURLRequestCompress.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp4.Body.Close()
+	defer CreateURLRequestCompress.Body.Close()
 
-	resp5, _ := CreateURLsListWrong(t, ts, "GET", "/api/user/urls")
-	assert.Equal(t, http.StatusNoContent, resp5.StatusCode)
+	CreateURLsListWrong, _ := CreateURLsListWrong(t, ts, "GET", "/api/user/urls")
+	assert.Equal(t, http.StatusNoContent, CreateURLsListWrong.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp5.Body.Close()
+	defer CreateURLsListWrong.Body.Close()
 
-	resp6, _ := CreateURLsList(t, ts, "GET", "/api/user/urls")
-	assert.Equal(t, http.StatusOK, resp6.StatusCode)
+	CreateURLsList, _ := CreateURLsList(t, ts, "GET", "/api/user/urls")
+	assert.Equal(t, http.StatusOK, CreateURLsList.StatusCode)
 	//assert.Contains(t, "https://", body)
-	defer resp6.Body.Close()
+	defer CreateURLsList.Body.Close()
 
 }
 
@@ -169,7 +170,7 @@ func CreateURLsList(t *testing.T, ts *httptest.Server, method, path string) (*ht
 
 	req.AddCookie(&http.Cookie{
 		Name:   "token",
-		Value:  "00000000b38aaf6c89467a765a15a5d40098d050c80503562bebef1c64ded15cc4fbdaeb",
+		Value:  "35653763623532652d363931642d346634362d626331632d3761653136313661353966663fe75fb6b45bd519a5e87f62c5507aff32f4410bed855e9c65628b7b9eee35b6",
 		MaxAge: 300,
 	})
 
