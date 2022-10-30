@@ -21,3 +21,26 @@ const SQLTableName = "sh_urls"
 type ctxKey string
 // ключ для context.WithValue
 const CtxKeyUserID ctxKey = "uid"
+
+// слайс структур декодирования JSON из POST запроса
+type DecodeBatchJSON []struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	OriginalURL   string `json:"original_url,omitempty"`
+	ShortURL      string `json:"_"`
+}
+
+// структура кодирования JSON для POST Batch ответа
+
+type EncodeBatch struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	ShortURL      string `json:"short_url,omitempty"`
+} 
+
+/* type EncodeBatchJSON []struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	ShortURL      string `json:"short_url,omitempty"`
+} */
+
+
+// длинна буфера при записи пакета url в SQL базу
+const BufferBatchSQL int = 1000 

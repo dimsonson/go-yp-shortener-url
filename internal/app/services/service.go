@@ -20,6 +20,7 @@ type StorageProvider interface {
 	UserIDExist(ctx context.Context, userid string) bool
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
+	PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error)
 }
 
 // структура конструктора бизнес логики
@@ -50,23 +51,55 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
 	// создаем запись userid-ключ-значение в базе
-	existKey, err := sr.storage.PutToStorage(ctx, userid, key, url)
+	key, err = sr.storage.PutToStorage(ctx, userid, key, url)
 	if err != nil {
 		log.Println("request sr.storage.PutToStorage returned error:", err)
-		key = existKey
+		//key = existKey
 	}
 	return key, err
 }
 
 // метод создание пакета пар id : URL
-func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, reqMap map[string]string) (respMap map[string]string, err error) {
+func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON) (ec []settings.EncodeBatch, err error) {
 	// создаем и присваиваем значение короткой ссылки
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	fmt.Println(userid)
-	respMap = make(map[string]string)
-	respMap["01qwer"] = "www.yandex.ru"
 
-	return respMap, err
+	for i := range dc {
+		key, err := RandSeq(settings.KeyLeght)
+		if err != nil {
+			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
+		}
+		key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
+		dc[i].ShortURL = key
+	}
+	fmt.Println("ServiceCreateBatchShortURLs dc", dc)
+	err = sr.storage.PutBatchToStorage(ctx, dc)
+	if err != nil {
+		return nil, err
+	}
+	//ecEx := settings.EncodeBatch{}
+	//EC := make([]settings.EncodeBatch,0)
+	for _, v := range dc {
+		elem := settings.EncodeBatch{
+			CorrelationID: v.CorrelationID,
+			ShortURL:      v.ShortURL,
+		}
+		ec = append(ec, elem)
+	}
+
+	/* for _, v := range dc {
+		elem := struct {
+			CorrelationID string `json:"correlation_id,omitempty"`
+			ShortURL      string `json:"short_url,omitempty"`
+		}{
+			CorrelationID: v.CorrelationID,
+			ShortURL: v.ShortURL,
+		}
+		ec = append(ec, elem)
+	} */
+
+	return ec, err
 }
 
 // метод возврат URL по id

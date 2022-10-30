@@ -3,11 +3,14 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
 // структура хранилища
@@ -20,8 +23,8 @@ type StorageFile struct {
 // метод записи id:url в хранилище
 func (ms *StorageFile) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
 	// проверяем наличие ключа в хранилище
-	if _, ok := ms.IDURL[key]; ok {
-		return //fmt.Errorf("key %s is already in database", value)
+	if v, ok := ms.IDURL[key]; ok {
+		return v, errors.New("key %s is already in database err: 23505")
 	}
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
@@ -128,4 +131,15 @@ func (ms *StorageFile) StorageOkPing(ctx context.Context) (bool, error) {
 
 func (ms *StorageFile) StorageConnectionClose() {
 
+}
+
+// метод пакетной записи id:url в хранилище
+func (ms *StorageFile) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error) {
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	for _, v := range dc {
+		// записываем в хранилице userid, id, URL
+		ms.IDURL[v.ShortURL] = userid
+		ms.UserID[v.ShortURL] = v.OriginalURL
+	}
+	return err
 }

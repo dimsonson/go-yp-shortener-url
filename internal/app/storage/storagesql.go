@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -15,6 +16,7 @@ import (
 // структура хранилища
 type StorageSQL struct {
 	PostgreSQL *pgxpool.Pool
+	buffer     settings.DecodeBatchJSON
 }
 
 // метод записи id:url в хранилище
@@ -51,17 +53,24 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key strin
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) PutBatchToStorage(ctx context.Context,
-	DecodeBatch []struct {
-		CorrelationID string
-		OriginalURL   string
-	}) (existKey string, err error) {
-
-
-
-
-	return existKey, err
-} 
+func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error) {
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	fmt.Println(userid)
+	fmt.Println("dc", dc)
+	// готовим инструкцию
+	q := "INSERT INTO sh_urls VALUES ($1, $2, $3)"
+	// итерируем по слайсу структур
+	for _, v := range dc {
+		// добавляем значения в транзакцию
+		if _, err = ms.PostgreSQL.Exec(ctx, q, userid, v.ShortURL, v.OriginalURL); err != nil {
+			return err
+		}
+	}
+	
+	//fmt.Println("ms.buffer", ms.buffer)
+	fmt.Println("dc", dc)
+	return err
+}
 
 // конструктор нового хранилища PostgreSQL
 func NewSQLStorage(p string) *StorageSQL {
@@ -88,6 +97,7 @@ func NewSQLStorage(p string) *StorageSQL {
 	}
 	return &StorageSQL{
 		PostgreSQL: dbpool,
+		buffer:     make(settings.DecodeBatchJSON, 0, settings.BufferBatchSQL),
 	}
 }
 
@@ -180,7 +190,43 @@ func (ms *StorageSQL) StorageOkPing(ctx context.Context) (ok bool, err error) {
 	return true, err
 }
 
-// сервис закрытия совединения с SQL базой
+// метод закрытия совединения с SQL базой
 func (ms *StorageSQL) StorageConnectionClose() {
 	ms.PostgreSQL.Close()
 }
+
+// метод пакетной записи в базу из буфера
+/* func (ms *StorageSQL) Flush(ctx context.Context, userid string) error {
+	// проверим на всякий случай
+	if ms.PostgreSQL == nil {
+		return errors.New("you haven`t opened the database connection")
+	}
+	tx, err := ms.PostgreSQL.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, v := range ms.buffer {
+		if _, err = stmt.Exec(userid, v.OriginalURL); err != nil {
+			if err = tx.Rollback(); err != nil {
+				log.Fatalf("update drivers: unable to rollback: %v", err)
+			}
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Fatalf("update drivers: unable to commit: %v", err)
+		return err
+	}
+
+	ms.buffer = ms.buffer[:0]
+	return nil
+}
+*/
