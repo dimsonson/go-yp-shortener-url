@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -20,13 +21,13 @@ type StorageProvider interface {
 	UserIDExist(ctx context.Context, userid string) bool
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
-	PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error)
+	PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error)
 }
 
 // структура конструктора бизнес логики
 type Services struct {
 	storage StorageProvider
-	base string
+	base    string
 }
 
 // конструктор бизнес логики
@@ -78,12 +79,14 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	}
 	fmt.Println("ServiceCreateBatchShortURLs dc", dc)
 
-	//  
-	err = sr.storage.PutBatchToStorage(ctx, dc)
-	if err != nil {
+	//
+	dc, err = sr.storage.PutBatchToStorage(ctx, dc)
+	switch {
+	case err != nil && strings.Contains(err.Error(), "23505"):
+		break
+	case err != nil:
 		return nil, err
 	}
-	
 	// заполняем слайс ответа EC := make([]settings.EncodeBatch,0)
 	for _, v := range dc {
 		elem := settings.EncodeBatch{

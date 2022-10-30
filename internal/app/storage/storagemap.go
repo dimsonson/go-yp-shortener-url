@@ -84,12 +84,12 @@ func (ms *StorageMap) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error) {
+func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid
 		ms.UserID[v.ShortURL] = v.OriginalURL
 	}
-	return err
+	return dc, err
 }

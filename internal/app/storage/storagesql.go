@@ -53,23 +53,40 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key strin
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (err error) {
+func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	fmt.Println(userid)
 	fmt.Println("dc", dc)
 	// готовим инструкцию
 	q := "INSERT INTO sh_urls VALUES ($1, $2, $3)"
 	// итерируем по слайсу структур
-	for _, v := range dc {
+	for i, v := range dc {
 		// добавляем значения в транзакцию
 		if _, err = ms.PostgreSQL.Exec(ctx, q, userid, v.ShortURL, v.OriginalURL); err != nil {
-			return err
+			if err != nil {
+				log.Println("insert request PutToStorage scan error:", err)
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) {
+					switch pgErr.Code {
+					case pgerrcode.UniqueViolation:
+						log.Println("correctly matched ", pgErr.Code)
+						// создаем текст запроса
+						q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
+						// запрос в хранилище на корокий URL по длинному URL,
+						// пишем результат запроса в пременную existKey
+						err := ms.PostgreSQL.QueryRow(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
+						if err != nil {
+							log.Println("PutToStorage select request scan error:", err)
+						}
+					}
+				}
+			}
 		}
 	}
-	
+
 	//fmt.Println("ms.buffer", ms.buffer)
-	fmt.Println("dc", dc)
-	return err
+	fmt.Println("Storage SQL dc", dc)
+	return dc, err
 }
 
 // конструктор нового хранилища PostgreSQL
