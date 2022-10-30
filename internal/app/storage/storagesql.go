@@ -21,6 +21,8 @@ type StorageSQL struct {
 
 // метод записи id:url в хранилище
 func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key string, value string) (existKey string, err error) {
+	fmt.Println("PutToStorage userid, key, value:::", userid, key, value)
+
 	// столбец short_url в SQL таблице содержит только уникальные занчения
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
