@@ -57,10 +57,13 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 	fmt.Println("ServiceCreateShortURL key 2 ::: ", key)
 	// создаем запись userid-ключ-значение в базе
 	existKey, err := sr.storage.PutToStorage(ctx, userid, key, url)
-	if err != nil {
-		log.Println("request sr.storage.PutToStorage returned error:", err)
+	switch {
+	case err != nil && strings.Contains(err.Error(), "23505"):
 		key = existKey
+	case err != nil:
+		return "", err
 	}
+	
 	fmt.Println("ServiceCreateShortURL key::: ", key)
 	return key, err
 }
