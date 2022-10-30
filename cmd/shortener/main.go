@@ -38,7 +38,7 @@ func main() {
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
 	defer s.StorageConnectionClose()
-	srvs := services.NewService(s)
+	srvs := services.NewService(s, base)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
 	// запускаем сервер

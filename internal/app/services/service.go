@@ -26,12 +26,14 @@ type StorageProvider interface {
 // структура конструктора бизнес логики
 type Services struct {
 	storage StorageProvider
+	base string
 }
 
 // конструктор бизнес логики
-func NewService(s StorageProvider) *Services {
+func NewService(s StorageProvider, base string) *Services {
 	return &Services{
 		s,
+		base,
 	}
 }
 
@@ -86,22 +88,11 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	for _, v := range dc {
 		elem := settings.EncodeBatch{
 			CorrelationID: v.CorrelationID,
-			ShortURL:      v.ShortURL,
+			ShortURL:      sr.base + "/" + v.ShortURL,
 		}
 		ec = append(ec, elem)
 	}
 	log.Println("HandlerCreateBatchJSON dc: ", dc)
-	/* for _, v := range dc {
-		elem := struct {
-			CorrelationID string `json:"correlation_id,omitempty"`
-			ShortURL      string `json:"short_url,omitempty"`
-		}{
-			CorrelationID: v.CorrelationID,
-			ShortURL: v.ShortURL,
-		}
-		ec = append(ec, elem)
-	} */
-
 	return ec, err
 }
 
