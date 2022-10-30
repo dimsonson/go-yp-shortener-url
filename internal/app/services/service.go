@@ -40,6 +40,7 @@ func NewService(s StorageProvider, base string) *Services {
 
 // метод создание пары id : URL
 func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key string, err error) {
+	fmt.Println("ServiceCreateShortURL - url :::", url)
 	// получаем значение из контекста
 	//fmt.Println("ctx :", ctx.Value("uid").(string))
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
