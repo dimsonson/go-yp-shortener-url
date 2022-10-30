@@ -51,6 +51,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, userid string, key strin
 			}
 		}
 	}
+	fmt.Println("PutToStorage existKey::: ", existKey)
 	return existKey, err
 }
 

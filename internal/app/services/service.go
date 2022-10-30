@@ -59,6 +59,7 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string) (key 
 		log.Println("request sr.storage.PutToStorage returned error:", err)
 		//key = existKey
 	}
+	fmt.Println("ServiceCreateShortURL key::: ", key)
 	return key, err
 }
 
