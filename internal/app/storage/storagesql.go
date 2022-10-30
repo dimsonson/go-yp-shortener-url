@@ -61,26 +61,26 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 	// итерируем по слайсу структур
 	for i, v := range dc {
 		// добавляем значения в транзакцию
-		if _, err = ms.PostgreSQL.Exec(ctx, q, userid, v.ShortURL, v.OriginalURL); err != nil {
-			if err != nil {
-				log.Println("insert SQL request PutBatchToStorage scan error:", err)
-				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) {
-					switch pgErr.Code {
-					case pgerrcode.UniqueViolation:
-						// создаем текст запроса
-						q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
-						// запрос в хранилище на корокий URL по длинному URL,
-						// пишем результат запроса в пременную existKey
-						err = ms.PostgreSQL.QueryRow(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
-						if err != nil {
-							log.Println("PutBatchToStorage select SQL request scan error:", err)
-						}
+		_, err = ms.PostgreSQL.Exec(ctx, q, userid, v.ShortURL, v.OriginalURL)
+		if err != nil {
+			log.Println("insert SQL request PutBatchToStorage scan error:", err)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				switch pgErr.Code {
+				case pgerrcode.UniqueViolation:
+					// создаем текст запроса
+					q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
+					// запрос в хранилище на корокий URL по длинному URL,
+					// пишем результат запроса в пременную existKey
+					err = ms.PostgreSQL.QueryRow(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
+					if err != nil {
+						log.Println("PutBatchToStorage select SQL request scan error:", err)
 					}
 				}
 			}
 		}
 	}
+
 	return dc, err
 }
 
