@@ -57,32 +57,52 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string
 func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
 	// получаем значение iserid из контекста
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// объявляем транзакцию
+	tx, err := ms.PostgreSQL.Begin()
+	if err != nil {
+		log.Println("error PutBatchToStorage tx.Begin : ", err)
+		return nil, err
+	}
+	// если возникает ошибка, откатываем изменения
+	defer tx.Rollback()
 	// готовим инструкцию
-	q := "INSERT INTO sh_urls VALUES ($1, $2, $3)"
+	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3)")
+	if err != nil {
+		log.Println("error PutBatchToStorage stmt.PrepareContext : ", err)
+		return nil, err
+	}
+	// закрываем инструкцию, когда она больше не нужна
+	defer stmt.Close()
 	// итерируем по слайсу структур
 	for i, v := range dc {
 		// добавляем значения в транзакцию
-		_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, v.ShortURL, v.OriginalURL)
+		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL)
 		if err != nil {
 			log.Println("insert SQL request PutBatchToStorage scan error:", err)
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				switch pgErr.Code {
 				case pgerrcode.UniqueViolation:
-					fmt.Println("pgErr.Code:::", pgErr.Code)
 					// создаем текст запроса
 					q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
-					// запрос в хранилище на корокий URL по длинному URL,
-					// пишем результат запроса в пременную existKey
-					err = ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
+					// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в пременную existKey
+					err := ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
 					if err != nil {
 						log.Println("PutBatchToStorage select SQL request scan error:", err)
+					}
+				default:
+					if rollbackErr := tx.Rollback(); rollbackErr != nil {
+						log.Println("insert urls: unable to rollback: ", rollbackErr)
+						return nil, err
 					}
 				}
 			}
 		}
 	}
-
+	// сохраняем изменения
+	if err := tx.Commit(); err != nil {
+		log.Println("error PutBatchToStorage tx.Commit : ", err)
+	}
 	return dc, err
 }
 
