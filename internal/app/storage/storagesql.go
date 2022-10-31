@@ -10,7 +10,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	_ "github.com/jackc/pgx"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 // структура хранилища
@@ -69,6 +69,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 			if errors.As(err, &pgErr) {
 				switch pgErr.Code {
 				case pgerrcode.UniqueViolation:
+					fmt.Println("pgErr.Code:::", pgErr.Code)
 					// создаем текст запроса
 					q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
 					// запрос в хранилище на корокий URL по длинному URL,
