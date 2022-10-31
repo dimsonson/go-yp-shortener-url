@@ -2,9 +2,11 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
+	
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/jackc/pgconn"
@@ -14,7 +16,7 @@ import (
 
 // структура хранилища
 type StorageSQL struct {
-	PostgreSQL *pgxpool.Pool
+	PostgreSQL *sql.DB
 	//buffer     settings.DecodeBatchJSON // для 4 спринта
 }
 
