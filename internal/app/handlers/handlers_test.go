@@ -295,7 +295,7 @@ func TestHandlerGetUserURLs(t *testing.T) {
 			ctx := context.WithValue(req.Context(), settings.CtxKeyUserID, "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff") //tt.req.id) //"5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
-			s.PutToStorage(ctx, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+			s.PutToStorage(ctx, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf", "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 			srvs := services.NewService(s, "http://localhost:8080/")
 			h := handlers.NewHandler(srvs, "http://localhost:8080/")
 			//r := httprouters.NewRouter(h)
@@ -478,7 +478,7 @@ func TestHandlerGetShortURL(t *testing.T) {
 			rctx.URLParams.Add("id", strings.TrimPrefix(tt.req.endpoint, "/"))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-			s.PutToStorage(req.Context(), "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+			s.PutToStorage(req.Context(), "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf", "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 			// запускаем сервер
 			r.ServeHTTP(w, req)
 			resp := w.Result()

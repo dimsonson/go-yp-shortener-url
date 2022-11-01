@@ -20,9 +20,9 @@ type StorageFile struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value string) (existKey string, err error) {
+func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
@@ -71,9 +71,9 @@ func (ms *StorageFile) LenStorage(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageFile) URLsByUserID(ctx context.Context) (userURLs map[string]string, err error) {
+func (ms *StorageFile) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -123,8 +123,8 @@ func (ms *StorageFile) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageFile) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+func (ms *StorageFile) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
+	//userid := ctx.Value(settings.CtxKeyUserID).(string)
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid

@@ -20,9 +20,9 @@ type StorageSQL struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string) (existKey string, err error) {
+func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// столбец short_url в SQL таблице содержит только уникальные занчения
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
@@ -54,9 +54,9 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
+func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
 	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// объявляем транзакцию
 	tx, err := ms.PostgreSQL.Begin()
 	if err != nil {
@@ -166,9 +166,9 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 
 // метод отбора URLs по UserID
 // посмотреть возможность использования SQLx
-func (ms *StorageSQL) URLsByUserID(ctx context.Context) (userURLs map[string]string, err error) {
+func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// создаем текст запроса
 	q := `SELECT short_url, long_url FROM sh_urls WHERE userid = $1`
 	// делаем запрос в SQL, получаем строку
