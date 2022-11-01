@@ -16,7 +16,7 @@ import (
 // интерфейс методов бизнес логики
 type Services interface {
 	ServiceCreateShortURL(ctx context.Context, url string, userid string) (key string, err error)
-	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
+	ServiceGetShortURL(ctx context.Context, id string) (value string, del bool, err error)
 	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
 	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error)
@@ -87,8 +87,8 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 // обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// пролучаем id из URL через chi, проверяем наличие
-	id := chi.URLParam(r, "id")
-	if id == "" {
+	key := chi.URLParam(r, "id")
+	if key == "" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
 	}
@@ -96,17 +96,22 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// освобождаем ресурс
 	defer cancel()
+	// устанавливаем заголовок content-type
+	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	// получаем ссылку по id
-	value, err := hn.service.ServiceGetShortURL(ctx, id)
+	value, del, err := hn.service.ServiceGetShortURL(ctx, key)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
-	// устанавливаем заголовок content-type
-	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	// перенаправление по ссылке
-	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	// пишем тело ответа
-	w.Write([]byte(value))
+	if del {
+		// сообщаем что ссылка удалена
+		http.Error(w, "short URL is deleted", http.StatusGone)
+	} else {
+		// перенаправление по ссылке
+		http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+		// пишем тело ответа
+		w.Write([]byte(value))
+	}
 }
 
 // обработка всех остальных запросов и возврат кода 400

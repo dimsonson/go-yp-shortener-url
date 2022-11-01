@@ -138,18 +138,16 @@ func NewSQLStorage(p string) *StorageSQL {
 }
 
 // метод получения записи из хранилища
-func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value string, err error) {
+func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value string, del bool, err error) {
 	// создаем текст запроса
-	q := `SELECT long_url FROM sh_urls WHERE short_url = $1`
-	// делаем запрос в SQL, получаем строку
-	row := ms.PostgreSQL.QueryRowContext(ctx, q, key)
-	// пишем результат запроса в пременную value
-	err = row.Scan(&value)
+	q := `SELECT long_url, deleted_url FROM sh_urls WHERE short_url = $1`
+	// делаем запрос в SQL, получаем строку и пишем результат запроса в пременную value
+	err = ms.PostgreSQL.QueryRowContext(ctx, q, key).Scan(&value, &del)
 	if err != nil {
 		log.Println("select GetFromStorage SQL request scan error:", err)
-		return value, err
+		return value, del, err
 	}
-	return value, err
+	return value, del, err
 }
 
 // метод определения длинны хранилища

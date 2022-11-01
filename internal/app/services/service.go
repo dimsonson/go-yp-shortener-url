@@ -14,8 +14,8 @@ import (
 // интерфейс методов хранилища
 type StorageProvider interface {
 	PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error)
-	GetFromStorage(ctx context.Context, key string) (string, error)
-	LenStorage(ctx context.Context) int
+	GetFromStorage(ctx context.Context, key string) (value string, del bool, err error)
+	LenStorage(ctx context.Context) (lenn int)
 	URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error)
 	LoadFromFileToStorage()
 	StorageOkPing(ctx context.Context) (bool, error)
@@ -76,7 +76,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	case err != nil:
 		return nil, err
 	}
-	// заполняем слайс ответа 
+	// заполняем слайс ответа
 	for _, v := range dc {
 		elem := settings.EncodeBatch{
 			CorrelationID: v.CorrelationID,
@@ -88,13 +88,13 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 }
 
 // метод возврат URL по id
-func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, err error) {
+func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, del bool, err error) {
 	// используем метод хранилища
-	value, err = sr.storage.GetFromStorage(ctx, key)
+	value, del, err = sr.storage.GetFromStorage(ctx, key)
 	if err != nil {
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
-	return value, err
+	return value, del, err
 }
 
 // метод возврат всех URLs по userid

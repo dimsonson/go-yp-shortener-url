@@ -35,13 +35,14 @@ func NewMapStorage(u map[string]string, s map[string]string, d map[string]bool) 
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value string, err error) {
+func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value string, del bool, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {
-		return "", fmt.Errorf("key %v not found", key)
+		return "", false, fmt.Errorf("key %v not found", key)
 	}
-	return value, nil
+	del = ms.DelURL[key]
+	return value, del, nil
 }
 
 // метод определения длинны хранилища
