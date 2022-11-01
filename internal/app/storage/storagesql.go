@@ -29,10 +29,11 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string
 			VALUES (
 			$1, 
 			$2, 
-			$3
+			$3,
+			$4
 			)`
 	// записываем в хранилице userid, id, URL
-	_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, key, value)
+	_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, key, value, false)
 	if err != nil {
 		log.Println("insert SQL request PutToStorage scan error:", err)
 		var pgErr *pgconn.PgError
@@ -66,7 +67,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 	// если возникает ошибка, откатываем изменения
 	defer tx.Rollback()
 	// готовим инструкцию
-	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3)")
+	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		log.Println("error PutBatchToStorage stmt.PrepareContext : ", err)
 		return nil, err
@@ -76,7 +77,7 @@ func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 	// итерируем по слайсу структур
 	for i, v := range dc {
 		// добавляем значения в транзакцию
-		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL)
+		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL, false)
 		if err != nil {
 			log.Println("insert SQL request PutBatchToStorage scan error:", err)
 			var pgErr *pgconn.PgError
@@ -122,7 +123,8 @@ func NewSQLStorage(p string) *StorageSQL {
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
 				"userid" TEXT,
 				"short_url" TEXT NOT NULL UNIQUE,
-				"long_url" TEXT NOT NULL UNIQUE
+				"long_url" TEXT NOT NULL UNIQUE,
+				"deleted_url" BOOLEAN 
 				)`
 	// создаем таблицу в SQL базе, если не существует
 	_, err = db.ExecContext(ctx, q)
