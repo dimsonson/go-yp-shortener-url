@@ -16,6 +16,7 @@ import (
 type StorageFile struct {
 	UserID   map[string]string `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
+	DelURL   map[string]bool   `json:"_"`                // shorturl:deleted_url
 	pathName string
 }
 
@@ -26,6 +27,7 @@ func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value strin
 	// записываем в хранилице userid, id, URL
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
+	ms.DelURL[key] = false
 	existKey = key
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
@@ -46,11 +48,12 @@ func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value strin
 }
 
 // конструктор нового хранилища JSON
-func NewFileStorage(u map[string]string, s map[string]string, p string) *StorageFile {
+func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool, p string) *StorageFile {
 
 	return &StorageFile{
 		UserID:   u,
 		IDURL:    s,
+		DelURL:   d,
 		pathName: p,
 	}
 }
@@ -129,6 +132,8 @@ func (ms *StorageFile) PutBatchToStorage(ctx context.Context, dc settings.Decode
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid
 		ms.UserID[v.ShortURL] = v.OriginalURL
+		ms.DelURL[v.ShortURL] = false
+
 	}
 	return dc, err
 }

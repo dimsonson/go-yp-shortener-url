@@ -11,6 +11,7 @@ import (
 type StorageMap struct {
 	UserID map[string]string
 	IDURL  map[string]string
+	DelURL map[string]bool
 }
 
 // метод записи в хранилище в памяти
@@ -19,15 +20,17 @@ func (ms *StorageMap) PutToStorage(ctx context.Context, key string, value string
 	//userid := ctx.Value(settings.CtxKeyUserID).(string)
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
+	ms.DelURL[key] = false
 	existKey = key
 	return existKey, err
 }
 
 // конструктор хранилища в памяти
-func NewMapStorage(u map[string]string, s map[string]string) *StorageMap {
+func NewMapStorage(u map[string]string, s map[string]string, d map[string]bool) *StorageMap {
 	return &StorageMap{
 		UserID: u,
 		IDURL:  s,
+		DelURL: d,
 	}
 }
 
@@ -94,6 +97,7 @@ func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid
 		ms.UserID[v.ShortURL] = v.OriginalURL
+		ms.DelURL[v.ShortURL] = false
 	}
 	return dc, err
 }
