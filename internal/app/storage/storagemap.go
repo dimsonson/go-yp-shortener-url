@@ -15,7 +15,7 @@ type StorageMap struct {
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+func (ms *StorageMap) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// получаем значение iserid из контекста
 	//userid := ctx.Value(settings.CtxKeyUserID).(string)
 	ms.IDURL[key] = string(value)
@@ -35,7 +35,7 @@ func NewMapStorage(u map[string]string, s map[string]string, d map[string]bool) 
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value string, del bool, err error) {
+func (ms *StorageMap) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {
@@ -46,13 +46,13 @@ func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value str
 }
 
 // метод определения длинны хранилища
-func (ms *StorageMap) LenStorage(ctx context.Context) (lenn int) {
+func (ms *StorageMap) StorageLen(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageMap) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	userURLs = make(map[string]string)
@@ -67,19 +67,8 @@ func (ms *StorageMap) URLsByUserID(ctx context.Context, userid string) (userURLs
 	return userURLs, err
 }
 
-func (ms *StorageMap) LoadFromFileToStorage() {
+func (ms *StorageMap) StorageLoadFromFile() {
 
-}
-
-// посик userid в хранилице
-func (ms *StorageMap) UserIDExist(ctx context.Context, userid string) bool {
-	// цикл по map поиск значения без ключа
-	for _, v := range ms.UserID {
-		if v == userid {
-			return true
-		}
-	}
-	return false
 }
 
 func (ms *StorageMap) StorageOkPing(ctx context.Context) (bool, error) {
@@ -92,7 +81,7 @@ func (ms *StorageMap) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
+func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
@@ -101,4 +90,9 @@ func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeB
 		ms.DelURL[v.ShortURL] = false
 	}
 	return dc, err
+}
+
+func (ms *StorageMap) StorageDeleteURL(key string, userid string) {
+	ms.IDURL[key] = userid
+	ms.DelURL[key] = true
 }

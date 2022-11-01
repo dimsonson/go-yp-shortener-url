@@ -21,7 +21,7 @@ type StorageFile struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageFile) PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+func (ms *StorageFile) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// записываем в хранилице userid, id, URL
@@ -59,7 +59,7 @@ func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool,
 }
 
 // метод получения записи из хранилища
-func (ms *StorageFile) GetFromStorage(ctx context.Context, key string) (value string, del bool, err error) {
+func (ms *StorageFile) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
 		return "", false, fmt.Errorf("key %v not found", key)
@@ -69,13 +69,13 @@ func (ms *StorageFile) GetFromStorage(ctx context.Context, key string) (value st
 }
 
 // метод определения длинны хранилища
-func (ms *StorageFile) LenStorage(ctx context.Context) (lenn int) {
+func (ms *StorageFile) StorageLen(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageFile) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageFile) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	userURLs = make(map[string]string)
@@ -90,7 +90,7 @@ func (ms *StorageFile) URLsByUserID(ctx context.Context, userid string) (userURL
 	return userURLs, err
 }
 
-func (ms *StorageFile) LoadFromFileToStorage() {
+func (ms *StorageFile) StorageLoadFromFile() {
 	// загрузка базы из JSON
 	p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
@@ -127,14 +127,18 @@ func (ms *StorageFile) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageFile) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
+func (ms *StorageFile) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
 	//userid := ctx.Value(settings.CtxKeyUserID).(string)
 	for _, v := range dc {
-		// записываем в хранилице userid, id, URL
+		// записываем в хранилице userid, id, URL, del
 		ms.IDURL[v.ShortURL] = userid
 		ms.UserID[v.ShortURL] = v.OriginalURL
 		ms.DelURL[v.ShortURL] = false
-
 	}
 	return dc, err
+}
+
+func (ms *StorageFile) StorageDeleteURL(key string, userid string) {
+	ms.IDURL[key] = userid
+	ms.DelURL[key] = true
 }

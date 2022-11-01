@@ -96,7 +96,7 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 		log.Println("server will start with data storage " + colorYellow + "in file and memory cash" + colorReset)
 		log.Printf("File storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
-		s.LoadFromFileToStorage()
+		s.StorageLoadFromFile()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url

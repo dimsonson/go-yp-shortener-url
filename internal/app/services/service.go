@@ -13,14 +13,15 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error)
-	GetFromStorage(ctx context.Context, key string) (value string, del bool, err error)
-	LenStorage(ctx context.Context) (lenn int)
-	URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error)
-	LoadFromFileToStorage()
+	StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error)
+	StorageGet(ctx context.Context, key string) (value string, del bool, err error)
+	StorageLen(ctx context.Context) (lenn int)
+	StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error)
+	StorageLoadFromFile()
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
-	PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error)
+	StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error)
+	StorageDeleteURL(key string, userid string)
 }
 
 // структура конструктора бизнес логики
@@ -45,9 +46,9 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, useri
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	// добавляем уникальный префикс к ключу
-	key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
+	key = fmt.Sprintf("%d%s", sr.storage.StorageLen(ctx), key)
 	// создаем запись userid-ключ-значение в базе
-	existKey, err := sr.storage.PutToStorage(ctx, key, url, userid)
+	existKey, err := sr.storage.StoragePut(ctx, key, url, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "23505"):
 		key = existKey
@@ -65,11 +66,11 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 		if err != nil {
 			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
-		key = fmt.Sprintf("%d%s", sr.storage.LenStorage(ctx), key)
+		key = fmt.Sprintf("%d%s", sr.storage.StorageLen(ctx), key)
 		dc[i].ShortURL = key
 	}
 	// пишем в базу и получаем слайс с обновленными shorturl в случае конфликта
-	dc, err = sr.storage.PutBatchToStorage(ctx, dc, userid)
+	dc, err = sr.storage.StoragePutBatch(ctx, dc, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "23505"):
 		break
@@ -87,10 +88,15 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	return ec, err
 }
 
+// метод запись признака deleted_url
+func (sr *Services) ServiceDeleteURL(key string, userid string) {
+	sr.storage.StorageDeleteURL(key, userid)
+}
+
 // метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, del bool, err error) {
 	// используем метод хранилища
-	value, del, err = sr.storage.GetFromStorage(ctx, key)
+	value, del, err = sr.storage.StorageGet(ctx, key)
 	if err != nil {
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
@@ -100,7 +106,7 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value s
 // метод возврат всех URLs по userid
 func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error) {
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err = sr.storage.URLsByUserID(ctx, userid)
+	userURLsMap, err = sr.storage.StorageURLsByUserID(ctx, userid)
 	if err != nil {
 		log.Println("request sr.storage.URLsByUserID returned error:", err)
 		return userURLsMap, err

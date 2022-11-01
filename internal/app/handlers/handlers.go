@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -20,6 +21,7 @@ type Services interface {
 	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
 	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error)
+	ServiceDeleteURL(key string, userid string)
 }
 
 // структура для конструктура обработчика
@@ -247,4 +249,37 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	}
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
+}
+
+// обработка DELETE запроса с слайсом short_url в теле
+func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
+	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
+	//ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
+	// не забываем освободить ресурс
+	//defer cancel()
+
+	// десериализация тела запроса
+	d := []string{} 
+
+	err := json.NewDecoder(r.Body).Decode(&d)
+	if err != nil {
+		log.Printf("Unmarshal error: %s", err)
+		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
+	}
+	fmt.Println(d)
+
+	for _, v := range d {
+		// запрос на получение correlation_id  - original_url
+		hn.service.ServiceDeleteURL(v, userid)
+	}
+
+	//устанавливаем заголовок Content-Type
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	//устанавливаем статус-код 202
+			w.WriteHeader(http.StatusAccepted)
+	
+	// пишем тело ответа
+	w.Write([]byte(""))
 }

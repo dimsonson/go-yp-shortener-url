@@ -20,7 +20,7 @@ type StorageSQL struct {
 }
 
 // метод записи id:url в хранилище
-func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// столбец short_url в SQL таблице содержит только уникальные занчения
@@ -55,7 +55,7 @@ func (ms *StorageSQL) PutToStorage(ctx context.Context, key string, value string
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
+func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// объявляем транзакцию
@@ -138,7 +138,7 @@ func NewSQLStorage(p string) *StorageSQL {
 }
 
 // метод получения записи из хранилища
-func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value string, del bool, err error) {
+func (ms *StorageSQL) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
 	// создаем текст запроса
 	q := `SELECT long_url, deleted_url FROM sh_urls WHERE short_url = $1`
 	// делаем запрос в SQL, получаем строку и пишем результат запроса в пременную value
@@ -151,7 +151,7 @@ func (ms *StorageSQL) GetFromStorage(ctx context.Context, key string) (value str
 }
 
 // метод определения длинны хранилища
-func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
+func (ms *StorageSQL) StorageLen(ctx context.Context) (lenn int) {
 	// создаем текст запроса
 	q := `SELECT COUNT (*) FROM sh_urls`
 	// делаем запрос в SQL, получаем строку
@@ -166,7 +166,7 @@ func (ms *StorageSQL) LenStorage(ctx context.Context) (lenn int) {
 
 // метод отбора URLs по UserID
 // посмотреть возможность использования SQLx
-func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageSQL) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// создаем текст запроса
@@ -199,7 +199,7 @@ func (ms *StorageSQL) URLsByUserID(ctx context.Context, userid string) (userURLs
 	return userURLs, err
 }
 
-func (ms *StorageSQL) LoadFromFileToStorage() {
+func (ms *StorageSQL) StorageLoadFromFile() {
 }
 
 // пинг хранилища для api/user/urls
@@ -214,4 +214,14 @@ func (ms *StorageSQL) StorageOkPing(ctx context.Context) (ok bool, err error) {
 // метод закрытия совединения с SQL базой
 func (ms *StorageSQL) StorageConnectionClose() {
 	ms.PostgreSQL.Close()
+}
+
+// метод запись признака deleted_url
+func (ms *StorageSQL) StorageDeleteURL(key string, userid string) {
+	q := `UPDATE sh_urls SET deleted_url = true WHERE short_url = $1 AND userid = $2`
+	// записываем в хранилице userid, id, URL
+	_, err := ms.PostgreSQL.Exec(q, key, userid)
+	if err != nil {
+		log.Println("update SQL request StorageDeleteURL error:", err)
+	}
 }
