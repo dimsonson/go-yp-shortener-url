@@ -278,8 +278,6 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 202
-			w.WriteHeader(http.StatusAccepted)
-	
-	// пишем тело ответа
-	w.Write([]byte(""))
+	w.WriteHeader(http.StatusAccepted)
+
 }
