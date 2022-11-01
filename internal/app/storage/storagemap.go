@@ -16,8 +16,7 @@ type StorageMap struct {
 
 // метод записи в хранилище в памяти
 func (ms *StorageMap) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
-	// получаем значение iserid из контекста
-	//userid := ctx.Value(settings.CtxKeyUserID).(string)
+
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
 	ms.DelURL[key] = false
@@ -53,8 +52,7 @@ func (ms *StorageMap) StorageLen(ctx context.Context) (lenn int) {
 
 // метод отбора URLs по UserID
 func (ms *StorageMap) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
-	// получаем значение iserid из контекста
-	// userid := ctx.Value(settings.CtxKeyUserID).(string)
+
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -82,7 +80,7 @@ func (ms *StorageMap) StorageConnectionClose() {
 
 // метод пакетной записи id:url в хранилище
 func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
-	// userid := ctx.Value(settings.CtxKeyUserID).(string)
+	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid

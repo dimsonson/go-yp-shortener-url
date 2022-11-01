@@ -16,14 +16,11 @@ import (
 // структура хранилища
 type StorageSQL struct {
 	PostgreSQL *sql.DB
-	//buffer     settings.DecodeBatchJSON // для 4 спринта
 }
 
 // метод записи id:url в хранилище
 func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
-	// получаем значение iserid из контекста
-	// userid := ctx.Value(settings.CtxKeyUserID).(string)
-	// столбец short_url в SQL таблице содержит только уникальные занчения
+
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
 			VALUES (
@@ -56,8 +53,7 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 
 // метод пакетной записи id:url в хранилище
 func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
-	// получаем значение iserid из контекста
-	// userid := ctx.Value(settings.CtxKeyUserID).(string)
+
 	// объявляем транзакцию
 	tx, err := ms.PostgreSQL.Begin()
 	if err != nil {
@@ -119,7 +115,6 @@ func NewSQLStorage(p string) *StorageSQL {
 		log.Println("database opening error:", err)
 	}
 	// создаем текст запроса
-	// возможно ли имя таблицы вывести в файл settings?
 	q := `CREATE TABLE IF NOT EXISTS sh_urls (
 				"userid" TEXT,
 				"short_url" TEXT NOT NULL UNIQUE,
@@ -133,7 +128,6 @@ func NewSQLStorage(p string) *StorageSQL {
 	}
 	return &StorageSQL{
 		PostgreSQL: db,
-		// buffer: make(settings.DecodeBatchJSON, 0, settings.BufferBatchSQL),  // для 4 спринта
 	}
 }
 
@@ -165,7 +159,6 @@ func (ms *StorageSQL) StorageLen(ctx context.Context) (lenn int) {
 }
 
 // метод отбора URLs по UserID
-// посмотреть возможность использования SQLx
 func (ms *StorageSQL) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
@@ -216,7 +209,7 @@ func (ms *StorageSQL) StorageConnectionClose() {
 	ms.PostgreSQL.Close()
 }
 
-// метод запись признака deleted_url
+// метод записи признака deleted_url
 func (ms *StorageSQL) StorageDeleteURL(key string, userid string) {
 	q := `UPDATE sh_urls SET deleted_url = true WHERE short_url = $1 AND userid = $2`
 	// записываем в хранилице userid, id, URL

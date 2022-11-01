@@ -36,6 +36,3 @@ type EncodeBatch struct {
 	ShortURL      string `json:"short_url,omitempty"`
 } 
 
-// длинна буфера при записи пакета url в SQL базу 
-// для 14 спринта
-const BufferBatchSQL int = 1000 
