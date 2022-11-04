@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -21,7 +22,7 @@ type StorageProvider interface {
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
 	StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error)
-	StorageDeleteURL(key string, userid string)
+	StorageDeleteURL(key string, userid string) (err error)
 }
 
 // структура конструктора бизнес логики
@@ -88,11 +89,6 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	return ec, err
 }
 
-// метод запись признака deleted_url
-func (sr *Services) ServiceDeleteURL(key string, userid string) {
-	sr.storage.StorageDeleteURL(key, userid)
-}
-
 // метод возврат URL по id
 func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, del bool, err error) {
 	// используем метод хранилища
@@ -114,7 +110,7 @@ func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userid string) 
 	return userURLsMap, err
 }
 
-// функция генерации случайной последовательности знаков
+// функция генерации псевдо случайной последовательности знаков
 func RandSeq(n int) (random string, ok error) {
 	if n < 1 {
 		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
@@ -133,4 +129,153 @@ func RandSeq(n int) (random string, ok error) {
 func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err error) {
 	ok, err = sr.storage.StorageOkPing(ctx)
 	return ok, err
+}
+
+const workersCount = 1
+
+// метод запись признака deleted_url
+func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
+
+	wg := &sync.WaitGroup{}
+	inputCh := make(chan [2]string)
+	// читаем массивы и кладём в inputCh
+	wg.Add(1)
+	go func() {
+		for _, v := range shURLs {
+			inputCh <- v
+			fmt.Println("gorutine main to inputCh :", v)
+		}
+		wg.Done()
+		close(inputCh)
+	}()
+
+	// здесь fanOut
+	fanOutChs := fanOut(inputCh, workersCount)
+	// var err error
+	workerChs := make([]chan error, 0, workersCount)
+	for _, fanOutCh := range fanOutChs {
+		wg.Add(1)
+		workerCh := make(chan error)
+
+		// newWorker(fanOutCh, workerCh)
+		// newWorker(input, out chan [2]string)
+// нужен запуск нескольких воркеров, а не одного
+		go func() {
+			// обработка паники, что бы программа могла выполниться в этом случае
+			/* 		defer func() {
+				if x := recover(); x != nil {
+					newWorker(fanOutCh, workerCh)
+					log.Printf("run time panic: %v", x)
+				}
+			}() */
+
+			for urls := range fanOutCh {
+				err := sr.storage.StorageDeleteURL(urls[0], urls[1])
+
+				workerCh <- err
+
+				fmt.Println("worker out:", err)
+
+			}
+
+			close(workerCh)
+		}()
+
+		workerChs = append(workerChs, workerCh)
+		wg.Done()
+	}
+
+	// здесь fanIn
+	for v := range fanIn(workerChs...) {
+
+	
+			log.Println("delete request returned err: ", v)
+	
+
+	}
+	wg.Wait()
+
+}
+
+func fanOut(inputCh chan [2]string, n int) []chan [2]string {
+	chs := make([]chan [2]string, 0, n)
+	wg := &sync.WaitGroup{}
+	for i := 0; i < n; i++ {
+		ch := make(chan [2]string)
+		chs = append(chs, ch)
+	}
+
+	go func() {
+		defer func(chs []chan [2]string) {
+			for _, ch := range chs {
+				close(ch)
+			}
+		}(chs)
+		wg.Add(1)
+		for i := 0; ; i++ {
+			if i == len(chs) {
+				i = 0
+			}
+
+			urls, ok := <-inputCh
+			if !ok {
+				return
+			}
+
+			ch := chs[i]
+			ch <- urls
+			fmt.Println("fanOut", urls)
+
+		}
+	}()
+	wg.Wait()
+	return chs
+}
+
+/* func newWorker(input, out chan [2]string) {
+	go func() {
+		// обработка паники, что бы программа могла выполниться в этом случае
+		defer func() {
+			if x := recover(); x != nil {
+				newWorker(input, out)
+				log.Printf("run time panic: %v", x)
+			}
+		}()
+
+		for urls := range input {
+			err := sr.storage.StorageDeleteURL(urls)
+
+			out <- err
+
+			fmt.Println("worker out:", err)
+
+		}
+
+		close(out)
+	}()
+}
+ */
+func fanIn(inputChs ...chan error) chan error {
+	outCh := make(chan error)
+
+	go func() {
+		wg := &sync.WaitGroup{}
+
+		for _, inputCh := range inputChs {
+			wg.Add(1)
+
+			go func(inputCh chan error) {
+				defer wg.Done()
+				for item := range inputCh {
+					outCh <- item
+					fmt.Println("fanIn to outCh :", item)
+
+				}
+			}(inputCh)
+		}
+		wg.Wait()
+		close(outCh)
+	}()
+
+	return outCh
 }

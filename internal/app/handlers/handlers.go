@@ -21,7 +21,7 @@ type Services interface {
 	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
 	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error)
-	ServiceDeleteURL(key string, userid string)
+	ServiceDeleteURL(shURLs []([2]string))
 }
 
 // структура для конструктура обработчика
@@ -261,7 +261,7 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	//defer cancel()
 
 	// десериализация тела запроса
-	d := []string{} 
+	d := []string{}
 
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
@@ -270,14 +270,19 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(d)
 
+	// создание и наполнение слайса массивов для передачи в fanout-fanin
+	var shURLs []([2]string)
 	for _, v := range d {
-		// запрос на получение correlation_id  - original_url
-		hn.service.ServiceDeleteURL(v, userid)
+		shURLs = append(shURLs, [2]string{v, userid})
 	}
-
+	fmt.Println("shURLs :", shURLs)
+	//wg := &sync.WaitGroup{}
+	//wg.Add(1)
+	go hn.service.ServiceDeleteURL(shURLs)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 202
 	w.WriteHeader(http.StatusAccepted)
-
+	//wg.Wait()
+	// time.Sleep(5 * time.Second)
 }

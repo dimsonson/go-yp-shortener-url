@@ -217,11 +217,12 @@ func (ms *StorageSQL) StorageConnectionClose() {
 }
 
 // метод запись признака deleted_url
-func (ms *StorageSQL) StorageDeleteURL(key string, userid string) {
+func (ms *StorageSQL) StorageDeleteURL(key string, userid string) (err error){
 	q := `UPDATE sh_urls SET deleted_url = true WHERE short_url = $1 AND userid = $2`
 	// записываем в хранилице userid, id, URL
-	_, err := ms.PostgreSQL.Exec(q, key, userid)
+	_, err = ms.PostgreSQL.Exec(q, key, userid)
 	if err != nil {
 		log.Println("update SQL request StorageDeleteURL error:", err)
 	}
+	return err
 }
