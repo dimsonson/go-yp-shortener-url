@@ -143,7 +143,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	go func() {
 		for _, v := range shURLs {
 			inputCh <- v
-			fmt.Println("gorutine main to inputCh :", v)
+			//fmt.Println("gorutine main to inputCh :", v)
 		}
 		wg.Done()
 		close(inputCh)
@@ -169,7 +169,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 
 				out <- err
 
-				fmt.Println("worker out:", err)
+			//	fmt.Println("worker out:", err)
 
 			}
 			close(workerCh)
@@ -227,14 +227,14 @@ func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 
 			urls, ok := <-inputCh
 			if !ok {
-				fmt.Println(" fanOut inputCh not ok")
+				//fmt.Println(" fanOut inputCh not ok")
 				return 
 
 			}
 
 			ch := chs[i]
 			ch <- urls
-			fmt.Println("fanOut", urls)
+		//	fmt.Println("fanOut", urls)
 
 		}
 	}()
@@ -280,7 +280,7 @@ func fanIn(inputChs ...chan error) chan error {
 				defer wg.Done()
 				for item := range inputCh {
 					outCh <- item
-					fmt.Println("fanIn to outCh :", item)
+					//fmt.Println("fanIn to outCh :", item)
 
 				}
 			}(inputCh)
