@@ -131,7 +131,7 @@ func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err erro
 	return ok, err
 }
 
-const workersCount = 1
+const workersCount = 3
 
 // метод запись признака deleted_url
 func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
@@ -151,6 +151,8 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 
 	// здесь fanOut
 	fanOutChs := fanOut(inputCh, workersCount)
+	//fmt.Println("fanOutChs :::", fanOutChs)
+
 	// var err error
 	workerChs := make([]chan error, 0, workersCount)
 	for _, fanOutCh := range fanOutChs {
@@ -159,27 +161,19 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 
 		// newWorker(fanOutCh, workerCh)
 		// newWorker(input, out chan [2]string)
-// нужен запуск нескольких воркеров, а не одного
-		go func() {
-			// обработка паники, что бы программа могла выполниться в этом случае
-			/* 		defer func() {
-				if x := recover(); x != nil {
-					newWorker(fanOutCh, workerCh)
-					log.Printf("run time panic: %v", x)
-				}
-			}() */
 
-			for urls := range fanOutCh {
+		// нужен запуск нескольких воркеров, а не одного
+		go func(input chan [2]string, out chan error) {
+			for urls := range input {
 				err := sr.storage.StorageDeleteURL(urls[0], urls[1])
 
-				workerCh <- err
+				out <- err
 
 				fmt.Println("worker out:", err)
 
 			}
-
 			close(workerCh)
-		}()
+		}(fanOutCh, workerCh)
 
 		workerChs = append(workerChs, workerCh)
 		wg.Done()
@@ -188,14 +182,25 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	// здесь fanIn
 	for v := range fanIn(workerChs...) {
 
-	
-			log.Println("delete request returned err: ", v)
-	
+		log.Println("delete request returned err: ", v)
 
 	}
 	wg.Wait()
 
 }
+
+
+
+// обработка паники, что бы программа могла выполниться в этом случае
+/* 		defer func() {
+	if x := recover(); x != nil {
+		newWorker(fanOutCh, workerCh)
+		log.Printf("run time panic: %v", x)
+	}
+}() */
+
+
+
 
 func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 	chs := make([]chan [2]string, 0, n)
@@ -206,12 +211,15 @@ func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 	}
 
 	go func() {
+
 		defer func(chs []chan [2]string) {
 			for _, ch := range chs {
 				close(ch)
 			}
 		}(chs)
+
 		wg.Add(1)
+		
 		for i := 0; ; i++ {
 			if i == len(chs) {
 				i = 0
@@ -219,7 +227,9 @@ func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 
 			urls, ok := <-inputCh
 			if !ok {
-				return
+				fmt.Println(" fanOut inputCh not ok")
+				return 
+
 			}
 
 			ch := chs[i]
@@ -228,33 +238,35 @@ func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 
 		}
 	}()
+
 	wg.Wait()
 	return chs
 }
 
-/* func newWorker(input, out chan [2]string) {
-	go func() {
-		// обработка паники, что бы программа могла выполниться в этом случае
-		defer func() {
-			if x := recover(); x != nil {
-				newWorker(input, out)
-				log.Printf("run time panic: %v", x)
+/*
+	 func newWorker(input, out chan [2]string) {
+		go func() {
+			// обработка паники, что бы программа могла выполниться в этом случае
+			defer func() {
+				if x := recover(); x != nil {
+					newWorker(input, out)
+					log.Printf("run time panic: %v", x)
+				}
+			}()
+
+			for urls := range input {
+				err := sr.storage.StorageDeleteURL(urls)
+
+				out <- err
+
+				fmt.Println("worker out:", err)
+
 			}
+
+			close(out)
 		}()
-
-		for urls := range input {
-			err := sr.storage.StorageDeleteURL(urls)
-
-			out <- err
-
-			fmt.Println("worker out:", err)
-
-		}
-
-		close(out)
-	}()
-}
- */
+	}
+*/
 func fanIn(inputChs ...chan error) chan error {
 	outCh := make(chan error)
 
