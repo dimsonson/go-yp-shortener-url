@@ -90,7 +90,8 @@ func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc settings.DecodeBat
 	return dc, err
 }
 
-func (ms *StorageMap) StorageDeleteURL(key string, userid string) {
+func (ms *StorageMap) StorageDeleteURL(key string, userid string) (err error){
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
+	return nil
 }

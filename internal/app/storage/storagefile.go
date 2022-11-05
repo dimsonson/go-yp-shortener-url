@@ -136,7 +136,8 @@ func (ms *StorageFile) StoragePutBatch(ctx context.Context, dc settings.DecodeBa
 	return dc, err
 }
 
-func (ms *StorageFile) StorageDeleteURL(key string, userid string) {
+func (ms *StorageFile) StorageDeleteURL(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
+	return nil
 }

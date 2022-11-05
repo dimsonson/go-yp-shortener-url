@@ -20,7 +20,7 @@ type Services interface {
 	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
 	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error)
-	ServiceDeleteURL(key string, userid string)
+	ServiceDeleteURL(shURLs []([2]string))
 }
 
 // структура для конструктура обработчика
@@ -215,7 +215,6 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
-// посмотреть в будущем вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -261,13 +260,15 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid slice of short_urls received", http.StatusBadRequest)
 	}
-	// итерация по short_url
+	// создание и наполнение слайса массивов для передачи в fanout-fanin
+	var shURLs []([2]string)
 	for _, v := range d {
-		// запрос на получение correlation_id  - original_url
-		hn.service.ServiceDeleteURL(v, userid)
+		shURLs = append(shURLs, [2]string{v, userid})
 	}
-	//устанавливаем заголовок Content-Type
+	// запуск сервиса внесения записей о удалении
+	go hn.service.ServiceDeleteURL(shURLs)
+	// устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
-	//устанавливаем статус-код 202
+	// записываем статус-код 202
 	w.WriteHeader(http.StatusAccepted)
 }
