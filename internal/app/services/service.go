@@ -139,56 +139,63 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	wg := &sync.WaitGroup{}
 	// создаем выходной канал
 	inputCh := make(chan [2]string)
-	// горутина чтения массива и отправки ее значений в канал inputCh
-	wg.Add(1)
-	go func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return
-		default:
-		for _, v := range shURLs {
-			inputCh <- v
-		}
-		wg.Done()
-		defer close(inputCh)
-	}
-	}(ctx)
-	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
-	fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
-	// создаем слайс возвращемых каналов
-	workerChs := make([]chan error, 0, settings.WorkersCount)
-	// итерируем по входным каналам с значениями и предаем из них значения в воркеры
-	for _, fanOutCh := range fanOutChs {
+	select {
+	case <-ctx.Done():
+		log.Printf("stopped by cancel err : %v", ctx.Err())
+		return
+	default:
+		// горутина чтения массива и отправки ее значений в канал inputCh
 		wg.Add(1)
-		workerCh := make(chan error)
-		// запуск воркера
-		go func(ctx context.Context, input chan [2]string, out chan error) {
-			// итерация по входящим каналам воркера, выполнения обращения в хранилище
-			for urls := range input {
-				select {
-				case <-ctx.Done():
-					log.Printf("worker %s stopped by cancel err : %v", urls, ctx.Err())
-					return
-				default:
-					err := sr.storage.StorageDeleteURL(urls[0], urls[1])
-					// возвращаем значения из воркера в выходные каналы воркеров
-					out <- err
-					if err != nil {
-						// отмена контекста в случае если из хранилища пришла ошибка
-						cancel()
+		go func(ctx context.Context) {
+			select {
+			case <-ctx.Done():
+				log.Printf("stopped by cancel err : %v", ctx.Err())
+				return
+			default:
+				for _, v := range shURLs {
+					inputCh <- v
+				}
+				wg.Done()
+				defer close(inputCh)
+			}
+		}(ctx)
+		// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
+		fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
+		// создаем слайс возвращемых каналов
+		workerChs := make([]chan error, 0, settings.WorkersCount)
+		// итерируем по входным каналам с значениями и предаем из них значения в воркеры
+		for _, fanOutCh := range fanOutChs {
+			wg.Add(1)
+			workerCh := make(chan error)
+
+			// запуск воркера
+			go func(ctx context.Context, input chan [2]string, out chan error) {
+				// итерация по входящим каналам воркера, выполнения обращения в хранилище
+				for urls := range input {
+					select {
+					case <-ctx.Done():
+						log.Printf("worker %s stopped by cancel err : %v", urls, ctx.Err())
+						return
+					default:
+						err := sr.storage.StorageDeleteURL(urls[0], urls[1])
+						// возвращаем значения из воркера в выходные каналы воркеров
+						out <- err
+						if err != nil {
+							// отмена контекста в случае если из хранилища пришла ошибка
+							cancel()
+						}
 					}
 				}
-			}
-			defer close(workerCh)
-		}(ctx, fanOutCh, workerCh)
-		// добавляем выходные каналы воркеров в слайс
-		workerChs = append(workerChs, workerCh)
-		wg.Done()
-	}
-	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
-	for v := range fanIn(ctx, workerChs...) {
-		log.Println("delete request affected record(s) and returned err: ", v)
+				defer close(workerCh)
+			}(ctx, fanOutCh, workerCh)
+			// добавляем выходные каналы воркеров в слайс
+			workerChs = append(workerChs, workerCh)
+			wg.Done()
+		}
+		// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
+		for v := range fanIn(ctx, workerChs...) {
+			log.Println("delete request affected record(s) and returned err: ", v)
+		}
 	}
 	wg.Wait()
 }
@@ -201,39 +208,39 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 		log.Printf("stopped by cancel err : %v", ctx.Err())
 		return chs
 	default:
-	wg := &sync.WaitGroup{}
-	for i := 0; i < n; i++ {
-		ch := make(chan [2]string)
-		chs = append(chs, ch)
-	}
-	go func(ctx context.Context) {
-		defer func(chs []chan [2]string) {
-			for _, ch := range chs {
-				close(ch)
-			}
-		}(chs)
-		wg.Add(1)
-		select {
-		case <-ctx.Done():
-			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return
-		default:		
-		for i := 0; ; i++ {
-			if i == len(chs) {
-				i = 0
-			}
-			urls, ok := <-inputCh
-			if !ok {
+		wg := &sync.WaitGroup{}
+		for i := 0; i < n; i++ {
+			ch := make(chan [2]string)
+			chs = append(chs, ch)
+		}
+		go func(ctx context.Context) {
+			defer func(chs []chan [2]string) {
+				for _, ch := range chs {
+					close(ch)
+				}
+			}(chs)
+			wg.Add(1)
+			select {
+			case <-ctx.Done():
+				log.Printf("stopped by cancel err : %v", ctx.Err())
 				return
+			default:
+				for i := 0; ; i++ {
+					if i == len(chs) {
+						i = 0
+					}
+					urls, ok := <-inputCh
+					if !ok {
+						return
+					}
+					ch := chs[i]
+					ch <- urls
+				}
 			}
-			ch := chs[i]
-			ch <- urls
-		}
-		}
-	}(ctx)
-	
-	wg.Wait()
-	return chs
+		}(ctx)
+
+		wg.Wait()
+		return chs
 	}
 }
 
@@ -247,15 +254,15 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 			log.Printf("stopped by cancel err : %v", ctx.Err())
 			return
 		default:
-		for _, inputCh := range inputChs {
-			wg.Add(1)
-			go func(inputCh chan error) {
-				defer wg.Done()
-				for item := range inputCh {
-					outCh <- item
-				}
-			}(inputCh)
-		}
+			for _, inputCh := range inputChs {
+				wg.Add(1)
+				go func(inputCh chan error) {
+					defer wg.Done()
+					for item := range inputCh {
+						outCh <- item
+					}
+				}(inputCh)
+			}
 		}
 		wg.Wait()
 		defer close(outCh)
