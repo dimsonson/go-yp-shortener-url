@@ -157,7 +157,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 				}
 				wg.Done()
 				defer close(inputCh)
-	//		}
+			}
 		}(ctx)
 		// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
 		fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
@@ -196,7 +196,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 			log.Println("delete request affected record(s) and returned err: ", v)
 		}
 		wg.Wait()
-	}
+//	}
 	cancel()
 }
 
