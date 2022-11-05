@@ -139,11 +139,11 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	wg := &sync.WaitGroup{}
 	// создаем выходной канал
 	inputCh := make(chan [2]string)
-	select {
+	/* select {
 	case <-ctx.Done():
 		log.Printf("stopped by cancel err : %v", ctx.Err())
 		// return
-	default:
+	default: */
 		// горутина чтения массива и отправки ее значений в канал inputCh
 		wg.Add(1)
 		go func(ctx context.Context) {
@@ -157,7 +157,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 				}
 				wg.Done()
 				defer close(inputCh)
-			}
+	//		}
 		}(ctx)
 		// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
 		fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
@@ -167,7 +167,6 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 		for _, fanOutCh := range fanOutChs {
 			wg.Add(1)
 			workerCh := make(chan error)
-
 			// запуск воркера
 			go func(ctx context.Context, input chan [2]string, out chan error) {
 				// итерация по входящим каналам воркера, выполнения обращения в хранилище
