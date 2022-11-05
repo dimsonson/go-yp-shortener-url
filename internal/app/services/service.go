@@ -175,6 +175,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 					// возвращаем значения из воркера в выходные каналы воркеров
 					out <- err
 					if err != nil {
+						// отмена контекста в случае если из хранилища пришла ошибка
 						cancel()
 					}
 				}
