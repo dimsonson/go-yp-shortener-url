@@ -198,6 +198,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 		}
 		wg.Wait()
 	}
+	cancel()
 }
 
 // функция распределения значений из одного канала в несколько по методу раунд робин
