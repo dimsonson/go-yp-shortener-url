@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -262,27 +261,20 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 
 	// десериализация тела запроса
 	d := []string{}
-
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
-	fmt.Println(d)
-
 	// создание и наполнение слайса массивов для передачи в fanout-fanin
 	var shURLs []([2]string)
 	for _, v := range d {
 		shURLs = append(shURLs, [2]string{v, userid})
 	}
-	fmt.Println("shURLs :", shURLs)
-	//wg := &sync.WaitGroup{}
-	//wg.Add(1)
+	// запуск сервиса внесения записей о удалении
 	go hn.service.ServiceDeleteURL(shURLs)
-	//устанавливаем заголовок Content-Type
+	// устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
-	//устанавливаем статус-код 202
+	// записываем статус-код 202
 	w.WriteHeader(http.StatusAccepted)
-	//wg.Wait()
-	// time.Sleep(5 * time.Second)
 }

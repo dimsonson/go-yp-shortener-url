@@ -131,77 +131,52 @@ func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err erro
 	return ok, err
 }
 
-const workersCount = 3
-
 // метод запись признака deleted_url
 func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
-
+	
+	// создаем счетчик ожидания
 	wg := &sync.WaitGroup{}
+	// создаем выходной канал
 	inputCh := make(chan [2]string)
-	// читаем массивы и кладём в inputCh
+	// горутина чтения массива и отправки ее значений в канал inputCh
 	wg.Add(1)
 	go func() {
 		for _, v := range shURLs {
 			inputCh <- v
-			//fmt.Println("gorutine main to inputCh :", v)
 		}
 		wg.Done()
 		close(inputCh)
 	}()
-
-	// здесь fanOut
-	fanOutChs := fanOut(inputCh, workersCount)
-	//fmt.Println("fanOutChs :::", fanOutChs)
-
-	// var err error
-	workerChs := make([]chan error, 0, workersCount)
+	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
+	fanOutChs := fanOut(inputCh, settings.WorkersCount)
+	// создаем слайс возвращемых каналов
+	workerChs := make([]chan error, 0, settings.WorkersCount)
+	// итерируем по входным каналам с значениями и предаем из них значения в воркеры
 	for _, fanOutCh := range fanOutChs {
 		wg.Add(1)
 		workerCh := make(chan error)
-
-		// newWorker(fanOutCh, workerCh)
-		// newWorker(input, out chan [2]string)
-
-		// нужен запуск нескольких воркеров, а не одного
+		// запуск воркера
 		go func(input chan [2]string, out chan error) {
+			// итерация по входящим каналам воркера, выполнения обращения в хранилище
 			for urls := range input {
 				err := sr.storage.StorageDeleteURL(urls[0], urls[1])
-
+				// возвращаем значения из воркера в выходные каналы воркеров
 				out <- err
-
-			//	fmt.Println("worker out:", err)
-
 			}
 			close(workerCh)
 		}(fanOutCh, workerCh)
-
+		// добавляем выходные каналы воркеров в слайс
 		workerChs = append(workerChs, workerCh)
 		wg.Done()
 	}
-
-	// здесь fanIn
+	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
 	for v := range fanIn(workerChs...) {
-
-		log.Println("delete request returned err: ", v)
-
+		log.Println("delete request affected record(s) and returned err: ", v)
 	}
 	wg.Wait()
-
 }
 
-
-
-// обработка паники, что бы программа могла выполниться в этом случае
-/* 		defer func() {
-	if x := recover(); x != nil {
-		newWorker(fanOutCh, workerCh)
-		log.Printf("run time panic: %v", x)
-	}
-}() */
-
-
-
-
+// функция распределения значений из одного канала в несколько по методу раунд робин
 func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 	chs := make([]chan [2]string, 0, n)
 	wg := &sync.WaitGroup{}
@@ -209,85 +184,46 @@ func fanOut(inputCh chan [2]string, n int) []chan [2]string {
 		ch := make(chan [2]string)
 		chs = append(chs, ch)
 	}
-
 	go func() {
-
 		defer func(chs []chan [2]string) {
 			for _, ch := range chs {
 				close(ch)
 			}
 		}(chs)
-
 		wg.Add(1)
-		
+
 		for i := 0; ; i++ {
 			if i == len(chs) {
 				i = 0
 			}
-
 			urls, ok := <-inputCh
 			if !ok {
-				//fmt.Println(" fanOut inputCh not ok")
-				return 
-
+				return
 			}
-
 			ch := chs[i]
 			ch <- urls
-		//	fmt.Println("fanOut", urls)
-
 		}
 	}()
-
 	wg.Wait()
 	return chs
 }
 
-/*
-	 func newWorker(input, out chan [2]string) {
-		go func() {
-			// обработка паники, что бы программа могла выполниться в этом случае
-			defer func() {
-				if x := recover(); x != nil {
-					newWorker(input, out)
-					log.Printf("run time panic: %v", x)
-				}
-			}()
-
-			for urls := range input {
-				err := sr.storage.StorageDeleteURL(urls)
-
-				out <- err
-
-				fmt.Println("worker out:", err)
-
-			}
-
-			close(out)
-		}()
-	}
-*/
+// функция сбора значений из нескольких каналов в один
 func fanIn(inputChs ...chan error) chan error {
 	outCh := make(chan error)
-
 	go func() {
 		wg := &sync.WaitGroup{}
-
 		for _, inputCh := range inputChs {
 			wg.Add(1)
-
 			go func(inputCh chan error) {
 				defer wg.Done()
 				for item := range inputCh {
 					outCh <- item
-					//fmt.Println("fanIn to outCh :", item)
-
 				}
 			}(inputCh)
 		}
 		wg.Wait()
 		close(outCh)
 	}()
-
 	return outCh
 }
