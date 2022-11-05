@@ -139,64 +139,58 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	wg := &sync.WaitGroup{}
 	// создаем выходной канал
 	inputCh := make(chan [2]string)
-	/* select {
-	case <-ctx.Done():
-		log.Printf("stopped by cancel err : %v", ctx.Err())
-		// return
-	default: */
-		// горутина чтения массива и отправки ее значений в канал inputCh
-		wg.Add(1)
-		go func(ctx context.Context) {
-			select {
-			case <-ctx.Done():
-				log.Printf("stopped by cancel err : %v", ctx.Err())
-				return
-			default:
-				for _, v := range shURLs {
-					inputCh <- v
-				}
-				wg.Done()
-				defer close(inputCh)
+	// горутина чтения массива и отправки ее значений в канал inputCh
+	wg.Add(1)
+	go func(ctx context.Context) {
+		select {
+		case <-ctx.Done():
+			log.Printf("stopped by cancel err : %v", ctx.Err())
+			return
+		default:
+			for _, v := range shURLs {
+				inputCh <- v
 			}
-		}(ctx)
-		// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
-		fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
-		// создаем слайс возвращемых каналов
-		workerChs := make([]chan error, 0, settings.WorkersCount)
-		// итерируем по входным каналам с значениями и предаем из них значения в воркеры
-		for _, fanOutCh := range fanOutChs {
-			wg.Add(1)
-			workerCh := make(chan error)
-			// запуск воркера
-			go func(ctx context.Context, input chan [2]string, out chan error) {
-				// итерация по входящим каналам воркера, выполнения обращения в хранилище
-				for urls := range input {
-					select {
-					case <-ctx.Done():
-						log.Printf("worker %s stopped by cancel err : %v", urls, ctx.Err())
-						return
-					default:
-						err := sr.storage.StorageDeleteURL(urls[0], urls[1])
-						// возвращаем значения из воркера в выходные каналы воркеров
-						out <- err
-						if err != nil {
-							// отмена контекста в случае если из хранилища пришла ошибка
-							cancel()
-						}
+			wg.Done()
+			defer close(inputCh)
+		}
+	}(ctx)
+	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
+	fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
+	// создаем слайс возвращемых каналов
+	workerChs := make([]chan error, 0, settings.WorkersCount)
+	// итерируем по входным каналам с значениями и предаем из них значения в воркеры
+	for _, fanOutCh := range fanOutChs {
+		wg.Add(1)
+		workerCh := make(chan error)
+		// запуск воркера
+		go func(ctx context.Context, input chan [2]string, out chan error) {
+			// итерация по входящим каналам воркера, выполнения обращения в хранилище
+			for urls := range input {
+				select {
+				case <-ctx.Done():
+					log.Printf("worker %s stopped by cancel err : %v", urls[0], ctx.Err())
+					return
+				default:
+					err := sr.storage.StorageDeleteURL(urls[0], urls[1])
+					// возвращаем значения из воркера в выходные каналы воркеров
+					out <- err
+					if err != nil {
+						// отмена контекста в случае если из хранилища пришла ошибка
+						cancel()
 					}
 				}
-				defer close(workerCh)
-			}(ctx, fanOutCh, workerCh)
-			// добавляем выходные каналы воркеров в слайс
-			workerChs = append(workerChs, workerCh)
-			wg.Done()
-		}
-		// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
-		for v := range fanIn(ctx, workerChs...) {
-			log.Println("delete request affected record(s) and returned err: ", v)
-		}
-		wg.Wait()
-//	}
+			}
+			defer close(workerCh)
+		}(ctx, fanOutCh, workerCh)
+		// добавляем выходные каналы воркеров в слайс
+		workerChs = append(workerChs, workerCh)
+		wg.Done()
+	}
+	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
+	for v := range fanIn(ctx, workerChs...) {
+		log.Println("delete request affected record(s) and returned err: ", v)
+	}
+	wg.Wait()
 	cancel()
 }
 

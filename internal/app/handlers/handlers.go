@@ -215,7 +215,6 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
-// посмотреть в будущем вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -254,11 +253,6 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
-	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
-	//ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
-	// не забываем освободить ресурс
-	//defer cancel()
-
 	// десериализация тела запроса
 	d := []string{}
 	err := json.NewDecoder(r.Body).Decode(&d)

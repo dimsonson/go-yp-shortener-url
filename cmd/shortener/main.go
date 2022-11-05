@@ -11,7 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
-	//_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
 // переменные по умолчанию
@@ -20,16 +20,6 @@ const (
 	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
-)
-
-// константы цветового вывода в консоль
-const (
-	colorBlack  = "\u001b[30m"
-	colorRed    = "\u001b[31m"
-	colorGreen  = "\u001b[32m"
-	colorYellow = "\u001b[33m"
-	colorBlue   = "\u001b[34m"
-	colorReset  = "\u001b[0m"
 )
 
 func main() {
@@ -42,8 +32,8 @@ func main() {
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
 	// запускаем сервер
-	log.Println("base URL:", colorGreen, base, colorReset)
-	log.Println("starting server on:", colorBlue, addr, colorReset)
+	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
+	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
@@ -88,12 +78,12 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
-		log.Println("server will start with data storage "+colorYellow+"in PostgreSQL:", dlink, colorReset)
+		log.Println("server will start with data storage "+settings.ColorYellow+"in PostgreSQL:", dlink, settings.ColorReset)
 		return s
 	}
 	// иначе если есть path используем для хранения файл
 	if path != "" && (govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
-		log.Println("server will start with data storage " + colorYellow + "in file and memory cash" + colorReset)
+		log.Println("server will start with data storage " + settings.ColorYellow + "in file and memory cash" + settings.ColorReset)
 		log.Printf("File storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
 		s.StorageLoadFromFile()
@@ -101,6 +91,6 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	}
 	// если переменная path не валидна, то используем память для хранения id:url
 	s = storage.NewMapStorage(make(map[string]string), make(map[string]string), make(map[string]bool))
-	log.Println("server will start with data storage " + colorYellow + "in memory" + colorReset)
+	log.Println("server will start with data storage " + settings.ColorYellow + "in memory" + settings.ColorReset)
 	return s
 }
