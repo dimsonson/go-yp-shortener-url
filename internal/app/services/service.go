@@ -142,7 +142,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	select {
 	case <-ctx.Done():
 		log.Printf("stopped by cancel err : %v", ctx.Err())
-		return
+		// return
 	default:
 		// горутина чтения массива и отправки ее значений в канал inputCh
 		wg.Add(1)
