@@ -196,8 +196,8 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 		for v := range fanIn(ctx, workerChs...) {
 			log.Println("delete request affected record(s) and returned err: ", v)
 		}
+		wg.Wait()
 	}
-	wg.Wait()
 }
 
 // функция распределения значений из одного канала в несколько по методу раунд робин
