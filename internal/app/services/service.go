@@ -246,7 +246,7 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 		select {
 		case <-ctx.Done():
 			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return outCh
+			return 
 		default:
 			for _, inputCh := range inputChs {
 				wg.Add(1)
