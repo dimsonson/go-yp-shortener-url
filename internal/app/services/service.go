@@ -135,6 +135,7 @@ func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err erro
 func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	// создаем контекст с отменой
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// создаем счетчик ожидания
 	wg := &sync.WaitGroup{}
 	// создаем выходной канал
@@ -151,7 +152,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 				inputCh <- v
 			}
 			wg.Done()
-			defer close(inputCh)
+			close(inputCh)
 		}
 	}(ctx)
 	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
@@ -180,7 +181,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 					}
 				}
 			}
-			defer close(workerCh)
+			close(workerCh)
 		}(ctx, fanOutCh, workerCh)
 		// добавляем выходные каналы воркеров в слайс
 		workerChs = append(workerChs, workerCh)
@@ -188,10 +189,9 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	}
 	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
 	for v := range fanIn(ctx, workerChs...) {
-		log.Println("delete request affected record(s) and returned err: ", v)
+		log.Println("delete request returned err: ", v)
 	}
 	wg.Wait()
-	cancel()
 }
 
 // функция распределения значений из одного канала в несколько по методу раунд робин
@@ -246,7 +246,7 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 		select {
 		case <-ctx.Done():
 			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return
+			return outCh
 		default:
 			for _, inputCh := range inputChs {
 				wg.Add(1)
