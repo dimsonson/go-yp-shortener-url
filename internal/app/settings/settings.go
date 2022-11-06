@@ -19,6 +19,7 @@ const SQLTableName = "sh_urls"
 
 // тип для context.WithValue
 type ctxKey string
+
 // ключ для context.WithValue
 const CtxKeyUserID ctxKey = "uid"
 
@@ -34,10 +35,9 @@ type DecodeBatchJSON []struct {
 type EncodeBatch struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	ShortURL      string `json:"short_url,omitempty"`
-} 
+}
 
-
-// количество каналов для воркеров при установке пометку удаленный для sh_urls 
+// количество каналов для воркеров при установке пометку удаленный для sh_urls
 const WorkersCount = 30
 
 // константы цветового вывода в консоль
