@@ -232,7 +232,6 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 				}
 			}
 		}(ctx)
-
 		wg.Wait()
 		return chs
 	}
@@ -259,7 +258,7 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 			}
 		}
 		wg.Wait()
-		defer close(outCh)
+		close(outCh)
 	}(ctx)
 	return outCh
 }
