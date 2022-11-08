@@ -58,11 +58,6 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 		log.Println("error PutBatchToStorage tx.Begin : ", err)
 		return nil, err
 	}
-	// если возникает ошибка, откатываем изменения
-	if rollbackErr := tx.Rollback(); rollbackErr != nil {
-		log.Println("insert urls: unable to rollback: ", rollbackErr)
-		return nil, err
-	}
 	// готовим инструкцию
 	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3, $4)")
 	if err != nil {
@@ -94,6 +89,11 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	// сохраняем изменения
 	if err = tx.Commit(); err != nil {
 		log.Println("error PutBatchToStorage tx.Commit : ", err)
+	}
+	// если возникает ошибка, откатываем изменения
+	if rollbackErr := tx.Rollback(); rollbackErr != nil {
+		log.Println("insert urls: unable to rollback: ", rollbackErr)
+		return nil, err
 	}
 	return dcCorr, err
 }
