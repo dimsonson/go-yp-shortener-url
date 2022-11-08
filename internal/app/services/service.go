@@ -9,7 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/jackc/pgerrcode"
 )
 
 // интерфейс методов хранилища
@@ -21,7 +23,7 @@ type StorageProvider interface {
 	StorageLoadFromFile()
 	StorageOkPing(ctx context.Context) (bool, error)
 	StorageConnectionClose()
-	StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error)
+	StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error)
 	StorageDeleteURL(key string, userid string) (err error)
 }
 
@@ -51,7 +53,7 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, useri
 	// создаем запись userid-ключ-значение в базе
 	existKey, err := sr.storage.StoragePut(ctx, key, url, userid)
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		key = existKey
 	case err != nil:
 		return "", err
@@ -60,7 +62,7 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, useri
 }
 
 // метод создание пакета пар id : URL
-func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error) {
+func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
 		key, err := RandSeq(settings.KeyLeght)
@@ -80,7 +82,7 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc settings
 	}
 	// заполняем слайс ответа
 	for _, v := range dc {
-		elem := settings.EncodeBatch{
+		elem := models.BatchResponse{
 			CorrelationID: v.CorrelationID,
 			ShortURL:      sr.base + "/" + v.ShortURL,
 		}
@@ -245,7 +247,7 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 		select {
 		case <-ctx.Done():
 			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return 
+			return
 		default:
 			for _, inputCh := range inputChs {
 				wg.Add(1)

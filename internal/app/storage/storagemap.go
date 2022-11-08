@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
 
 // структура хранилища в памяти
@@ -79,7 +79,7 @@ func (ms *StorageMap) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
+func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
@@ -90,7 +90,7 @@ func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc settings.DecodeBat
 	return dc, err
 }
 
-func (ms *StorageMap) StorageDeleteURL(key string, userid string) (err error){
+func (ms *StorageMap) StorageDeleteURL(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
 	return nil

@@ -12,7 +12,7 @@ const UserIDLeght int = 16 //значение должно быть больше
 const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
 
 // timeout запроса
-const StorageTimeout = 300000 * time.Second
+const StorageTimeout = 5 * time.Second
 
 // имя таблицы в базе PosgreSQL
 const SQLTableName = "sh_urls"
@@ -22,20 +22,6 @@ type ctxKey string
 
 // ключ для context.WithValue
 const CtxKeyUserID ctxKey = "uid"
-
-// слайс структур декодирования JSON из POST запроса
-type DecodeBatchJSON []struct {
-	CorrelationID string `json:"correlation_id,omitempty"`
-	OriginalURL   string `json:"original_url,omitempty"`
-	ShortURL      string `json:"_"`
-}
-
-// структура кодирования JSON для POST Batch ответа
-
-type EncodeBatch struct {
-	CorrelationID string `json:"correlation_id,omitempty"`
-	ShortURL      string `json:"short_url,omitempty"`
-}
 
 // количество каналов для воркеров при установке пометку удаленный для sh_urls
 const WorkersCount = 30

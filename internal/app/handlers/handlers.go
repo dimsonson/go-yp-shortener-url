@@ -10,7 +10,9 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgerrcode"
 )
 
 // интерфейс методов бизнес логики
@@ -19,7 +21,7 @@ type Services interface {
 	ServiceGetShortURL(ctx context.Context, id string) (value string, del bool, err error)
 	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
-	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (ec []settings.EncodeBatch, err error)
+	ServiceCreateBatchShortURLs(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error)
 	ServiceDeleteURL(shURLs []([2]string))
 }
 
@@ -68,13 +70,13 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-	// создаем ключ и userid token
-	key, err := hn.service.ServiceCreateShortURL(ctx, b, userid)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	// создаем ключ и userid token
+	key, err := hn.service.ServiceCreateShortURL(ctx, b, userid)
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -149,7 +151,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -223,7 +225,7 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// не забываем освободить ресурс
 	defer cancel()
 	// десериализация тела запроса
-	dc := settings.DecodeBatchJSON{} //DecodeBatchJSON{}
+	dc := models.BatchRequest{} //DecodeBatchJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil {
 		log.Printf("Unmarshal error: %s", err)
@@ -238,7 +240,7 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)

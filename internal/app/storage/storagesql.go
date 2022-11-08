@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
@@ -31,29 +32,26 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 			)`
 	// записываем в хранилице userid, id, URL
 	_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, key, value, false)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		// создаем текст запроса
+		q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
+		// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в пременную existKey
+		err := ms.PostgreSQL.QueryRowContext(ctx, q, value).Scan(&existKey)
+		if err != nil {
+			log.Println("select PutToStorage SQL select request scan error:", err)
+			return "", err
+		}
+	}
 	if err != nil {
 		log.Println("insert SQL request PutToStorage scan error:", err)
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			switch pgErr.Code {
-			case pgerrcode.UniqueViolation:
-				// создаем текст запроса
-				q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
-				// запрос в хранилище на корокий URL по длинному URL,
-				// пишем результат запроса в пременную existKey
-				err := ms.PostgreSQL.QueryRowContext(ctx, q, value).Scan(&existKey)
-				if err != nil {
-					log.Println("select PutToStorage SQL select request scan error:", err)
-				}
-			}
-		}
+		return "", err
 	}
 	return existKey, err
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc settings.DecodeBatchJSON, userid string) (dcCorr settings.DecodeBatchJSON, err error) {
-
+func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
 	// объявляем транзакцию
 	tx, err := ms.PostgreSQL.Begin()
 	if err != nil {
@@ -61,7 +59,10 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc settings.DecodeBat
 		return nil, err
 	}
 	// если возникает ошибка, откатываем изменения
-	defer tx.Rollback()
+	if rollbackErr := tx.Rollback(); rollbackErr != nil {
+		log.Println("insert urls: unable to rollback: ", rollbackErr)
+		return nil, err
+	}
 	// готовим инструкцию
 	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3, $4)")
 	if err != nil {
@@ -71,36 +72,30 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc settings.DecodeBat
 	// закрываем инструкцию, когда она больше не нужна
 	defer stmt.Close()
 	// итерируем по слайсу структур
+	var pgErr *pgconn.PgError
 	for i, v := range dc {
 		// добавляем значения в транзакцию
 		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL, false)
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			// создаем текст запроса
+			q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
+			// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в поле структуры
+			err := ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
+			if err != nil {
+				log.Println("select SQL request PutBatchToStorage scan error:", err)
+				return nil, err
+			}
+		}
 		if err != nil {
 			log.Println("insert SQL request PutBatchToStorage scan error:", err)
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) {
-				switch pgErr.Code {
-				case pgerrcode.UniqueViolation:
-					// создаем текст запроса
-					q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
-					// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в пременную existKey
-					err := ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
-					if err != nil {
-						log.Println("PutBatchToStorage select SQL request scan error:", err)
-					}
-				default:
-					if rollbackErr := tx.Rollback(); rollbackErr != nil {
-						log.Println("insert urls: unable to rollback: ", rollbackErr)
-						return nil, err
-					}
-				}
-			}
+			return nil, err
 		}
 	}
 	// сохраняем изменения
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		log.Println("error PutBatchToStorage tx.Commit : ", err)
 	}
-	return dc, err
+	return dcCorr, err
 }
 
 // конструктор нового хранилища PostgreSQL
