@@ -43,7 +43,7 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 			return "", err
 		}
 	}
-	if err != nil && pgErr.Code != pgerrcode.UniqueViolation{
+	if err != nil && pgErr.Code != pgerrcode.UniqueViolation {
 		log.Println("insert SQL request PutToStorage scan error:", err)
 		return "", err
 	}
@@ -69,12 +69,10 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	defer stmt.Close()
 	// итерируем по слайсу структур
 	var pgErr *pgconn.PgError
-	fmt.Println("dc", dc)
 	for i, v := range dc {
 		// добавляем значения в транзакцию
 		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL, false)
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			fmt.Println("pgErr",pgErr.Code)
 			// создаем текст запроса
 			q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
 			// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в поле структуры
@@ -83,9 +81,8 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 				log.Println("select SQL request PutBatchToStorage scan error:", err)
 				return nil, err
 			}
-			fmt.Println("dc[i].ShortURL", dc[i].ShortURL, i)
 		}
-		if err != nil && pgErr.Code != pgerrcode.UniqueViolation{
+		if err != nil && pgErr.Code != pgerrcode.UniqueViolation {
 			log.Println("insert SQL request PutBatchToStorage scan error:", err)
 			return nil, err
 		}
@@ -94,7 +91,6 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	if err = tx.Commit(); err != nil {
 		log.Println("error PutBatchToStorage tx.Commit : ", err)
 	}
-	fmt.Println("dc2", dc)
 	return dc, err
 }
 
