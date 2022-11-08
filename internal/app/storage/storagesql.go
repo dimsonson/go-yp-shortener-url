@@ -58,6 +58,7 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 		log.Println("error PutBatchToStorage tx.Begin : ", err)
 		return nil, err
 	}
+	defer tx.Rollback()
 	// готовим инструкцию
 	stmt, err := ms.PostgreSQL.PrepareContext(ctx, "INSERT INTO sh_urls VALUES ($1, $2, $3, $4)")
 	if err != nil {
@@ -68,20 +69,23 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	defer stmt.Close()
 	// итерируем по слайсу структур
 	var pgErr *pgconn.PgError
+	fmt.Println("dc", dc)
 	for i, v := range dc {
 		// добавляем значения в транзакцию
 		_, err = stmt.ExecContext(ctx, userid, v.ShortURL, v.OriginalURL, false)
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			fmt.Println("pgErr",pgErr.Code)
 			// создаем текст запроса
 			q := `SELECT short_url FROM sh_urls WHERE long_url = $1`
 			// запрос в хранилище на корокий URL по длинному URL, пишем результат запроса в поле структуры
 			err := ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
 			if err != nil {
 				log.Println("select SQL request PutBatchToStorage scan error:", err)
-				return nil, err
+				//return nil, err
 			}
+			fmt.Println("dc[i].ShortURL", dc[i].ShortURL, i)
 		}
-		if err != nil {
+		if err != nil && pgErr.Code != pgerrcode.UniqueViolation{
 			log.Println("insert SQL request PutBatchToStorage scan error:", err)
 			return nil, err
 		}
@@ -90,12 +94,7 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	if err = tx.Commit(); err != nil {
 		log.Println("error PutBatchToStorage tx.Commit : ", err)
 	}
-	// если возникает ошибка, откатываем изменения
-	if rollbackErr := tx.Rollback(); rollbackErr != nil {
-		log.Println("insert urls: unable to rollback: ", rollbackErr)
-		return nil, err
-	}
-	return dcCorr, err
+	return dc, err
 }
 
 // конструктор нового хранилища PostgreSQL
