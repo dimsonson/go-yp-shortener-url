@@ -43,7 +43,7 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 			return "", err
 		}
 	}
-	if err != nil {
+	if err != nil && pgErr.Code != pgerrcode.UniqueViolation{
 		log.Println("insert SQL request PutToStorage scan error:", err)
 		return "", err
 	}
@@ -81,7 +81,7 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 			err := ms.PostgreSQL.QueryRowContext(ctx, q, v.OriginalURL).Scan(&dc[i].ShortURL)
 			if err != nil {
 				log.Println("select SQL request PutBatchToStorage scan error:", err)
-				//return nil, err
+				return nil, err
 			}
 			fmt.Println("dc[i].ShortURL", dc[i].ShortURL, i)
 		}
@@ -94,6 +94,7 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	if err = tx.Commit(); err != nil {
 		log.Println("error PutBatchToStorage tx.Commit : ", err)
 	}
+	fmt.Println("dc2", dc)
 	return dc, err
 }
 
