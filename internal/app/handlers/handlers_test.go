@@ -288,10 +288,6 @@ func TestHandlerGetUserURLs(t *testing.T) {
 			// создаём новый Recorder
 
 			w := httptest.NewRecorder()
-
-			//ctx := context.Background()
-			//ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
-			//defer cancel()
 			ctx := context.WithValue(req.Context(), settings.CtxKeyUserID, "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff") //tt.req.id) //"5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 			// определяем хендлер
 			s := storage.NewMapStorage(make(map[string]string), make(map[string]string), make(map[string]bool))
