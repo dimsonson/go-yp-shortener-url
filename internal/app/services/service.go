@@ -33,7 +33,7 @@ type Services struct {
 	base    string
 }
 
-// конструктор бизнес логики
+// конструктор бизнес  логики
 func NewService(s StorageProvider, base string) *Services {
 	return &Services{
 		s,
