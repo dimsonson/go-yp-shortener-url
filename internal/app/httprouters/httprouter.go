@@ -16,6 +16,8 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	// дополнительный middleware
 	rout.Use(middlewareGzip)
 	rout.Use(middlewareCookie)
+	// профилировщик
+	rout.Mount("/debug", middleware.Profiler())
 
 	// маршрут DELETE "/api/user/urls" пакетное удаление коротки ссылок
 	rout.Delete("/api/user/urls", hn.HandlerDeleteBatch)

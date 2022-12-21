@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -54,13 +55,28 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	// получаем значение userid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// читаем Body
-	bs, err := io.ReadAll(r.Body)
-	// обрабатываем ошибку
+	var bf bytes.Buffer
+	_, err := io.Copy(&bf, r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	b := string(bs)
+	b := bf.String()
+
+	// не эффективные варианты
+
+	//now := bufio.NewScanner(r.Body)
+	//now.Scan()
+	//b := now.Text()
+	//bs
+	//bs, err := io.ReadAll(r.Body)
+	// обрабатываем ошибку
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusInternalServerError)
+	//	return
+	//}
+	//b := string(bs)
+
 	// валидация URL
 	if !govalidator.IsURL(b) {
 		http.Error(w, "invalid URL received to make short one", http.StatusBadRequest)

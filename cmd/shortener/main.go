@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
 // переменные по умолчанию
@@ -23,7 +25,7 @@ const (
 )
 
 func main() {
-	//  получаем переменные 
+	//  получаем переменные
 	dlink, path, base, addr := flagsVars()
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
