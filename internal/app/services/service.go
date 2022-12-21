@@ -160,12 +160,12 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
 	fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
 	// создаем слайс возвращемых каналов
-	workerChs := make([]chan error, 0, settings.WorkersCount)
+	//workerChs := make([]chan error, 0, settings.WorkersCount)
 	// итерируем по входным каналам с значениями и предаем из них значения в воркеры
 	for _, fanOutCh := range fanOutChs {
-		wg.Add(1)
 		workerCh := make(chan error)
 		// запуск воркера
+		wg.Add(1)
 		go func(ctx context.Context, input chan [2]string, out chan error) {
 			// итерация по входящим каналам воркера, выполнения обращения в хранилище
 			for urls := range input {
@@ -176,23 +176,24 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 				default:
 					err := sr.storage.StorageDeleteURL(urls[0], urls[1])
 					// возвращаем значения из воркера в выходные каналы воркеров
-					out <- err
 					if err != nil {
-						// отмена контекста в случае если из хранилища пришла ошибка
-						cancel()
+						// логгируем в случае если из хранилища пришла ошибка
+						log.Printf("shorturl %s from %s can't be delited with delete request error: %v", urls[0], urls[1], ctx.Err())
 					}
+					out <- err
 				}
 			}
+			wg.Done()
 			close(workerCh)
 		}(ctx, fanOutCh, workerCh)
 		// добавляем выходные каналы воркеров в слайс
-		workerChs = append(workerChs, workerCh)
-		wg.Done()
+	//	workerChs = append(workerChs, workerCh)
+		//wg.Done()
 	}
 	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
-	for v := range fanIn(ctx, workerChs...) {
+/* 	for v := range fanIn(ctx, workerChs...) {
 		log.Println("delete request returned err: ", v)
-	}
+	} */
 	wg.Wait()
 }
 
@@ -239,7 +240,7 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 	}
 }
 
-// функция сбора значений из нескольких каналов в один
+/* // функция сбора значений из нескольких каналов в один
 func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 	outCh := make(chan error)
 	go func(ctx context.Context) {
@@ -263,4 +264,4 @@ func fanIn(ctx context.Context, inputChs ...chan error) chan error {
 		close(outCh)
 	}(ctx)
 	return outCh
-}
+} */
