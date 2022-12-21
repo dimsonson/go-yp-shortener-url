@@ -159,8 +159,6 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	}(ctx)
 	// здесь fanOut - получаем слайс каналов, в которые распределены значения из inputCh
 	fanOutChs := fanOut(ctx, inputCh, settings.WorkersCount)
-	// создаем слайс возвращемых каналов
-	//workerChs := make([]chan error, 0, settings.WorkersCount)
 	// итерируем по входным каналам с значениями и предаем из них значения в воркеры
 	for _, fanOutCh := range fanOutChs {
 		workerCh := make(chan error)
@@ -186,14 +184,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 			wg.Done()
 			close(workerCh)
 		}(ctx, fanOutCh, workerCh)
-		// добавляем выходные каналы воркеров в слайс
-	//	workerChs = append(workerChs, workerCh)
-		//wg.Done()
 	}
-	// здесь fanIn - итерируем по слайсу каналов из воркеров и выводим их содержание в консоль
-/* 	for v := range fanIn(ctx, workerChs...) {
-		log.Println("delete request returned err: ", v)
-	} */
 	wg.Wait()
 }
 
@@ -240,28 +231,3 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 	}
 }
 
-/* // функция сбора значений из нескольких каналов в один
-func fanIn(ctx context.Context, inputChs ...chan error) chan error {
-	outCh := make(chan error)
-	go func(ctx context.Context) {
-		wg := &sync.WaitGroup{}
-		select {
-		case <-ctx.Done():
-			log.Printf("stopped by cancel err : %v", ctx.Err())
-			return
-		default:
-			for _, inputCh := range inputChs {
-				wg.Add(1)
-				go func(inputCh chan error) {
-					defer wg.Done()
-					for item := range inputCh {
-						outCh <- item
-					}
-				}(inputCh)
-			}
-		}
-		wg.Wait()
-		close(outCh)
-	}(ctx)
-	return outCh
-} */
