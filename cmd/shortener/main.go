@@ -23,7 +23,7 @@ const (
 )
 
 func main() {
-	// получаем переменные
+	//  получаем переменные 
 	dlink, path, base, addr := flagsVars()
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
