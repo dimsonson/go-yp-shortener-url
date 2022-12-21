@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgerrcode"
 )
@@ -51,7 +51,7 @@ type EncodeJSON struct {
 
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
-	// получаем значение iserid из контекста запроса
+	// получаем значение userid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// читаем Body
 	bs, err := io.ReadAll(r.Body)
@@ -129,7 +129,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
@@ -227,7 +227,7 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// десериализация тела запроса
 	dc := models.BatchRequest{} //DecodeBatchJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
@@ -258,7 +258,7 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	// десериализация тела запроса
 	d := []string{}
 	err := json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid slice of short_urls received", http.StatusBadRequest)
 	}
