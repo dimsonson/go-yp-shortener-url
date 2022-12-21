@@ -17,7 +17,7 @@ type StorageFile struct {
 	UserID   map[string]string `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	DelURL   map[string]bool   `json:"_"`                // shorturl:deleted_url
-	pathName string
+	pathName string  
 }
 
 // метод записи id:url в хранилище
@@ -36,7 +36,7 @@ func (ms *StorageFile) StoragePut(ctx context.Context, key string, value string,
 	}
 	defer sfile.Close()
 	// кодирование в JSON
-	js, err := json.Marshal(&ms)
+	js, err := json.Marshal(ms)
 	if err != nil {
 		log.Println("JSON marshalling from struct error: ", err)
 		return //err
