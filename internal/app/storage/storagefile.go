@@ -32,7 +32,7 @@ func (ms *StorageFile) StoragePut(ctx context.Context, key string, value string,
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
 		log.Println("storage file opening error: ", err)
-		return //err
+		return "", err
 	}
 	defer sfile.Close()
 	// кодирование в JSON
