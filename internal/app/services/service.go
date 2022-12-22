@@ -139,7 +139,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	// создаем счетчик ожидания
-	wg := &sync.WaitGroup{}
+	var wg *sync.WaitGroup
 	// создаем выходной канал
 	inputCh := make(chan [2]string)
 	// горутина чтения массива и отправки ее значений в канал inputCh
@@ -196,7 +196,7 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 		log.Printf("stopped by cancel err : %v", ctx.Err())
 		return chs
 	default:
-		wg := &sync.WaitGroup{}
+		var wg *sync.WaitGroup
 		for i := 0; i < n; i++ {
 			ch := make(chan [2]string)
 			chs = append(chs, ch)
@@ -230,4 +230,3 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 		return chs
 	}
 }
-

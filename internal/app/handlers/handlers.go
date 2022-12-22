@@ -143,7 +143,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// десериализация тела запроса
-	dc := DecodeJSON{}
+	var dc DecodeJSON
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)
@@ -161,7 +161,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
 	key, err := hn.service.ServiceCreateShortURL(ctx, dc.URL, userid)
 	// сериализация тела запроса
-	ec := EncodeJSON{}
+	var ec EncodeJSON
 	ec.Result = hn.base + "/" + key
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
@@ -193,7 +193,7 @@ func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// создаем и заполняем слайс структур
-	UserURLs := []UserURL{}
+	var UserURLs []UserURL
 	for k, v := range userURLsMap {
 		k = hn.base + "/" + k
 		UserURLs = append(UserURLs, UserURL{k, v})
@@ -241,7 +241,7 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	// не забываем освободить ресурс
 	defer cancel()
 	// десериализация тела запроса
-	dc := models.BatchRequest{} //DecodeBatchJSON{}
+	var dc models.BatchRequest
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)
@@ -272,7 +272,7 @@ func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// десериализация тела запроса
-	d := []string{}
+	var d []string
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil && err != io.EOF {
 		log.Printf("Unmarshal error: %s", err)

@@ -48,7 +48,7 @@ func BenchmarkHandlers(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			h.HandlerGetUserURLs(w, req)
-		} 
+		}
 	})
 
 	b.Run("IncorrectReques1ts", func(b *testing.B) {
