@@ -11,7 +11,7 @@ import (
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	services "github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"

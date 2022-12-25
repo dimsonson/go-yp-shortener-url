@@ -16,15 +16,18 @@ import (
 
 // интерфейс методов хранилища
 type StorageProvider interface {
-	StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error)
-	StorageGet(ctx context.Context, key string) (value string, del bool, err error)
-	StorageLen(ctx context.Context) (lenn int)
-	StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error)
-	StorageLoadFromFile()
-	StorageOkPing(ctx context.Context) (bool, error)
-	StorageConnectionClose()
-	StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error)
-	StorageDeleteURL(key string, userid string) (err error)
+	Put(ctx context.Context, key string, value string, userid string) (existKey string, err error)
+	PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error)
+
+	Get(ctx context.Context, key string) (value string, del bool, err error)
+	GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error)
+
+	Delete(key string, userid string) (err error)
+
+	Ping(ctx context.Context) (bool, error)
+	Len(ctx context.Context) (lenn int)
+	LoadFromFile()
+	ConnectionClose()
 }
 
 // структура конструктора бизнес логики
@@ -42,16 +45,16 @@ func NewService(s StorageProvider, base string) *Services {
 }
 
 // метод создание пары id : URL
-func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, userid string) (key string, err error) {
+func (sr *Services) Put(ctx context.Context, url string, userid string) (key string, err error) {
 	// создаем и присваиваем значение короткой ссылки
 	key, err = RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
 	// добавляем уникальный префикс к ключу
-	key = fmt.Sprintf("%d%s", sr.storage.StorageLen(ctx), key)
+	key = fmt.Sprintf("%d%s", sr.storage.Len(ctx), key)
 	// создаем запись userid-ключ-значение в базе
-	existKey, err := sr.storage.StoragePut(ctx, key, url, userid)
+	existKey, err := sr.storage.Put(ctx, key, url, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		key = existKey
@@ -62,18 +65,18 @@ func (sr *Services) ServiceCreateShortURL(ctx context.Context, url string, useri
 }
 
 // метод создание пакета пар id : URL
-func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
+func (sr *Services) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
 		key, err := RandSeq(settings.KeyLeght)
 		if err != nil {
 			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
-		key = fmt.Sprintf("%d%s", sr.storage.StorageLen(ctx), key)
+		key = fmt.Sprintf("%d%s", sr.storage.Len(ctx), key)
 		dc[i].ShortURL = key
 	}
 	// пишем в базу и получаем слайс с обновленными shorturl в случае конфликта
-	dc, err = sr.storage.StoragePutBatch(ctx, dc, userid)
+	dc, err = sr.storage.PutBatch(ctx, dc, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), "23505"):
 		break
@@ -92,9 +95,9 @@ func (sr *Services) ServiceCreateBatchShortURLs(ctx context.Context, dc models.B
 }
 
 // метод возврат URL по id
-func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value string, del bool, err error) {
+func (sr *Services) Get(ctx context.Context, key string) (value string, del bool, err error) {
 	// используем метод хранилища
-	value, del, err = sr.storage.StorageGet(ctx, key)
+	value, del, err = sr.storage.Get(ctx, key)
 	if err != nil {
 		log.Println("request sr.storage.GetFromStorageid returned error (id not found):", err)
 	}
@@ -102,9 +105,9 @@ func (sr *Services) ServiceGetShortURL(ctx context.Context, key string) (value s
 }
 
 // метод возврат всех URLs по userid
-func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error) {
+func (sr *Services) GetBatch(ctx context.Context, userid string) (userURLsMap map[string]string, err error) {
 	// используем метод хранилища для получения map URLs по userid
-	userURLsMap, err = sr.storage.StorageURLsByUserID(ctx, userid)
+	userURLsMap, err = sr.storage.GetBatch(ctx, userid)
 	if err != nil {
 		log.Println("request sr.storage.URLsByUserID returned error:", err)
 		return userURLsMap, err
@@ -112,29 +115,13 @@ func (sr *Services) ServiceGetUserShortURLs(ctx context.Context, userid string) 
 	return userURLsMap, err
 }
 
-// функция генерации псевдо случайной последовательности знаков
-func RandSeq(n int) (random string, ok error) {
-	if n < 1 {
-		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
-		return "", err
-	}
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	random = string(b)
-	return random, nil
-}
-
-func (sr *Services) ServiceStorageOkPing(ctx context.Context) (ok bool, err error) {
-	ok, err = sr.storage.StorageOkPing(ctx)
+func (sr *Services)Ping(ctx context.Context) (ok bool, err error) {
+	ok, err = sr.storage.Ping(ctx)
 	return ok, err
 }
 
 // метод запись признака deleted_url
-func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
+func (sr *Services) Delete(shURLs [][2]string) {
 	// создаем контекст с отменой
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -172,7 +159,7 @@ func (sr *Services) ServiceDeleteURL(shURLs [][2]string) {
 					log.Printf("worker %s stopped by cancel err : %v", urls[0], ctx.Err())
 					return
 				default:
-					err := sr.storage.StorageDeleteURL(urls[0], urls[1])
+					err := sr.storage.Delete(urls[0], urls[1])
 					// возвращаем значения из воркера в выходные каналы воркеров
 					if err != nil {
 						// логгируем в случае если из хранилища пришла ошибка
@@ -229,4 +216,20 @@ func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string
 		wg.Wait()
 		return chs
 	}
+}
+
+// функция генерации псевдо случайной последовательности знаков
+func RandSeq(n int) (random string, ok error) {
+	if n < 1 {
+		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
+		return "", err
+	}
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	random = string(b)
+	return random, nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
@@ -30,7 +30,7 @@ func main() {
 	dlink, path, base, addr := flagsVars()
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
-	defer s.StorageConnectionClose()
+	defer s.ConnectionClose()
 	srvs := services.NewService(s, base)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
@@ -89,7 +89,7 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 		log.Println("server will start with data storage " + settings.ColorYellow + "in file and memory cash" + settings.ColorReset)
 		log.Printf("File storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
-		s.StorageLoadFromFile()
+		s.LoadFromFile()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url

@@ -15,7 +15,7 @@ type StorageMap struct {
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+func (ms *StorageMap) Put(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
@@ -34,7 +34,7 @@ func NewMapStorage(u map[string]string, s map[string]string, d map[string]bool) 
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
+func (ms *StorageMap) Get(ctx context.Context, key string) (value string, del bool, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {
@@ -45,13 +45,13 @@ func (ms *StorageMap) StorageGet(ctx context.Context, key string) (value string,
 }
 
 // метод определения длинны хранилища
-func (ms *StorageMap) StorageLen(ctx context.Context) (lenn int) {
+func (ms *StorageMap) Len(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+func (ms *StorageMap) GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
@@ -65,21 +65,21 @@ func (ms *StorageMap) StorageURLsByUserID(ctx context.Context, userid string) (u
 	return userURLs, err
 }
 
-func (ms *StorageMap) StorageLoadFromFile() {
+func (ms *StorageMap) LoadFromFile() {
 
 }
 
-func (ms *StorageMap) StorageOkPing(ctx context.Context) (bool, error) {
+func (ms *StorageMap) Ping(ctx context.Context) (bool, error) {
 
 	return true, nil
 }
 
-func (ms *StorageMap) StorageConnectionClose() {
+func (ms *StorageMap) ConnectionClose() {
 
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+func (ms *StorageMap) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
@@ -90,7 +90,7 @@ func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	return dc, err
 }
 
-func (ms *StorageMap) StorageDeleteURL(key string, userid string) (err error) {
+func (ms *StorageMap) Delete(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
 	return nil

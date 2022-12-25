@@ -20,21 +20,21 @@ func NewRouter(hn *handlers.Handler) chi.Router {
 	rout.Mount("/debug", middleware.Profiler())
 
 	// маршрут DELETE "/api/user/urls" пакетное удаление коротки ссылок
-	rout.Delete("/api/user/urls", hn.HandlerDeleteBatch)
+	rout.Delete("/api/user/urls", hn.Delete)
 	// маршрут POST "/api/shorten/batch" пакетная выдача коротких ссылок
-	rout.Post("/api/shorten/batch", hn.HandlerCreateBatchJSON)
+	rout.Post("/api/shorten/batch", hn.PutBatch)
 	// маршрут GET "/ping" проверка доступности PostgreSQL
-	rout.Get("/ping", hn.HandlerSQLping)
+	rout.Get("/ping", hn.Ping)
 	// маршрут GET "/api/user/urls"  получение ссылок пользователя
-	rout.Get("/api/user/urls", hn.HandlerGetUserURLs)
+	rout.Get("/api/user/urls", hn.GetBatch)
 	// маршрут GET "/{id}" получение ссылки по котороткой ссылке
-	rout.Get("/{id}", hn.HandlerGetShortURL)
+	rout.Get("/{id}", hn.Get)
 	// маршрут POST "/api/shorten" выдача короткой ссылки по JSON в теле запроса
-	rout.Post("/api/shorten", hn.HandlerCreateShortJSON)
+	rout.Post("/api/shorten", hn.PutJSON)
 	// маршрут POST "/" выдача короткой ссылки по текстовыму URL в теле запроса
-	rout.Post("/", hn.HandlerCreateShortURL)
+	rout.Post("/", hn.Put)
 	// возврат ошибки 400 для всех остальных запросов
-	rout.HandleFunc("/*", hn.IncorrectRequests)
+	rout.HandleFunc("/*", hn.IncorrectRequest)
 
 	return rout
 }
