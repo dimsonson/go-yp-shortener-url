@@ -26,8 +26,8 @@ type StorageProvider interface {
 
 	Ping(ctx context.Context) (bool, error)
 	Len(ctx context.Context) (lenn int)
-	LoadFromFile()
-	ConnectionClose()
+	Load()
+	Close()
 }
 
 // структура конструктора бизнес логики

@@ -30,7 +30,7 @@ func main() {
 	dlink, path, base, addr := flagsVars()
 	// инициализируем конструкторы
 	s := newStrorageProvider(dlink, path)
-	defer s.ConnectionClose()
+	defer s.Close()
 	srvs := services.NewService(s, base)
 	h := handlers.NewHandler(srvs, base)
 	r := httprouters.NewRouter(h)
@@ -89,7 +89,7 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 		log.Println("server will start with data storage " + settings.ColorYellow + "in file and memory cash" + settings.ColorReset)
 		log.Printf("File storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
-		s.LoadFromFile()
+		s.Load()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url

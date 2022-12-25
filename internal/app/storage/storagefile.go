@@ -88,7 +88,7 @@ func (ms *StorageFile) GetBatch(ctx context.Context, userid string) (userURLs ma
 	return userURLs, err
 }
 
-func (ms *StorageFile) LoadFromFile() {
+func (ms *StorageFile) Load() {
 	// загрузка базы из JSON
 	p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
@@ -120,7 +120,7 @@ func (ms *StorageFile) Ping(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (ms *StorageFile) ConnectionClose() {
+func (ms *StorageFile) Close() {
 
 }
 

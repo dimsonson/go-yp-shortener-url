@@ -65,7 +65,7 @@ func (ms *StorageMap) GetBatch(ctx context.Context, userid string) (userURLs map
 	return userURLs, err
 }
 
-func (ms *StorageMap) LoadFromFile() {
+func (ms *StorageMap) Load() {
 
 }
 
@@ -74,7 +74,7 @@ func (ms *StorageMap) Ping(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (ms *StorageMap) ConnectionClose() {
+func (ms *StorageMap) Close() {
 
 }
 

@@ -183,7 +183,7 @@ func (ms *StorageSQL) GetBatch(ctx context.Context, userid string) (userURLs map
 	return userURLs, err
 }
 
-func (ms *StorageSQL) LoadFromFile() {
+func (ms *StorageSQL) Load() {
 }
 
 // пинг хранилища для api/user/urls
@@ -196,7 +196,7 @@ func (ms *StorageSQL) Ping(ctx context.Context) (ok bool, err error) {
 }
 
 // метод закрытия совединения с SQL базой
-func (ms *StorageSQL) ConnectionClose() {
+func (ms *StorageSQL) Close() {
 	ms.PostgreSQL.Close()
 }
 
