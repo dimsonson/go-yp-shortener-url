@@ -61,7 +61,7 @@ func TestNewRouter(t *testing.T) {
 
 func Get(t *testing.T, ts *httptest.Server, method, path string) *http.Response {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: UidCookie})
+	req.AddCookie(&http.Cookie{Name: "token", Value: UIDCookie})
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func Get(t *testing.T, ts *httptest.Server, method, path string) *http.Response 
 
 func Put(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader("https://pkg.go.dev/"))
-	req.AddCookie(&http.Cookie{Name: "token", Value: UidCookie})
+	req.AddCookie(&http.Cookie{Name: "token", Value: UIDCookie})
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -83,7 +83,7 @@ func Put(t *testing.T, ts *httptest.Server, method, path string) (*http.Response
 func PutJSON(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, strings.NewReader(`{"url":"https://pkg.go.dev/io#Reader"}`))
 	require.NoError(t, err)
-	req.AddCookie(&http.Cookie{Name: "token", Value: UidCookie})
+	req.AddCookie(&http.Cookie{Name: "token", Value: UIDCookie})
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	respBody, err := ioutil.ReadAll(resp.Body)
