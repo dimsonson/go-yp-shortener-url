@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
@@ -61,6 +62,8 @@ func (sr *DeleteServices) Delete(shURLs [][2]string) {
 		go func(ctx context.Context, input chan [2]string, out chan error) {
 			// итерация по входящим каналам воркера, выполнения обращения в хранилище
 			for urls := range input {
+				// делаем паузу в соотвествии с Retry-After
+				<-time.After(settings.RequestsTimeout)
 				select {
 				case <-ctx.Done():
 					log.Printf("worker %s stopped by cancel err : %v", urls[0], ctx.Err())
