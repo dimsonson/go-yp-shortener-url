@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
@@ -17,16 +18,19 @@ type StorageFile struct {
 	UserID   map[string]string `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	DelURL   map[string]bool   `json:"_"`                // shorturl:deleted_url
-	pathName string  
+	pathName string
+	mu       sync.Mutex
 }
 
 // метод записи id:url в хранилище
 func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 
 	// записываем в хранилице userid, id, URL
+	ms.mu.Lock()
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
 	ms.DelURL[key] = false
+	ms.mu.Unlock()
 	existKey = key
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
