@@ -51,7 +51,7 @@ func TestNewRouter(t *testing.T) {
 	PutGzipOk, body := PutGzip(t, ts, http.MethodPost, "/")
 	assert.Equal(t, http.StatusCreated, PutGzipOk.StatusCode)
 	assert.Contains(t, body, base)
-	defer PutJSONok.Body.Close()
+	defer PutGzipOk.Body.Close()
 
 	GetZipNotOk := GetZip(t, ts, http.MethodGet, "/api/")
 	assert.Equal(t, http.StatusNotFound, GetZipNotOk.StatusCode)
