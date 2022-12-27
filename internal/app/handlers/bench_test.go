@@ -18,6 +18,8 @@ func BenchmarkHandlers(b *testing.B) {
 
 	h := NewPutHandler(s, "http://localhost:8080")
 
+	b.ReportAllocs()
+
 	b.Run("Put", func(b *testing.B) {
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://ya.ru"))
