@@ -19,7 +19,7 @@ type StorageFile struct {
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	DelURL   map[string]bool   `json:"_"`                // shorturl:deleted_url
 	pathName string
-	mu       sync.Mutex
+	mu       sync.RWMutex
 }
 
 // метод записи id:url в хранилище
