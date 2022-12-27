@@ -1,4 +1,4 @@
-package tests
+package handlers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/go-chi/chi/v5"
@@ -63,7 +63,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	h := handlers.NewGetHandler(s, "http://localhost:8080")
+	h := NewGetHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
@@ -73,6 +73,7 @@ func TestGet(t *testing.T) {
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", strings.TrimPrefix(tt.inputEndpoint, "/"))
+			// req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 			// запускаем сервер
 			h.Get(w, req)
@@ -128,7 +129,7 @@ func TestGetBatch(t *testing.T) {
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	h := handlers.NewGetHandler(s, "http://localhost:8080")
+	h := NewGetHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
@@ -137,6 +138,7 @@ func TestGetBatch(t *testing.T) {
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
+	
 			// запускаем сервер
 			h.GetBatch(w, req)
 			// проверяем код ответа

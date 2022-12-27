@@ -36,7 +36,7 @@ func (hn DeleteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	var d []string
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil && err != io.EOF {
-		log.Printf("Unmarshal error: %s", err)
+		log.Printf("unmarshal error: %s", err)
 		http.Error(w, "invalid slice of short_urls received", http.StatusBadRequest)
 	}
 	// создание и наполнение слайса массивов для передачи в fanout-fanin

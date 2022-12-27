@@ -38,8 +38,8 @@ func NewRouter(
 	rout.Post("/api/shorten", putHandler.PutJSON)
 	// маршрут POST "/" выдача короткой ссылки по текстовыму URL в теле запроса
 	rout.Post("/", putHandler.Put)
-	// возврат ошибки 400 для всех остальных запросов
-	rout.HandleFunc("/*", pingHandler.IncorrectRequest)
+
+	// возврат ошибки 404 для всех остальных запросов - роутер chi
 
 	return rout
 }

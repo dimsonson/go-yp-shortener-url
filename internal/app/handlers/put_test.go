@@ -1,4 +1,4 @@
-package tests
+package handlers
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +62,7 @@ func TestPut(t *testing.T) {
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	h := handlers.NewPutHandler(s, "http://localhost:8080")
+	h := NewPutHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,7 +104,7 @@ func TestPutJSON(t *testing.T) {
 		{
 			name:                  "Positive test - PutJSON - OK",
 			inputMetod:            http.MethodPost,
-			inputEndpoint:         "/",
+			inputEndpoint:         "/api/shorten",
 			inputBody:             `{"url":"https://pkg.go.dev/io#Reader"}`,
 			inputUserID:           "ok",
 			expectedStatusCode:    http.StatusCreated,
@@ -116,28 +115,28 @@ func TestPutJSON(t *testing.T) {
 		{
 			name:                  "Negativae test - PutJSON server error",
 			inputMetod:            http.MethodPost,
-			inputEndpoint:         "/",
+			inputEndpoint:         "/api/shorten",
 			inputBody:             `{"url":"https://pkg.go.dev/io#Reader"}`,
 			inputUserID:           "srv",
 			expectedStatusCode:    http.StatusInternalServerError,
-			expectedResponseBody:  "http://localhost:8080/",
+			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "application/json; charset=utf-8",
 		},
 		{
 			name:                  "Negativae test - PutJSON - notUniq",
 			inputMetod:            http.MethodPost,
-			inputEndpoint:         "/",
+			inputEndpoint:         "/api/shorten",
 			inputBody:             `{"url":"https://pkg.go.dev/io#Reader"}`,
 			inputUserID:           "notUniq",
 			expectedStatusCode:    http.StatusConflict,
-			expectedResponseBody:  "http://localhost:8080/",
+			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "application/json; charset=utf-8",
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	h := handlers.NewPutHandler(s, "http://localhost:8080")
+	h := NewPutHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
@@ -211,7 +210,7 @@ func TestPutBatch(t *testing.T) {
 		}, 
 	}
 	s := &servicemock.ServiceMock{}
-	h := handlers.NewPutHandler(s, "http://localhost:8080")
+	h := NewPutHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {

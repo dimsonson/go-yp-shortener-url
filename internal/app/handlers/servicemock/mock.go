@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/jackc/pgerrcode"
 )
 
@@ -50,7 +51,7 @@ func (s *ServiceMock) Get(ctx context.Context, id string) (value string, del boo
 }
 
 func (s *ServiceMock) GetBatch(ctx context.Context, userid string) (userURLsMap map[string]string, err error) {
-	kv := map[string]string{"xyz":"https://pkg.go.dev/io#Reader" }
+	kv := map[string]string{"xyz": "https://pkg.go.dev/io#Reader"}
 	switch userid {
 	case "ok":
 		return kv, nil
@@ -61,9 +62,15 @@ func (s *ServiceMock) GetBatch(ctx context.Context, userid string) (userURLsMap 
 }
 
 func (s *ServiceMock) Ping(ctx context.Context) (bool, error) {
+	userid := ctx.Value(settings.CtxKeyUserID).(string)
+	switch userid {
+	case "ok":
+		return true, nil
+	case "bad":
+		return false, errors.New("DB error")
+	}
 	return true, nil
 }
 
 func (s *ServiceMock) Delete(shURLs []([2]string)) {
-
 }

@@ -27,11 +27,6 @@ func NewPingHandler(s PingServiceProvider, base string) *PingHandler {
 	}
 }
 
-// обработка всех остальных запросов и возврат кода 400
-func (hn PingHandler) IncorrectRequest(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "request incorrect", http.StatusBadRequest)
-}
-
 // проверка доступности базы SQL
 func (hn PingHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
