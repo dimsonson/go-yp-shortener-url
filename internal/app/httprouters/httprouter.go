@@ -7,7 +7,12 @@ import (
 )
 
 // маршрутизатор запросов
-func NewRouter(handler *handlers.Handler) chi.Router {
+func NewRouter(
+	putHandler *handlers.PutHandler,
+	getHandler *handlers.GetHandler,
+	deleteHandler *handlers.DeleteHandler,
+	pingHandler *handlers.PingHandler) chi.Router {
+
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
@@ -20,21 +25,21 @@ func NewRouter(handler *handlers.Handler) chi.Router {
 	rout.Mount("/debug", middleware.Profiler())
 
 	// маршрут DELETE "/api/user/urls" пакетное удаление коротки ссылок
-	rout.Delete("/api/user/urls", handler.Delete)
+	rout.Delete("/api/user/urls", deleteHandler.Delete)
 	// маршрут POST "/api/shorten/batch" пакетная выдача коротких ссылок
-	rout.Post("/api/shorten/batch", handler.PutBatch)
+	rout.Post("/api/shorten/batch", putHandler.PutBatch)
 	// маршрут GET "/ping" проверка доступности PostgreSQL
-	rout.Get("/ping", handler.Ping)
+	rout.Get("/ping", pingHandler.Ping)
 	// маршрут GET "/api/user/urls"  получение ссылок пользователя
-	rout.Get("/api/user/urls", handler.GetBatch)
+	rout.Get("/api/user/urls", getHandler.GetBatch)
 	// маршрут GET "/{id}" получение ссылки по котороткой ссылке
-	rout.Get("/{id}", handler.Get)
+	rout.Get("/{id}", getHandler.Get)
 	// маршрут POST "/api/shorten" выдача короткой ссылки по JSON в теле запроса
-	rout.Post("/api/shorten", handler.PutJSON)
+	rout.Post("/api/shorten", putHandler.PutJSON)
 	// маршрут POST "/" выдача короткой ссылки по текстовыму URL в теле запроса
-	rout.Post("/", handler.Put)
+	rout.Post("/", putHandler.Put)
 	// возврат ошибки 400 для всех остальных запросов
-	rout.HandleFunc("/*", handler.IncorrectRequest)
+	rout.HandleFunc("/*", pingHandler.IncorrectRequest)
 
 	return rout
 }

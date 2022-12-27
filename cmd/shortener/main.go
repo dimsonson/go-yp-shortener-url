@@ -1,4 +1,4 @@
-// Стартовый пакет приложения.
+// Сервис выдачи коротких ссылок по API запросам.
 package main
 
 import (
@@ -17,7 +17,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
-// переменные по умолчанию
+// Константы по умолчанию.
 const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
@@ -26,21 +26,35 @@ const (
 )
 
 func main() {
-	//  получаем переменные
+	//  Получаем переменные из флагов или переменных оркужения.
 	dlink, path, base, addr := flagsVars()
-	// инициализируем конструкторы
+
+	// Инициализируем конструкторы.
+	// Конструктор хранилища.
 	s := newStrorageProvider(dlink, path)
 	defer s.Close()
-	srvs := services.NewService(s, base)
-	h := handlers.NewHandler(srvs, base)
-	r := httprouters.NewRouter(h)
-	// запускаем сервер
+	// Конструктор Put слоя.
+	svsPut := services.NewPutService(s, base)
+	hPut := handlers.NewPutHandler(svsPut, base)
+	// Конструктор Get слоя.
+	svsGet := services.NewGetService(s, base)
+	hGet := handlers.NewGetHandler(svsGet, base)
+	// Конструктор Delete слоя.
+	svsDel := services.NewDeleteService(s, base)
+	hDel := handlers.NewDeleteHandler(svsDel, base)
+	// Констуктор Ping слоя.
+	svsPing := services.NewPingService(s, base)
+	hPing := handlers.NewPingHandler(svsPing, base)
+	// Инциализация хендлеров.
+	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
+
+	// Запуск сервера.
 	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
 	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-// парсинг флагов и валидация переменных окружения
+// Парсинг флагов и валидация переменных окружения.
 func flagsVars() (dlink string, path string, base string, addr string) {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
@@ -76,7 +90,7 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 	return dlink, path, base, addr
 }
 
-// создание интерфейса хранилища
+// Инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
 func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {

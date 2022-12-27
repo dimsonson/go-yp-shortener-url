@@ -55,7 +55,7 @@ func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key 
 }
 
 // метод создание пакета пар id : URL
-func (sr *PutServices) ServiceCreateBatchShortURLs(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
+func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
 		key, err := RandSeq(settings.KeyLeght)

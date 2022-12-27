@@ -27,3 +27,4 @@ func (sr *PingServices) Ping(ctx context.Context) (ok bool, err error) {
 	ok, err = sr.storage.Ping(ctx)
 	return ok, err
 }
+ 
