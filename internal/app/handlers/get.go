@@ -78,7 +78,7 @@ func (hn GetHandler) GetBatch(w http.ResponseWriter, r *http.Request) {
 	var UserURLs []models.UserURL
 	for k, v := range userURLsMap {
 		k = hn.base + "/" + k
-		UserURLs = append(UserURLs, models.UserURL{k, v})
+		UserURLs = append(UserURLs, models.UserURL{ShortURL: k, OriginalURL: v})
 	}
 	// сериализация тела запроса
 	w.Header().Set("content-type", "application/json; charset=utf-8")
