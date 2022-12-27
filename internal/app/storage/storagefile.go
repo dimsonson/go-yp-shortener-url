@@ -30,7 +30,7 @@ func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
 	ms.DelURL[key] = false
-	
+	ms.mu.Unlock()
 	existKey = key
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
@@ -46,8 +46,11 @@ func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid
 		return //err
 	}
 	// запись в файл
-	sfile.Write(js)
-	ms.mu.Unlock()
+	_, err = sfile.Write(js)
+	if err != nil {
+		return "", err
+	}
+
 	return existKey, err
 }
 
