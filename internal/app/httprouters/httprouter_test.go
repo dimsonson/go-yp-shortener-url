@@ -46,7 +46,7 @@ func TestNewRouter(t *testing.T) {
 	PutJSONok, body := PutJSON(t, ts, http.MethodPost, "/api/shorten")
 	assert.Equal(t, http.StatusCreated, PutJSONok.StatusCode)
 	assert.Contains(t, body, base)
-	defer PutOk.Body.Close()
+	defer PutJSONok.Body.Close()
 	
 	PutGzipOk, body := PutGzip(t, ts, http.MethodPost, "/")
 	assert.Equal(t, http.StatusCreated, PutGzipOk.StatusCode)
