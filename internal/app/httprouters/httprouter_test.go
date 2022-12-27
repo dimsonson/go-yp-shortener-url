@@ -3,7 +3,7 @@ package httprouters_test
 import (
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,7 +33,6 @@ func TestNewRouter(t *testing.T) {
 	assert.Equal(t, http.StatusOK, GetOK.StatusCode)
 	defer GetOK.Body.Close()
 
-
 	GetNotOk := Get(t, ts, http.MethodPatch, "/")
 	assert.Equal(t, http.StatusMethodNotAllowed, GetNotOk.StatusCode)
 	defer GetNotOk.Body.Close()
@@ -47,7 +46,7 @@ func TestNewRouter(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, PutJSONok.StatusCode)
 	assert.Contains(t, body, base)
 	defer PutJSONok.Body.Close()
-	
+
 	PutGzipOk, body := PutGzip(t, ts, http.MethodPost, "/")
 	assert.Equal(t, http.StatusCreated, PutGzipOk.StatusCode)
 	assert.Contains(t, body, base)
@@ -78,7 +77,7 @@ func Put(t *testing.T, ts *httptest.Server, method, path string) (*http.Response
 	require.NoError(t, err)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	return resp, string(respBody)
@@ -90,7 +89,7 @@ func PutJSON(t *testing.T, ts *httptest.Server, method, path string) (*http.Resp
 	req.AddCookie(&http.Cookie{Name: "token", Value: UIDCookie})
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	return resp, string(respBody)
@@ -110,7 +109,7 @@ func PutGzip(t *testing.T, ts *httptest.Server, method, path string) (*http.Resp
 	req.Header.Set("Content-Encoding", "gzip")
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	return resp, string(respBody)
@@ -133,7 +132,7 @@ func GetZip(t *testing.T, ts *httptest.Server, method, path string) *http.Respon
 	return resp
 }
 
-func PutBatch(t *testing.T, ts *httptest.Server, method, path string) (*http.Response) {
+func PutBatch(t *testing.T, ts *httptest.Server, method, path string) *http.Response {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
 	_, err := w.Write([]byte("https://pkg.go.dev/"))
