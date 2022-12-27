@@ -31,9 +31,12 @@ func TestNewRouter(t *testing.T) {
 
 	GetOK := Get(t, ts, http.MethodGet, "/xyz")
 	assert.Equal(t, http.StatusOK, GetOK.StatusCode)
+	defer GetOK.Body.Close()
+
 
 	GetNotOk := Get(t, ts, http.MethodPatch, "/")
 	assert.Equal(t, http.StatusMethodNotAllowed, GetNotOk.StatusCode)
+	defer GetNotOk.Body.Close()
 
 	PutOk, body := Put(t, ts, http.MethodPost, "/")
 	assert.Equal(t, http.StatusCreated, PutOk.StatusCode)
@@ -43,15 +46,16 @@ func TestNewRouter(t *testing.T) {
 	PutJSONok, body := PutJSON(t, ts, http.MethodPost, "/api/shorten")
 	assert.Equal(t, http.StatusCreated, PutJSONok.StatusCode)
 	assert.Contains(t, body, base)
-	defer PutJSONok.Body.Close()
-
+	defer PutOk.Body.Close()
+	
 	PutGzipOk, body := PutGzip(t, ts, http.MethodPost, "/")
 	assert.Equal(t, http.StatusCreated, PutGzipOk.StatusCode)
 	assert.Contains(t, body, base)
-	defer PutGzipOk.Body.Close()
+	defer PutJSONok.Body.Close()
 
 	GetZipNotOk := GetZip(t, ts, http.MethodGet, "/api/")
 	assert.Equal(t, http.StatusNotFound, GetZipNotOk.StatusCode)
+	defer GetZipNotOk.Body.Close()
 
 	PutBatchOk := PutBatch(t, ts, "GET", "/api/user/urls")
 	assert.Equal(t, http.StatusOK, PutBatchOk.StatusCode)
