@@ -88,7 +88,7 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(hn.base + "/" + key))
 }
 
-// обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
+// обработка POST запроса с одним JSON URL в теле и возврат короткого URL JSON в теле
 func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -108,20 +108,20 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
-	key, err := hn.service.Put(ctx, dc.URL, userid)
-	// сериализация тела запроса
+	// струтктура сериализация тела запроса
 	var ec models.EncodeJSON
-	ec.Result = hn.base + "/" + key
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
-	//устанавливаем статус-код 201, 500 или 409
+	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
+	key, err := hn.service.Put(ctx, dc.URL, userid)
+	// устанавливаем статус-код 201, 500 или 409
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
 	default:
+		ec.Result = hn.base + "/" + key
 		w.WriteHeader(http.StatusCreated)
 	}
 	// пишем тело ответа
@@ -140,17 +140,15 @@ func (hn PutHandler) PutBatch(w http.ResponseWriter, r *http.Request) {
 	var dc models.BatchRequest
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
-		log.Printf("Unmarshal error: %s", err)
+		log.Printf("unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
-	}
-	// запрос на получение correlation_id  - original_url
-	ec, err := hn.service.PutBatch(ctx, dc, userid)
-	if err != nil {
-		log.Println(err) // подумать над обработкой
 	}
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
+
+	// запрос на получение correlation_id  - original_url
+	ec, err := hn.service.PutBatch(ctx, dc, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)

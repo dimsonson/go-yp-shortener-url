@@ -11,7 +11,7 @@ import (
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	services "github.com/dimsonson/go-yp-shortener-url/internal/app/service"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/go-chi/chi/v5"
@@ -31,7 +31,6 @@ func TestHandlerCreateShortURL(t *testing.T) {
 		endpoint string
 		body     string
 	}
-
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name string
@@ -53,6 +52,7 @@ func TestHandlerCreateShortURL(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
