@@ -11,7 +11,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-func Example_Put() {
+func Example_Put1() {
 /* 	var s Student
 	s.SetName("dima")
 	fmt.Println(s.Name)
@@ -24,7 +24,7 @@ func Example_Put() {
 	// Dima
 }
 
-func ExampleHandlers_Put() {
+func Example_Put() {
 	s := &servicemock.ServiceMock{}
 	h := NewPutHandler(s, "http://localhost:8080")
 
