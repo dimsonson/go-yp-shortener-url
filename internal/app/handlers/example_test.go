@@ -11,12 +11,12 @@ import (
 )
 
 func Example_Put() {
-	var s Student
+/* 	var s Student
 	s.SetName("dima")
 	fmt.Println(s.Name)
 
 	n := s.GetName()
-	fmt.Println(n)
+	fmt.Println(n) */
 
 	// Output:
 	// Dima
@@ -34,11 +34,11 @@ func ExampleHandlers_Put() {
 	// запускаем сервер
 	h.Put(w, req)
 
-	s.SetName("dima")
-	fmt.Println(s.Name)
+	
+	fmt.Println(w)
 
-	n := s.GetName()
-	fmt.Println(n)
+	
+	fmt.Println(w)
 
 	// Output:
 	// Dima
