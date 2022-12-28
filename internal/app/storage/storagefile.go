@@ -1,4 +1,3 @@
-// storage пакет хранилища.
 package storage
 
 import (

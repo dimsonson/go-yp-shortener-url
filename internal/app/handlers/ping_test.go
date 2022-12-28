@@ -58,7 +58,7 @@ func TestPing(t *testing.T) {
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
-			// запускаем сервер
+			// Запускаем хендлер.
 			h.Ping(w, req)
 			// проверяем код ответа
 			assert.Equal(t, tt.expectedStatusCode, w.Code)

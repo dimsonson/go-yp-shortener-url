@@ -74,7 +74,7 @@ func TestGet(t *testing.T) {
 			rctx.URLParams.Add("id", strings.TrimPrefix(tt.inputEndpoint, "/"))
 			// req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-			// запускаем сервер
+			// Запускаем хендлер.
 			h.Get(w, req)
 			// проверяем код ответа
 			assert.Equal(t, tt.expectedStatusCode, w.Code)
@@ -137,8 +137,7 @@ func TestGetBatch(t *testing.T) {
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
-
-			// запускаем сервер
+			// Запускаем хендлер.
 			h.GetBatch(w, req)
 			// проверяем код ответа
 			assert.Equal(t, tt.expectedStatusCode, w.Code)

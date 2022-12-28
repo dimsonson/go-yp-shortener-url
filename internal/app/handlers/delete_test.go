@@ -58,7 +58,7 @@ func TestDelete(t *testing.T) {
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
-			// Запускаем сервер.
+			// Запускаем хендлер.
 			h.Delete(w, req)
 			// Проверяем код ответа.
 			assert.Equal(t, tt.expectedStatusCode, w.Code)
