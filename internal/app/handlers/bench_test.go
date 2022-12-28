@@ -12,15 +12,15 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-// BenchmarkHandlers(b *testing.B) Бенчмарк хендлеров.
+// BenchmarkHandlers Бенчмарк хендлеров.
 func BenchmarkHandlers(b *testing.B) {
 	s := &servicemock.ServiceMock{}
 
 	h := NewPutHandler(s, "http://localhost:8080")
 
-	b.ReportAllocs()
-
+	
 	b.Run("Put", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://ya.ru"))
 		w := httptest.NewRecorder()
@@ -33,6 +33,7 @@ func BenchmarkHandlers(b *testing.B) {
 	})
 
 	b.Run("PutJSON", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"https://yandex.ru"}`))
 		w := httptest.NewRecorder()
@@ -45,6 +46,7 @@ func BenchmarkHandlers(b *testing.B) {
 	})
 
 	b.Run("PutBatch", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`[
 			{
@@ -72,6 +74,7 @@ func BenchmarkHandlers(b *testing.B) {
 	hG := NewGetHandler(s, "http://localhost:8080")
 
 	b.Run("GetBatch", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodGet, "/api/user/urls", strings.NewReader(`{"url":"https://yandex.ru"}`))
 		w := httptest.NewRecorder()
@@ -84,6 +87,7 @@ func BenchmarkHandlers(b *testing.B) {
 	})
 
 	b.Run("Get", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodGet, "/0124", nil)
 		w := httptest.NewRecorder()
@@ -98,6 +102,7 @@ func BenchmarkHandlers(b *testing.B) {
 	hD := NewDeleteHandler(s, "http://localhost:8080")
 
 	b.Run("Delete", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(`["0SNGmH", "1GSuBf", "4pLhqd", "4", "1GSuB33f"]`))
 		w := httptest.NewRecorder()
@@ -112,6 +117,7 @@ func BenchmarkHandlers(b *testing.B) {
 	hP := NewPingHandler(s, "http://localhost:8080")
 
 	b.Run("SQLping", func(b *testing.B) {
+		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка
 		req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 		w := httptest.NewRecorder()
