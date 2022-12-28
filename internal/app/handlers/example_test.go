@@ -1,6 +1,6 @@
 package handlers
 
- import (
+import (
 	"context"
 	"fmt"
 	"net/http"
@@ -10,19 +10,6 @@ package handlers
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
-
-//func Example_Put1() {
-/* 	var s Student
-	s.SetName("dima")
-	fmt.Println(s.Name)
-
-	n := s.GetName()
-	fmt.Println(n) */
-
-	// Output:
-	// Dima
-	// Dima
-//}
 
 func Example() {
 	s := &servicemock.ServiceMock{}
@@ -35,14 +22,8 @@ func Example() {
 	// запускаем сервер
 	h.Put(w, req)
 
-	
-	fmt.Println(w)
-
-	
-	fmt.Println(w)
+	fmt.Println(w.Code)
 
 	// Output:
-	// Dima
-	// Dima
+	// 201
 }
- 
