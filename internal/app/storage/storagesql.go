@@ -1,3 +1,4 @@
+// // storage пакет хранилища.
 package storage
 
 import (
@@ -182,6 +183,7 @@ func (ms *StorageSQL) GetBatch(ctx context.Context, userid string) (userURLs map
 	return userURLs, err
 }
 
+// Load метод загрузки хранилища в кеш при инциализации файлового хранилища.
 func (ms *StorageSQL) Load() {
 }
 
