@@ -1,3 +1,4 @@
+// storage пакет хранилища.
 package storage
 
 import (
@@ -13,7 +14,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
 
-// структура хранилища
+// StorageFile структура файлового хранилища.
 type StorageFile struct {
 	UserID   map[string]string `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
@@ -22,9 +23,8 @@ type StorageFile struct {
 	mu       sync.RWMutex
 }
 
-// метод записи id:url в хранилище
+// Put метод записи id:url в файловое хранилище.
 func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
-
 	// записываем в хранилице userid, id, URL
 	ms.mu.Lock()
 	ms.IDURL[key] = value
@@ -50,13 +50,11 @@ func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid
 		return "", err
 	}
 	ms.mu.Unlock()
-
 	return existKey, err
 }
 
-// конструктор нового хранилища JSON
+// NewFileStorage конструктор нового файлового хранилища.
 func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool, p string) *StorageFile {
-
 	return &StorageFile{
 		UserID:   u,
 		IDURL:    s,
@@ -65,7 +63,7 @@ func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool,
 	}
 }
 
-// метод получения записи из хранилища
+// Get метод получения записи из файлового хранилища.
 func (ms *StorageFile) Get(ctx context.Context, key string) (value string, del bool, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
@@ -75,13 +73,13 @@ func (ms *StorageFile) Get(ctx context.Context, key string) (value string, del b
 	return value, del, nil
 }
 
-// метод определения длинны хранилища
+// Len метод определения длинны файлового хранилища.
 func (ms *StorageFile) Len(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
-// метод отбора URLs по UserID
+// GetBatch метод отбора URLs по UserID.
 func (ms *StorageFile) GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 
 	userURLs = make(map[string]string)
@@ -96,12 +94,17 @@ func (ms *StorageFile) GetBatch(ctx context.Context, userid string) (userURLs ma
 	return userURLs, err
 }
 
+// Load метод загрузки хранилища в кеш при инциализации.
 func (ms *StorageFile) Load() {
 	// загрузка базы из JSON
 	p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
 	if os.IsNotExist(pathOk) {
-		os.MkdirAll(filepath.Dir(p), 0777)
+		err := os.MkdirAll(filepath.Dir(p), 0777)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		log.Printf("folder %s created\n", filepath.Dir(p))
 	}
 	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
@@ -123,16 +126,16 @@ func (ms *StorageFile) Load() {
 	}
 }
 
+// Ping метод проверки доступности SQL хранилища.
 func (ms *StorageFile) Ping(ctx context.Context) (bool, error) {
-
 	return true, nil
 }
 
+// Close метод закрытия соединения доступности SQL хранилища.
 func (ms *StorageFile) Close() {
-
 }
 
-// метод пакетной записи id:url в хранилище
+// PutBatch метод пакетной записи id:url в хранилище.
 func (ms *StorageFile) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
@@ -144,6 +147,7 @@ func (ms *StorageFile) PutBatch(ctx context.Context, dc models.BatchRequest, use
 	return dc, err
 }
 
+// Delete метод пометки записи в файловом хранилище как удаленной.
 func (ms *StorageFile) Delete(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true

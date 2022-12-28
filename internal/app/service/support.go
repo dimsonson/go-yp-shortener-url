@@ -1,18 +1,18 @@
 package service
 
-// интерфейс методов хранилища
+// SupportStorageProvider интерфейс обслуживающих методов хранилища.
 type SupportStorageProvider interface {
 	Load()
 	Close()
 }
 
-// структура конструктора бизнес логики
+// SupportServices структура конструктора ckjz Support бизнес логики обслуживающих методов хранилища.
 type SupportServices struct {
 	storage SupportStorageProvider
 	base    string
 }
 
-// конструктор бизнес  логики
+// NewSupportService конструктор бизнес  логики.
 func NewSupportService(s SupportStorageProvider, base string) *SupportServices {
 	return &SupportServices{
 		s,
@@ -20,10 +20,12 @@ func NewSupportService(s SupportStorageProvider, base string) *SupportServices {
 	}
 }
 
+// Close метод закрытия соединения с хранилищем.
 func (sr *SupportServices) Close() {
 	sr.storage.Close()
 }
 
+// Load метод загрузки из файлового хранилица.
 func (sr *SupportServices) Load() {
 	sr.storage.Load()
 }
