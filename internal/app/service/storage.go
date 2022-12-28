@@ -1,4 +1,4 @@
-package services
+package service
 
 // Единый интерфейс хранилища для упрощения его инциализации
 type StorageProvider interface {

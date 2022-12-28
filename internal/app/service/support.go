@@ -1,4 +1,4 @@
-package services
+package service
 
 // интерфейс методов хранилища
 type SupportStorageProvider interface {

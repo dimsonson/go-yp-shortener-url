@@ -13,7 +13,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	services "github.com/dimsonson/go-yp-shortener-url/internal/app/service"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
@@ -39,16 +39,16 @@ func main() {
 	s := newStrorageProvider(dlink, path)
 	defer s.Close()
 	// Конструктор Put слоя.
-	svsPut := services.NewPutService(s, base)
+	svsPut := service.NewPutService(s, base)
 	hPut := handlers.NewPutHandler(svsPut, base)
 	// Конструктор Get слоя.
-	svsGet := services.NewGetService(s, base)
+	svsGet := service.NewGetService(s, base)
 	hGet := handlers.NewGetHandler(svsGet, base)
 	// Конструктор Delete слоя.
-	svsDel := services.NewDeleteService(s, base)
+	svsDel := service.NewDeleteService(s, base)
 	hDel := handlers.NewDeleteHandler(svsDel, base)
 	// Констуктор Ping слоя.
-	svsPing := services.NewPingService(s, base)
+	svsPing := service.NewPingService(s, base)
 	hPing := handlers.NewPingHandler(svsPing, base)
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
@@ -96,7 +96,7 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 }
 
 // Инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
-func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
+func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
