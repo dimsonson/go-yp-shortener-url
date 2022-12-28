@@ -69,10 +69,12 @@ func (ms *StorageMap) GetBatch(ctx context.Context, userid string) (userURLs map
 func (ms *StorageMap) Load() {
 
 }
+
 // Ping метод проверки доступности SQL хранилища.
 func (ms *StorageMap) Ping(ctx context.Context) (bool, error) {
 	return true, nil
 }
+
 // Close метод закрытия соединения доступности SQL хранилища.
 func (ms *StorageMap) Close() {
 
@@ -89,6 +91,7 @@ func (ms *StorageMap) PutBatch(ctx context.Context, dc models.BatchRequest, user
 	}
 	return dc, err
 }
+
 // Delete метод пометки записи в хранилище в памяти как удаленной.
 func (ms *StorageMap) Delete(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
