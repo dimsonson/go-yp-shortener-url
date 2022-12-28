@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func TestPing(t *testing.T) {
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "",
 		},
-		 		{
+		{
 			name:                  "Negativae test - Ping - server error",
 			inputMetod:            http.MethodGet,
 			inputEndpoint:         "/ping",
@@ -47,8 +46,7 @@ func TestPing(t *testing.T) {
 			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "",
-		}, 
-
+		},
 	}
 	s := &servicemock.ServiceMock{}
 	h := NewPingHandler(s, "http://localhost:8080")

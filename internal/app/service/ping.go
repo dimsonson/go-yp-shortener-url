@@ -4,18 +4,18 @@ import (
 	"context"
 )
 
-// интерфейс методов хранилища
+// PingStorageProvider интерфейс методов хранилища.
 type PingStorageProvider interface {
 	Ping(ctx context.Context) (bool, error)
 }
 
-// структура конструктора бизнес логики
+// PingServices структура конструктора бизнес логики.
 type PingServices struct {
 	storage PingStorageProvider
 	base    string
 }
 
-// конструктор бизнес  логики
+// NewPingService конструктор бизнес  логики.
 func NewPingService(s PingStorageProvider, base string) *PingServices {
 	return &PingServices{
 		s,
@@ -23,8 +23,8 @@ func NewPingService(s PingStorageProvider, base string) *PingServices {
 	}
 }
 
+// Ping метод проверки достпности хранилища.
 func (sr *PingServices) Ping(ctx context.Context) (ok bool, err error) {
 	ok, err = sr.storage.Ping(ctx)
 	return ok, err
 }
- 

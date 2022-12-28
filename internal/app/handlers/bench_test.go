@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
@@ -18,7 +17,6 @@ func BenchmarkHandlers(b *testing.B) {
 
 	h := NewPutHandler(s, "http://localhost:8080")
 
-	
 	b.Run("Put", func(b *testing.B) {
 		b.ReportAllocs()
 		// конфигурируем аналоги http.Request и http.ResponseWriter для бенчмарка

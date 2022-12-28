@@ -1,3 +1,4 @@
+// service пакет слоя бизнес логики.
 package service
 
 import (
@@ -9,18 +10,18 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-// интерфейс методов хранилища
+// DeleteStorageProvider интерфейс методов хранилища.
 type DeleteStorageProvider interface {
 	Delete(key string, userid string) (err error)
 }
 
-// структура конструктора бизнес логики
+// DeleteServices структура конструктора бизнес логики.
 type DeleteServices struct {
 	storage DeleteStorageProvider
 	base    string
 }
 
-// конструктор бизнес  логики
+// NewDeleteService конструктор бизнес  логики.
 func NewDeleteService(s DeleteStorageProvider, base string) *DeleteServices {
 	return &DeleteServices{
 		s,
@@ -28,7 +29,7 @@ func NewDeleteService(s DeleteStorageProvider, base string) *DeleteServices {
 	}
 }
 
-// метод запись признака deleted_url
+// Delete метод записи признака deleted_url.
 func (sr *DeleteServices) Delete(shURLs [][2]string) {
 	// создаем контекст с отменой
 	ctx, cancel := context.WithCancel(context.Background())
@@ -85,7 +86,7 @@ func (sr *DeleteServices) Delete(shURLs [][2]string) {
 	wg.Wait()
 }
 
-// функция распределения значений из одного канала в несколько по методу раунд робин
+// fanOut функция распределения значений из одного канала в несколько по методу раунд робин.
 func fanOut(ctx context.Context, inputCh chan [2]string, n int) []chan [2]string {
 	chs := make([]chan [2]string, 0, n)
 	select {

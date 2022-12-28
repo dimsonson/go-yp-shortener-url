@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
@@ -52,18 +51,18 @@ func TestDelete(t *testing.T) {
 	s := &servicemock.ServiceMock{}
 	h := NewDeleteHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
-		// запускаем каждый тест
+		// Запускаем каждый тест.
 		t.Run(tt.name, func(t *testing.T) {
-			// Cоздание тестирующего запроса и рекордерю
+			// Cоздание тестирующего запроса и рекордер.
 			req := httptest.NewRequest(tt.inputMetod, tt.inputEndpoint, strings.NewReader(tt.inputBody))
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
-			// запускаем сервер
+			// Запускаем сервер.
 			h.Delete(w, req)
-			// проверяем код ответа
+			// Проверяем код ответа.
 			assert.Equal(t, tt.expectedStatusCode, w.Code)
-			// заголовок ответа
+			// Заголовок ответа.
 			assert.Contains(t, w.Header().Get(tt.expectedHeader), tt.expectedHeaderContent)
 		})
 	}

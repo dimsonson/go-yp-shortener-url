@@ -1,3 +1,4 @@
+// handlers пакет обработчиков http запросов.
 package handlers
 
 import (
@@ -9,18 +10,18 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-// интерфейс методов бизнес логики
+// DeleteServiceProvider интерфейс методов бизнес логики для слоя Delete.
 type DeleteServiceProvider interface {
 	Delete(shURLs []([2]string))
 }
 
-// структура для конструктура обработчика
+// DeleteHandler структура для конструктура обработчика.
 type DeleteHandler struct {
 	service DeleteServiceProvider
 	base    string
 }
 
-// конструктор обработчика
+// NewDeleteHandler конструктор обработчика.
 func NewDeleteHandler(s DeleteServiceProvider, base string) *DeleteHandler {
 	return &DeleteHandler{
 		s,
@@ -28,7 +29,7 @@ func NewDeleteHandler(s DeleteServiceProvider, base string) *DeleteHandler {
 	}
 }
 
-// обработка DELETE запроса с слайсом short_url в теле
+// Delete метод обработки DELETE запроса с слайсом short_url в теле
 func (hn DeleteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)

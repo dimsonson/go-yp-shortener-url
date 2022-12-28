@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/go-chi/chi/v5"
@@ -138,7 +137,7 @@ func TestGetBatch(t *testing.T) {
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
-	
+
 			// запускаем сервер
 			h.GetBatch(w, req)
 			// проверяем код ответа

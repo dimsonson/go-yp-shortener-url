@@ -1,3 +1,4 @@
+// servicemock пакет заглушек обращения хендлеров к сервисам.
 package servicemock
 
 import (
@@ -9,9 +10,11 @@ import (
 	"github.com/jackc/pgerrcode"
 )
 
+// ServiceMock структура заглушки обращения хендлеров к сервисам.
 type ServiceMock struct {
 }
 
+// Put метод реализованный для запросов через заглушку.
 func (s *ServiceMock) Put(ctx context.Context, url string, userid string) (key string, err error) {
 	switch userid {
 	case "ok":
@@ -25,6 +28,7 @@ func (s *ServiceMock) Put(ctx context.Context, url string, userid string) (key s
 	return "", nil
 }
 
+// PutBatch метод реализованный для запросов через заглушку.
 func (s *ServiceMock) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	switch userid {
 	case "ok":
@@ -38,6 +42,8 @@ func (s *ServiceMock) PutBatch(ctx context.Context, dc models.BatchRequest, user
 
 	return nil, nil
 }
+
+// Get метод реализованный для запросов через заглушку.
 func (s *ServiceMock) Get(ctx context.Context, id string) (value string, del bool, err error) {
 	switch id {
 	case "xyz":
@@ -50,6 +56,7 @@ func (s *ServiceMock) Get(ctx context.Context, id string) (value string, del boo
 	return "", true, err
 }
 
+// GetBatch метод реализованный для запросов через заглушку.
 func (s *ServiceMock) GetBatch(ctx context.Context, userid string) (userURLsMap map[string]string, err error) {
 	kv := map[string]string{"xyz": "https://pkg.go.dev/io#Reader"}
 	switch userid {
@@ -61,6 +68,7 @@ func (s *ServiceMock) GetBatch(ctx context.Context, userid string) (userURLsMap 
 	return nil, err
 }
 
+// Ping метод реализованный для запросов через заглушку.
 func (s *ServiceMock) Ping(ctx context.Context) (bool, error) {
 	userid := ctx.Value(settings.CtxKeyUserID).(string)
 	switch userid {
@@ -72,5 +80,6 @@ func (s *ServiceMock) Ping(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+// Delete метод реализованный для запросов через заглушку.
 func (s *ServiceMock) Delete(shURLs []([2]string)) {
 }

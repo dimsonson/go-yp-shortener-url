@@ -26,7 +26,7 @@ const (
 )
 
 func main() {
-	//  Получаем переменные из флагов или переменных оркужения.
+	// Получаем переменные из флагов или переменных оркужения.
 	dlink, path, base, addr := flagsVars()
 
 	// Инициализируем конструкторы.
@@ -54,7 +54,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-// Парсинг флагов и валидация переменных окружения.
+// flagsVars парсинг флагов и валидация переменных окружения.
 func flagsVars() (dlink string, path string, base string, addr string) {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
@@ -90,7 +90,7 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 	return dlink, path, base, addr
 }
 
-// Инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
+// newStrorageProvider инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
 func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {

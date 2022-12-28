@@ -15,19 +15,19 @@ import (
 	"github.com/jackc/pgerrcode"
 )
 
-// интерфейс методов бизнес логики
+// PutServiceProvider интерфейс методов бизнес логики слоя Put.
 type PutServiceProvider interface {
 	Put(ctx context.Context, url string, userid string) (key string, err error)
 	PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error)
 }
 
-// структура для конструктура обработчика
+// PutHandler структура для конструктура обработчика.
 type PutHandler struct {
 	service PutServiceProvider
 	base    string
 }
 
-// конструктор обработчика
+// NewPutHandler конструктор обработчика.
 func NewPutHandler(s PutServiceProvider, base string) *PutHandler {
 	return &PutHandler{
 		s,
@@ -35,7 +35,7 @@ func NewPutHandler(s PutServiceProvider, base string) *PutHandler {
 	}
 }
 
-// обработка POST запроса с text URL в теле и возврат короткого URL в теле
+// Put метод обработки POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	// получаем значение userid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -85,10 +85,15 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	}
 	// пишем тело ответа
-	w.Write([]byte(hn.base + "/" + key))
+	_, err = w.Write([]byte(hn.base + "/" + key))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 }
 
-// обработка POST запроса с одним JSON URL в теле и возврат короткого URL JSON в теле
+// PutJSON метод обработки POST запроса с одним JSON URL в теле и возврат короткого URL JSON в теле
 func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -125,10 +130,15 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	}
 	// пишем тело ответа
-	json.NewEncoder(w).Encode(ec)
+	err = json.NewEncoder(w).Encode(ec)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 }
 
-// обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
+// PutBatch метод обработки POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
 func (hn PutHandler) PutBatch(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -158,5 +168,10 @@ func (hn PutHandler) PutBatch(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	}
 	// пишем тело ответа
-	json.NewEncoder(w).Encode(ec)
+	err = json.NewEncoder(w).Encode(ec)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 }

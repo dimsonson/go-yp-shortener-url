@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
@@ -10,19 +11,19 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// интерфейс методов бизнес логики
+// GetServiceProvider интерфейс методов бизнес логики для слоя Get.
 type GetServiceProvider interface {
 	Get(ctx context.Context, id string) (value string, del bool, err error)
 	GetBatch(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 }
 
-// структура для конструктура обработчика
+// GetHandler структура для конструктура обработчика.
 type GetHandler struct {
 	service GetServiceProvider
 	base    string
 }
 
-// конструктор обработчика
+// NewGetHandler конструктор обработчика.
 func NewGetHandler(s GetServiceProvider, base string) *GetHandler {
 	return &GetHandler{
 		s,
@@ -30,7 +31,7 @@ func NewGetHandler(s GetServiceProvider, base string) *GetHandler {
 	}
 }
 
-// обработка GET запроса c id и редирект по полному URL
+// GetHandler метод обработки GET запроса c id и редирект по полному URL.
 func (hn GetHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// пролучаем id из URL через chi, проверяем наличие
 	key := chi.URLParam(r, "id")
@@ -56,11 +57,16 @@ func (hn GetHandler) Get(w http.ResponseWriter, r *http.Request) {
 		// перенаправление по ссылке
 		http.Redirect(w, r, value, http.StatusTemporaryRedirect)
 		// пишем тело ответа
-		w.Write([]byte(value))
+		_, err := w.Write([]byte(value))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
 	}
 }
 
-// обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
+// GetBatch метод обработки GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL.
 func (hn GetHandler) GetBatch(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
@@ -85,5 +91,10 @@ func (hn GetHandler) GetBatch(w http.ResponseWriter, r *http.Request) {
 	// устанавливаем статус-код 201
 	w.WriteHeader(http.StatusOK)
 	// сериализуем и пишем тело ответа
-	json.NewEncoder(w).Encode(UserURLs)
+	err = json.NewEncoder(w).Encode(UserURLs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 }

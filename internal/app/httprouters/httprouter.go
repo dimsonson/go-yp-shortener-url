@@ -1,3 +1,4 @@
+// httprouters - пакет роутера HTTP запросов.
 package httprouters
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// маршрутизатор запросов
+// NewRouter маршрутизатор запросов.
 func NewRouter(
 	putHandler *handlers.PutHandler,
 	getHandler *handlers.GetHandler,

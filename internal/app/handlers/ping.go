@@ -8,18 +8,18 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
-// интерфейс методов бизнес логики
+// PingServiceProvider интерфейс методов бизнес логики слоя Ping.
 type PingServiceProvider interface {
 	Ping(ctx context.Context) (bool, error)
 }
 
-// структура для конструктура обработчика
+// PingHandler структура для конструктура обработчика.
 type PingHandler struct {
 	service PingServiceProvider
 	base    string
 }
 
-// конструктор обработчика
+// NewPingHandler конструктор обработчика.
 func NewPingHandler(s PingServiceProvider, base string) *PingHandler {
 	return &PingHandler{
 		s,
@@ -27,7 +27,7 @@ func NewPingHandler(s PingServiceProvider, base string) *PingHandler {
 	}
 }
 
-// проверка доступности базы SQL
+// Ping метод проверки доступности базы SQL.
 func (hn PingHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
@@ -44,5 +44,10 @@ func (hn PingHandler) Ping(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		result = []byte("DB ping OK")
 	}
-	w.Write(result)
+	_, err = w.Write(result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 }

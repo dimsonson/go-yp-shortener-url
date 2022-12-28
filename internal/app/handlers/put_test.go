@@ -190,24 +190,24 @@ func TestPutBatch(t *testing.T) {
 			name:                  "Negativae test POST - PutBatch - server error",
 			inputMetod:            http.MethodPost,
 			inputEndpoint:         "/api/shorten/batch",
-			inputBody:              `[{"correlation_id": "05id", "original_url": "https://ya.ru/"}]`,
+			inputBody:             `[{"correlation_id": "05id", "original_url": "https://ya.ru/"}]`,
 			inputUserID:           "srv",
 			expectedStatusCode:    http.StatusInternalServerError,
 			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "application/json; charset=utf-8",
 		},
- 		{
+		{
 			name:                  "Negativae test POST - PutBatch - notUniq",
 			inputMetod:            http.MethodPost,
-			inputEndpoint:        "/api/shorten/batch",
-			inputBody:            `[{"correlation_id": "05id", "original_url": "https://ya.ru/"}]`,
+			inputEndpoint:         "/api/shorten/batch",
+			inputBody:             `[{"correlation_id": "05id", "original_url": "https://ya.ru/"}]`,
 			inputUserID:           "notUniq",
 			expectedStatusCode:    http.StatusConflict,
 			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
 			expectedHeaderContent: "application/json; charset=utf-8",
-		}, 
+		},
 	}
 	s := &servicemock.ServiceMock{}
 	h := NewPutHandler(s, "http://localhost:8080")
@@ -235,4 +235,3 @@ func TestPutBatch(t *testing.T) {
 		})
 	}
 }
-
