@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 
@@ -27,10 +28,10 @@ func ExampleHandlers_Put() {
 	s := &servicemock.ServiceMock{}
 	h := NewPutHandler(s, "http://localhost:8080")
 
-	req := httptest.NewRequest(tt.inputMetod, tt.inputEndpoint, strings.NewReader(tt.inputBody))
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://localhost:8080/0xyz"))
 	w := httptest.NewRecorder()
 	// Создание контекста id пользователя для передачи хендлером в сервис.
-	req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
+	req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, "ok"))
 	// запускаем сервер
 	h.Put(w, req)
 
