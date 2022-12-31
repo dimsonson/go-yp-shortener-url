@@ -35,10 +35,11 @@ func NewPutHandler(s PutServiceProvider, base string) *PutHandler {
 	}
 }
 
-// Put метод обработки POST запроса с text URL в теле и возврат короткого URL в теле
+// Put метод обработки POST запроса с text URL в теле и возврат короткого URL в теле.
 func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	// получаем значение userid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
+	
 	// читаем Body
 	var bf bytes.Buffer
 	_, err := io.Copy(&bf, r.Body)
@@ -53,7 +54,9 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	//now := bufio.NewScanner(r.Body)
 	//now.Scan()
 	//b := now.Text()
-	//bs
+
+	// не эффективные варианты чтения Body 2
+	
 	//bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	//if err != nil {

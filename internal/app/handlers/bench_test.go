@@ -23,7 +23,7 @@ func BenchmarkHandlers(b *testing.B) {
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://ya.ru"))
 		w := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff"))
-		// обнуляемтаймер бенчмарка и запукаем его
+		// обнуляем таймер бенчмарка и запукаем его
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			h.Put(w, req)

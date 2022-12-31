@@ -29,7 +29,7 @@ func NewDeleteHandler(s DeleteServiceProvider, base string) *DeleteHandler {
 	}
 }
 
-// Delete метод обработки DELETE запроса с слайсом short_url в теле
+// Delete метод обработки DELETE запроса с слайсом short_url в теле.
 func (hn DeleteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// получаем значение iserid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
