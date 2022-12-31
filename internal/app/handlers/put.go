@@ -39,7 +39,7 @@ func NewPutHandler(s PutServiceProvider, base string) *PutHandler {
 func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	// получаем значение userid из контекста запроса
 	userid := r.Context().Value(settings.CtxKeyUserID).(string)
-	
+
 	// читаем Body
 	var bf bytes.Buffer
 	_, err := io.Copy(&bf, r.Body)
@@ -56,7 +56,7 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	//b := now.Text()
 
 	// не эффективные варианты чтения Body 2
-	
+
 	//bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
 	//if err != nil {

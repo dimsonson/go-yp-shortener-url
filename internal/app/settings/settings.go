@@ -1,4 +1,4 @@
-// settings пакет настроек сервиса
+// settings пакет настроек сервиса.
 package settings
 
 import "time"
