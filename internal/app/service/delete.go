@@ -1,4 +1,4 @@
-// service пакет слоя бизнес логики.
+// Package service пакет слоя бизнес логики.
 package service
 
 import (

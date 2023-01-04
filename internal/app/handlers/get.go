@@ -31,7 +31,7 @@ func NewGetHandler(s GetServiceProvider, base string) *GetHandler {
 	}
 }
 
-// GetHandler метод обработки GET запроса c id и редирект по полному URL.
+// Get метод обработки GET запроса c id и редирект по полному URL.
 func (hn GetHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// пролучаем id из URL через chi, проверяем наличие
 	key := chi.URLParam(r, "id")

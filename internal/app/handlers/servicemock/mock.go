@@ -1,4 +1,4 @@
-// servicemock пакет заглушек обращения хендлеров к сервисам.
+// Package servicemock пакет заглушек обращения хендлеров к сервисам.
 package servicemock
 
 import (

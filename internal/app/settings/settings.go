@@ -1,4 +1,4 @@
-// settings пакет настроек сервиса.
+// Package settings пакет настроек сервиса.
 package settings
 
 import "time"
@@ -24,7 +24,7 @@ const SQLTableName = "sh_urls"
 // ctxKey тип для context.WithValue.
 type ctxKey string
 
-// ctxKey ключ для context.WithValue.
+// CtxKeyUserID ключ для context.WithValue.
 const CtxKeyUserID ctxKey = "uid"
 
 // WorkersCount количество каналов для воркеров при установке пометку удаленный для sh_urls.

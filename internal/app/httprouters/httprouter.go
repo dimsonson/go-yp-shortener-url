@@ -1,4 +1,4 @@
-// httprouters - пакет роутера HTTP запросов.
+// Package httprouters - пакет роутера HTTP запросов.
 package httprouters
 
 import (
