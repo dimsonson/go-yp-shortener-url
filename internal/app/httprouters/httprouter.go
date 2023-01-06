@@ -13,7 +13,6 @@ func NewRouter(
 	getHandler *handlers.GetHandler,
 	deleteHandler *handlers.DeleteHandler,
 	pingHandler *handlers.PingHandler) chi.Router {
-
 	// chi роутер
 	rout := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
