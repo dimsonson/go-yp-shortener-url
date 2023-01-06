@@ -1,3 +1,4 @@
+// Package storage пакет хранилища.
 package storage
 
 import (
@@ -14,14 +15,41 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-// структура хранилища
+// StorageSQL структура хранилища PostgreSQL.
 type StorageSQL struct {
 	PostgreSQL *sql.DB
 }
 
-// метод записи id:url в хранилище
-func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+// NewSQLStorage конструктор нового хранилища PostgreSQL.
+func NewSQLStorage(p string) *StorageSQL {
+	// создаем контекст и оснащаем его таймаутом
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
+	defer cancel()
+	// открываем базу данных
+	db, err := sql.Open("pgx", p)
+	if err != nil {
+		log.Println("database opening error:", settings.ColorRed, err, settings.ColorReset)
+	}
+	// создаем текст запроса
+	q := `CREATE TABLE IF NOT EXISTS sh_urls (
+		"userid" TEXT,
+		"short_url" TEXT NOT NULL UNIQUE,
+		"long_url" TEXT NOT NULL UNIQUE,
+		"deleted_url" BOOLEAN 
+		)`
+	// создаем таблицу в SQL базе, если не существует
+	_, err = db.ExecContext(ctx, q)
+	if err != nil {
+		log.Println("request NewSQLStorage to sql db returned error:", settings.ColorRed, err, settings.ColorReset)
+	}
+	return &StorageSQL{
+		PostgreSQL: db,
+	}
+}
 
+// Put метод записи id:url в хранилище PostgreSQL.
+func (ms *StorageSQL) Put(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// создаем текст запроса
 	q := `INSERT INTO sh_urls 
 			VALUES (
@@ -30,7 +58,7 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 			$3,
 			$4
 			)`
-	// записываем в хранилице userid, id, URL
+	// записываем в хранилице userid, id, URL PostgreSQL.
 	_, err = ms.PostgreSQL.ExecContext(ctx, q, userid, key, value, false)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -50,8 +78,8 @@ func (ms *StorageSQL) StoragePut(ctx context.Context, key string, value string, 
 	return existKey, err
 }
 
-// метод пакетной записи id:url в хранилище
-func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+// PutBatch метод пакетной записи id:url в хранилище PostgreSQL.
+func (ms *StorageSQL) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
 	// объявляем транзакцию
 	tx, err := ms.PostgreSQL.Begin()
 	if err != nil {
@@ -94,36 +122,8 @@ func (ms *StorageSQL) StoragePutBatch(ctx context.Context, dc models.BatchReques
 	return dc, err
 }
 
-// конструктор нового хранилища PostgreSQL
-func NewSQLStorage(p string) *StorageSQL {
-	// создаем контекст и оснащаем его таймаутом
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
-	defer cancel()
-	// открываем базу данных
-	db, err := sql.Open("pgx", p)
-	if err != nil {
-		log.Println("database opening error:", settings.ColorRed, err, settings.ColorReset)
-	}
-	// создаем текст запроса
-	q := `CREATE TABLE IF NOT EXISTS sh_urls (
-				"userid" TEXT,
-				"short_url" TEXT NOT NULL UNIQUE,
-				"long_url" TEXT NOT NULL UNIQUE,
-				"deleted_url" BOOLEAN 
-				)`
-	// создаем таблицу в SQL базе, если не существует
-	_, err = db.ExecContext(ctx, q)
-	if err != nil {
-		log.Println("request NewSQLStorage to sql db returned error:", settings.ColorRed, err, settings.ColorReset)
-	}
-	return &StorageSQL{
-		PostgreSQL: db,
-	}
-}
-
-// метод получения записи из хранилища
-func (ms *StorageSQL) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
+// Get метод получения записи из хранилища PostgreSQL.
+func (ms *StorageSQL) Get(ctx context.Context, key string) (value string, del bool, err error) {
 	// создаем текст запроса
 	q := `SELECT long_url, deleted_url FROM sh_urls WHERE short_url = $1`
 	// делаем запрос в SQL, получаем строку и пишем результат запроса в пременную value
@@ -135,8 +135,8 @@ func (ms *StorageSQL) StorageGet(ctx context.Context, key string) (value string,
 	return value, del, err
 }
 
-// метод определения длинны хранилища
-func (ms *StorageSQL) StorageLen(ctx context.Context) (lenn int) {
+// Len метод определения длинны хранилища PostgreSQL/
+func (ms *StorageSQL) Len(ctx context.Context) (lenn int) {
 	// создаем текст запроса
 	q := `SELECT COUNT (*) FROM sh_urls`
 	// делаем запрос в SQL, получаем строку
@@ -149,8 +149,8 @@ func (ms *StorageSQL) StorageLen(ctx context.Context) (lenn int) {
 	return lenn
 }
 
-// метод отбора URLs по UserID
-func (ms *StorageSQL) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+// GetBatch метод отбора URLs по UserID хранилища PostgreSQL.
+func (ms *StorageSQL) GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 	// получаем значение iserid из контекста
 	// userid := ctx.Value(settings.CtxKeyUserID).(string)
 	// создаем текст запроса
@@ -183,11 +183,12 @@ func (ms *StorageSQL) StorageURLsByUserID(ctx context.Context, userid string) (u
 	return userURLs, err
 }
 
-func (ms *StorageSQL) StorageLoadFromFile() {
+// Load метод загрузки хранилища в кеш при инциализации файлового хранилища.
+func (ms *StorageSQL) Load() {
 }
 
-// пинг хранилища для api/user/urls
-func (ms *StorageSQL) StorageOkPing(ctx context.Context) (ok bool, err error) {
+// Ping пинг хранилища для api/user/urls PostgreSQL.
+func (ms *StorageSQL) Ping(ctx context.Context) (ok bool, err error) {
 	err = ms.PostgreSQL.PingContext(ctx)
 	if err != nil {
 		return false, err
@@ -195,13 +196,13 @@ func (ms *StorageSQL) StorageOkPing(ctx context.Context) (ok bool, err error) {
 	return true, err
 }
 
-// метод закрытия совединения с SQL базой
-func (ms *StorageSQL) StorageConnectionClose() {
+// Close метод закрытия совединения с SQL базой PostgreSQL.
+func (ms *StorageSQL) Close() {
 	ms.PostgreSQL.Close()
 }
 
-// метод запись признака deleted_url
-func (ms *StorageSQL) StorageDeleteURL(key string, userid string) (err error) {
+// Delete метод запись признака deleted_url в SQL базе PostgreSQL.
+func (ms *StorageSQL) Delete(key string, userid string) (err error) {
 	q := `UPDATE sh_urls SET deleted_url = true WHERE short_url = $1 AND userid = $2`
 	// записываем в хранилице userid, id, URL
 	_, err = ms.PostgreSQL.Exec(q, key, userid)
