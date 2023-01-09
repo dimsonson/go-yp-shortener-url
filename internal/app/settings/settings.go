@@ -14,6 +14,9 @@ const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
 // timeout запроса
 const StorageTimeout = 5 * time.Second
 
+// начальный таймаут для горутин
+var RequestsTimeout = 500 * time.Millisecond
+
 // имя таблицы в базе PosgreSQL
 const SQLTableName = "sh_urls"
 
@@ -22,6 +25,24 @@ type ctxKey string
 
 // ключ для context.WithValue
 const CtxKeyUserID ctxKey = "uid"
+
+// слайс структур декодирования JSON из POST запроса
+type DecodeBatchJSON []struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	OriginalURL   string `json:"original_url,omitempty"`
+	ShortURL      string `json:"_"`
+}
+
+// структура кодирования JSON для POST Batch ответа
+
+type EncodeBatch struct {
+	CorrelationID string `json:"correlation_id,omitempty"`
+	ShortURL      string `json:"short_url,omitempty"`
+} 
+
+// длинна буфера при записи пакета url в SQL базу 
+// для 14 спринта
+const BufferBatchSQL int = 1000 
 
 // количество каналов для воркеров при установке пометку удаленный для sh_urls
 const WorkersCount = 30
@@ -35,3 +56,4 @@ const (
 	ColorBlue   = "\u001b[34m"
 	ColorReset  = "\u001b[0m"
 )
+

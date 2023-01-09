@@ -94,3 +94,4 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 	log.Println("server will start with data storage " + settings.ColorYellow + "in memory" + settings.ColorReset)
 	return s
 }
+
