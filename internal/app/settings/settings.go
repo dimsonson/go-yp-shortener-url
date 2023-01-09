@@ -14,6 +14,9 @@ const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
 // timeout запроса
 const StorageTimeout = 300000 * time.Second
 
+// начальный таймаут для горутин
+var RequestsTimeout = 500 * time.Millisecond
+
 // имя таблицы в базе PosgreSQL
 const SQLTableName = "sh_urls"
 
