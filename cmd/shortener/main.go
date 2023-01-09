@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +26,17 @@ const (
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
 
+// Глобальные переменные для использования при сборке - go run -ldflags "-X main.buildVersion=v0.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X main.buildCommit=final"  main.go.
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
+	// Вывод данных о версии, дате, коммите сборки.
+	fmt.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
+
 	// Получаем переменные из флагов или переменных оркужения.
 	dlink, path, base, addr := flagsVars()
 
