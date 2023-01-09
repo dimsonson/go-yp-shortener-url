@@ -22,19 +22,20 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 // структура для чтения зашифрованного тела запроса
 type gzipReader struct {
-	gzipReader io.Reader
+	gzipReader *gzip.Reader
 	gzipBody   io.ReadCloser
 }
 
 // метод для закрытия тела запроса
 func (r gzipReader) Close() error {
 	//закрываем gzipReader
+	r.gzipReader.Close()
+	//закрываем тело
 	return r.gzipBody.Close()
 }
 
 // метод для чтения зашифрованного тела запроса
 func (r gzipReader) Read(b []byte) (int, error) {
-	//
 	return r.gzipReader.Read(b)
 }
 
@@ -47,9 +48,10 @@ func middlewareGzip(next http.Handler) http.Handler {
 			gzR, err := gzip.NewReader(r.Body)
 			if err != nil {
 				log.Println("gzip error: ", err)
+				return
 			}
- 			r.Body = gzipReader{gzipReader: gzR, gzipBody: r.Body}
-			defer gzR.Close() 
+			defer gzR.Close()
+			r.Body = gzipReader{gzipReader: gzR, gzipBody: r.Body}
 			defer r.Body.Close()
 		}
 		// проверяем, что клиент поддерживает gzip-сжатие

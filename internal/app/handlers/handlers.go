@@ -10,16 +10,19 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgerrcode"
 )
 
 // интерфейс методов бизнес логики
 type Services interface {
-	ServiceCreateShortURL(ctx context.Context, url string) (key string, err error)
-	ServiceGetShortURL(ctx context.Context, id string) (value string, err error)
-	ServiceGetUserShortURLs(ctx context.Context) (UserURLsMap map[string]string, err error)
+	ServiceCreateShortURL(ctx context.Context, url string, userid string) (key string, err error)
+	ServiceGetShortURL(ctx context.Context, id string) (value string, del bool, err error)
+	ServiceGetUserShortURLs(ctx context.Context, userid string) (userURLsMap map[string]string, err error)
 	ServiceStorageOkPing(ctx context.Context) (bool, error)
-	ServiceCreateBatchShortURLs(ctx context.Context, dc settings.DecodeBatchJSON) (ec []settings.EncodeBatch, err error)
+	ServiceCreateBatchShortURLs(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error)
+	ServiceDeleteURL(shURLs []([2]string))
 }
 
 // структура для конструктура обработчика
@@ -48,6 +51,8 @@ type EncodeJSON struct {
 
 // обработка POST запроса с text URL в теле и возврат короткого URL в теле
 func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) {
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// читаем Body
 	bs, err := io.ReadAll(r.Body)
 	// обрабатываем ошибку
@@ -65,13 +70,13 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
-	// создаем ключ и userid token
-	key, err := hn.service.ServiceCreateShortURL(ctx, b)
 	//устанавливаем заголовок Content-Type
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	// создаем ключ и userid token
+	key, err := hn.service.ServiceCreateShortURL(ctx, b, userid)
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,8 +90,8 @@ func (hn Handler) HandlerCreateShortURL(w http.ResponseWriter, r *http.Request) 
 // обработка GET запроса c id и редирект по полному URL
 func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	// пролучаем id из URL через chi, проверяем наличие
-	id := chi.URLParam(r, "id")
-	if id == "" {
+	key := chi.URLParam(r, "id")
+	if key == "" {
 		http.Error(w, "userId is empty", http.StatusBadRequest)
 		return
 	}
@@ -94,17 +99,22 @@ func (hn Handler) HandlerGetShortURL(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// освобождаем ресурс
 	defer cancel()
+	// устанавливаем заголовок content-type
+	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	// получаем ссылку по id
-	value, err := hn.service.ServiceGetShortURL(ctx, id)
+	value, del, err := hn.service.ServiceGetShortURL(ctx, key)
 	if err != nil {
 		http.Error(w, "short URL not found", http.StatusBadRequest)
 	}
-	// устанавливаем заголовок content-type
-	w.Header().Set("content-type", "text/plain; charset=utf-8")
-	// перенаправление по ссылке
-	http.Redirect(w, r, value, http.StatusTemporaryRedirect)
-	// пишем тело ответа
-	w.Write([]byte(value))
+	if del {
+		// сообщаем что ссылка удалена
+		http.Error(w, "short URL is deleted", http.StatusGone)
+	} else {
+		// перенаправление по ссылке
+		http.Redirect(w, r, value, http.StatusTemporaryRedirect)
+		// пишем тело ответа
+		w.Write([]byte(value))
+	}
 }
 
 // обработка всех остальных запросов и возврат кода 400
@@ -114,7 +124,8 @@ func (hn Handler) IncorrectRequests(w http.ResponseWriter, r *http.Request) {
 
 // обработка POST запроса с JSON URL в теле и возврат короткого URL JSON в теле
 func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request) {
-
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// десериализация тела запроса
 	dc := DecodeJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
@@ -132,7 +143,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	// не забываем освободить ресурс
 	defer cancel()
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
-	key, err := hn.service.ServiceCreateShortURL(ctx, dc.URL)
+	key, err := hn.service.ServiceCreateShortURL(ctx, dc.URL, userid)
 	// сериализация тела запроса
 	ec := EncodeJSON{}
 	ec.Result = hn.base + "/" + key
@@ -140,7 +151,7 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -153,12 +164,14 @@ func (hn Handler) HandlerCreateShortJSON(w http.ResponseWriter, r *http.Request)
 
 // обработка GET запроса /api/user/urls c возвратом пользователю всех когда-либо сокращённых им URL
 func (hn Handler) HandlerGetUserURLs(w http.ResponseWriter, r *http.Request) {
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// получаем map всех URLs по usertoken
-	userURLsMap, err := hn.service.ServiceGetUserShortURLs(ctx)
+	userURLsMap, err := hn.service.ServiceGetUserShortURLs(ctx, userid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 		return
@@ -204,21 +217,22 @@ func (hn Handler) HandlerSQLping(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработка POST запроса с JSON batch в теле и возврат Batch JSON c короткими URL
-// посмотреть в будущем вариант записи через отдельный метод хранилища с стейтментами
 func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request) {
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
 	// наследуем контекcт запроса r *http.Request, оснащая его Timeout
 	ctx, cancel := context.WithTimeout(r.Context(), settings.StorageTimeout)
 	// не забываем освободить ресурс
 	defer cancel()
 	// десериализация тела запроса
-	dc := settings.DecodeBatchJSON{} //DecodeBatchJSON{}
+	dc := models.BatchRequest{} //DecodeBatchJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil {
 		log.Printf("Unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
 	// запрос на получение correlation_id  - original_url
-	ec, err := hn.service.ServiceCreateBatchShortURLs(ctx, dc)
+	ec, err := hn.service.ServiceCreateBatchShortURLs(ctx, dc, userid)
 	if err != nil {
 		log.Println(err) // подумать над обработкой
 	}
@@ -226,7 +240,7 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	//устанавливаем статус-код 201, 500 или 409
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -235,4 +249,28 @@ func (hn Handler) HandlerCreateBatchJSON(w http.ResponseWriter, r *http.Request)
 	}
 	// пишем тело ответа
 	json.NewEncoder(w).Encode(ec)
+}
+
+// обработка DELETE запроса с слайсом short_url в теле
+func (hn Handler) HandlerDeleteBatch(w http.ResponseWriter, r *http.Request) {
+	// получаем значение iserid из контекста запроса
+	userid := r.Context().Value(settings.CtxKeyUserID).(string)
+	// десериализация тела запроса
+	d := []string{}
+	err := json.NewDecoder(r.Body).Decode(&d)
+	if err != nil {
+		log.Printf("Unmarshal error: %s", err)
+		http.Error(w, "invalid slice of short_urls received", http.StatusBadRequest)
+	}
+	// создание и наполнение слайса массивов для передачи в fanout-fanin
+	var shURLs []([2]string)
+	for _, v := range d {
+		shURLs = append(shURLs, [2]string{v, userid})
+	}
+	// запуск сервиса внесения записей о удалении
+	go hn.service.ServiceDeleteURL(shURLs)
+	// устанавливаем заголовок Content-Type
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	// записываем статус-код 202
+	w.WriteHeader(http.StatusAccepted)
 }

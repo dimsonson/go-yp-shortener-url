@@ -4,53 +4,55 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
 
 // структура хранилища в памяти
 type StorageMap struct {
 	UserID map[string]string
 	IDURL  map[string]string
+	DelURL map[string]bool
 }
 
 // метод записи в хранилище в памяти
-func (ms *StorageMap) PutToStorage(ctx context.Context, key string, value string) (existKey string, err error) {
-	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+func (ms *StorageMap) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
+
 	ms.IDURL[key] = string(value)
 	ms.UserID[key] = userid
+	ms.DelURL[key] = false
 	existKey = key
 	return existKey, err
 }
 
 // конструктор хранилища в памяти
-func NewMapStorage(u map[string]string, s map[string]string) *StorageMap {
+func NewMapStorage(u map[string]string, s map[string]string, d map[string]bool) *StorageMap {
 	return &StorageMap{
 		UserID: u,
 		IDURL:  s,
+		DelURL: d,
 	}
 }
 
 // метод получения id:url из хранилища в памяти
-func (ms *StorageMap) GetFromStorage(ctx context.Context, key string) (value string, err error) {
+func (ms *StorageMap) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
 	// метод получения записи из хранилища
 	value, ok := ms.IDURL[key]
 	if !ok {
-		return "", fmt.Errorf("key %v not found", key)
+		return "", false, fmt.Errorf("key %v not found", key)
 	}
-	return value, nil
+	del = ms.DelURL[key]
+	return value, del, nil
 }
 
 // метод определения длинны хранилища
-func (ms *StorageMap) LenStorage(ctx context.Context) (lenn int) {
+func (ms *StorageMap) StorageLen(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
 // метод отбора URLs по UserID
-func (ms *StorageMap) URLsByUserID(ctx context.Context) (userURLs map[string]string, err error) {
-	// получаем значение iserid из контекста
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+func (ms *StorageMap) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
 		if v == userid {
@@ -63,19 +65,8 @@ func (ms *StorageMap) URLsByUserID(ctx context.Context) (userURLs map[string]str
 	return userURLs, err
 }
 
-func (ms *StorageMap) LoadFromFileToStorage() {
+func (ms *StorageMap) StorageLoadFromFile() {
 
-}
-
-// посик userid в хранилице
-func (ms *StorageMap) UserIDExist(ctx context.Context, userid string) bool {
-	// цикл по map поиск значения без ключа
-	for _, v := range ms.UserID {
-		if v == userid {
-			return true
-		}
-	}
-	return false
 }
 
 func (ms *StorageMap) StorageOkPing(ctx context.Context) (bool, error) {
@@ -88,12 +79,19 @@ func (ms *StorageMap) StorageConnectionClose() {
 }
 
 // метод пакетной записи id:url в хранилище
-func (ms *StorageMap) PutBatchToStorage(ctx context.Context, dc settings.DecodeBatchJSON) (dcCorr settings.DecodeBatchJSON, err error) {
-	userid := ctx.Value(settings.CtxKeyUserID).(string)
+func (ms *StorageMap) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL
 		ms.IDURL[v.ShortURL] = userid
 		ms.UserID[v.ShortURL] = v.OriginalURL
+		ms.DelURL[v.ShortURL] = false
 	}
 	return dc, err
+}
+
+func (ms *StorageMap) StorageDeleteURL(key string, userid string) (err error) {
+	ms.IDURL[key] = userid
+	ms.DelURL[key] = true
+	return nil
 }

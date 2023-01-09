@@ -20,9 +20,9 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	s := storage.NewMapStorage(make(map[string]string), make(map[string]string))
+	s := storage.NewMapStorage(make(map[string]string), make(map[string]string), make(map[string]bool))
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, settings.CtxKeyUserID , "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
+	// ctx = context.WithValue(ctx, settings.CtxKeyUserID , "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 	srvs := services.NewService(s, "http://localhost:8080")
 	h := handlers.NewHandler(srvs, "http://localhost:8080")
 	r := httprouters.NewRouter(h)
@@ -30,7 +30,7 @@ func TestNewRouter(t *testing.T) {
 	defer ts.Close()
 	ctx, cancel := context.WithTimeout(ctx, settings.StorageTimeout)
 	defer cancel()
-	s.PutToStorage(ctx, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf")
+	s.StoragePut(ctx, "xyz", "https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/assert#Containsf", "5e7cb52e-691d-4f46-bc1c-7ae1616a59ff")
 
 	CreateURLRequest, _ := CreateURLRequest(t, ts, "POST", "/")
 	assert.Equal(t, http.StatusCreated, CreateURLRequest.StatusCode)

@@ -6,7 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/jackc/pgconn v1.13.0
-	github.com/jackc/pgx/v5 v5.0.3
+	github.com/jackc/pgx/v5 v5.0.4
 	github.com/stretchr/testify v1.8.0
 )
 
@@ -28,6 +28,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

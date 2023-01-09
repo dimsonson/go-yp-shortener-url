@@ -12,7 +12,7 @@ const UserIDLeght int = 16 //значение должно быть больше
 const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
 
 // timeout запроса
-const StorageTimeout = 300000 * time.Second
+const StorageTimeout = 5 * time.Second
 
 // начальный таймаут для горутин
 var RequestsTimeout = 500 * time.Millisecond
@@ -22,6 +22,7 @@ const SQLTableName = "sh_urls"
 
 // тип для context.WithValue
 type ctxKey string
+
 // ключ для context.WithValue
 const CtxKeyUserID ctxKey = "uid"
 
@@ -42,3 +43,17 @@ type EncodeBatch struct {
 // длинна буфера при записи пакета url в SQL базу 
 // для 14 спринта
 const BufferBatchSQL int = 1000 
+=======
+// количество каналов для воркеров при установке пометку удаленный для sh_urls
+const WorkersCount = 30
+
+// константы цветового вывода в консоль
+const (
+	ColorBlack  = "\u001b[30m"
+	ColorRed    = "\u001b[31m"
+	ColorGreen  = "\u001b[32m"
+	ColorYellow = "\u001b[33m"
+	ColorBlue   = "\u001b[34m"
+	ColorReset  = "\u001b[0m"
+)
+
