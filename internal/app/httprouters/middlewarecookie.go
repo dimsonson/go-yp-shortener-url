@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -43,8 +42,8 @@ func middlewareCookie(next http.Handler) http.Handler {
 			userid = string(useridByte)
 		}
 		// наследуем контекст, оснащаем его Value
-		fmt.Println(userid)
-		ctx := context.WithValue(r.Context(), settings.CtxKeyUserID , userid)
+		log.Println(userid)
+		ctx := context.WithValue(r.Context(), settings.CtxKeyUserID, userid)
 		// отправляем контекст дальше
 		r = r.WithContext(ctx)
 		// передаем запрос
