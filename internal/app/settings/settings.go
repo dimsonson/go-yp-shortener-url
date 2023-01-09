@@ -43,7 +43,7 @@ type EncodeBatch struct {
 // длинна буфера при записи пакета url в SQL базу 
 // для 14 спринта
 const BufferBatchSQL int = 1000 
-=======
+
 // количество каналов для воркеров при установке пометку удаленный для sh_urls
 const WorkersCount = 30
 
