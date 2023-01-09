@@ -59,8 +59,6 @@ func main() {
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
 
-	//os.Exit(1)
-
 	// Запуск сервера.
 	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
 	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
