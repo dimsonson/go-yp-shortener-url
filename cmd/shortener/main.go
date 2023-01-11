@@ -1,20 +1,24 @@
+// Сервис выдачи коротких ссылок по API запросам.
 package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/services"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 )
 
-// переменные по умолчанию
+// Константы по умолчанию.
 const (
 	defServAddr    = "localhost:8080"
 	defBaseURL     = "http://localhost:8080"
@@ -22,22 +26,47 @@ const (
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
 
+// Глобальные переменные для использования при сборке - go run -ldflags "-X main.buildVersion=v0.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X main.buildCommit=final"  main.go.
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
-	//  получаем переменные 
+	// Вывод данных о версии, дате, коммите сборки.
+	fmt.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
+
+	// Получаем переменные из флагов или переменных оркужения.
 	dlink, path, base, addr := flagsVars()
-	// инициализируем конструкторы
+
+	// Инициализируем конструкторы.
+	// Конструктор хранилища.
 	s := newStrorageProvider(dlink, path)
-	defer s.StorageConnectionClose()
-	srvs := services.NewService(s, base)
-	h := handlers.NewHandler(srvs, base)
-	r := httprouters.NewRouter(h)
-	// запускаем сервер
+	defer s.Close()
+	// Конструктор Put слоя.
+	svcRand := &service.Rand{}
+	svsPut := service.NewPutService(s, base, svcRand)
+	hPut := handlers.NewPutHandler(svsPut, base)
+	// Конструктор Get слоя.
+	svsGet := service.NewGetService(s, base)
+	hGet := handlers.NewGetHandler(svsGet, base)
+	// Конструктор Delete слоя.
+	svsDel := service.NewDeleteService(s, base)
+	hDel := handlers.NewDeleteHandler(svsDel, base)
+	// Констуктор Ping слоя.
+	svsPing := service.NewPingService(s, base)
+	hPing := handlers.NewPingHandler(svsPing, base)
+	// Инциализация хендлеров.
+	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
+
+	// Запуск сервера.
 	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
 	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-// парсинг флагов и валидация переменных окружения
+// flagsVars парсинг флагов и валидация переменных окружения.
 func flagsVars() (dlink string, path string, base string, addr string) {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
@@ -73,8 +102,8 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 	return dlink, path, base, addr
 }
 
-// создание интерфейса хранилища
-func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
+// newStrorageProvider инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
+func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
@@ -86,7 +115,7 @@ func newStrorageProvider(dlink, path string) (s services.StorageProvider) {
 		log.Println("server will start with data storage " + settings.ColorYellow + "in file and memory cash" + settings.ColorReset)
 		log.Printf("File storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
-		s.StorageLoadFromFile()
+		s.Load()
 		return s
 	}
 	// если переменная path не валидна, то используем память для хранения id:url
