@@ -24,20 +24,22 @@ type PutStorageProvider interface {
 type PutServices struct {
 	storage PutStorageProvider
 	base    string
+	RandProvider
 }
 
 // NewPutService конструктор бизнес логики.
-func NewPutService(s PutStorageProvider, base string) *PutServices {
+func NewPutService(s PutStorageProvider, base string, rand RandProvider) *PutServices {
 	return &PutServices{
 		s,
 		base,
+		rand,
 	}
 }
 
 // Put метод создание пары id : URL.
 func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key string, err error) {
 	// создаем и присваиваем значение короткой ссылки
-	key, err = RandSeq(settings.KeyLeght)
+	key, err = sr.RandSeq(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}
@@ -58,7 +60,7 @@ func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key 
 func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
-		key, err := RandSeq(settings.KeyLeght)
+		key, err := sr.RandSeq(settings.KeyLeght)
 		if err != nil {
 			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
@@ -84,8 +86,14 @@ func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, use
 	return ec, err
 }
 
+type RandProvider interface {
+	RandSeq(n int) (random string, ok error)
+}
+
+type Rand struct{}
+
 // RandSeq функция генерации псевдо случайной последовательности знаков.
-func RandSeq(n int) (random string, ok error) {
+func (sr *Rand) RandSeq(n int) (random string, ok error) {
 	if n < 1 {
 		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
 		return "", err

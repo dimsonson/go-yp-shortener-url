@@ -45,7 +45,8 @@ func main() {
 	s := newStrorageProvider(dlink, path)
 	defer s.Close()
 	// Конструктор Put слоя.
-	svsPut := service.NewPutService(s, base)
+	svcRand := &service.Rand{}
+	svsPut := service.NewPutService(s, base, svcRand)
 	hPut := handlers.NewPutHandler(svsPut, base)
 	// Конструктор Get слоя.
 	svsGet := service.NewGetService(s, base)

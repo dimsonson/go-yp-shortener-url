@@ -49,7 +49,9 @@ func TestPut(t *testing.T) {
 		   		},*/
 	}
 	s := &storagemock.StorageMock{}
-	svc := service.NewPutService(s, "")
+	rand := &storagemock.RandMock{}
+	svc := service.NewPutService(s, "", rand)
+
 	ctx := context.Background()
 
 	for _, tt := range tests {
@@ -62,9 +64,9 @@ func TestPut(t *testing.T) {
 			// получаем и проверяем тело ответа
 			assert.Equal(t, tt.expectedError, err)
 			// проверка содержания строки в теле ответа
-/* 			assert.Containsf(t, string(key), tt.expectedResponseBody, "error message %s", "formatted")
-			// заголовок ответа
-			assert.Contains(t, (tt.expectedHeader), tt.expectedHeaderContent) */
+			/* 			assert.Containsf(t, string(key), tt.expectedResponseBody, "error message %s", "formatted")
+			   			// заголовок ответа
+			   			assert.Contains(t, (tt.expectedHeader), tt.expectedHeaderContent) */
 		})
 	}
 }

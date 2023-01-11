@@ -24,7 +24,7 @@ func (s *StorageMock) Put(ctx context.Context, key string, value string, userid 
 	   		return "", errors.New(pgerrcode.UniqueViolation)
 	   	}
 	*/
-	return "", nil
+	return "8xyz9k", nil
 }
 
 // PutBatch метод реализованный для запросов через заглушку.
@@ -86,7 +86,7 @@ func (s *StorageMock) Delete(key string, userid string) (err error) {
 
 func (ms *StorageMock) Len(ctx context.Context) (lenn int) {
 
-	return lenn
+	return 1
 
 }
 
@@ -95,4 +95,17 @@ func (ms *StorageMock) Load() {
 
 func (ms *StorageMock) Close() {
 
+}
+
+func (sr *StorageMock) RandSeq(n int) (random string, ok error) {
+	return "", ok
+}
+
+type RandMock struct {
+	StorageMock
+}
+
+
+func (sr *RandMock) RandSeq(n int) (random string, ok error) {
+	return "999", ok
 }
