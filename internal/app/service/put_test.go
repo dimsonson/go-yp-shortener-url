@@ -26,16 +26,7 @@ func TestPut(t *testing.T) {
 			expectedError: nil,
 		},
 		/* 		{
-		   			name:                  "Negativae test POST - Put long URL for short - server error",
-		   			inputMetod:            http.MethodPost,
-		   			inputEndpoint:         "/",
-		   			inputBody:             "https://pkg.go.dev/io#Reader",
-		   			inputUserID:           "srv",
-		   			expectedStatusCode:    http.StatusInternalServerError,
-		   			expectedResponseBody:  "http://localhost:8080/",
-		   			expectedHeader:        "Content-Type",
-		   			expectedHeaderContent: "text/plain; charset=utf-8",
-		   		},
+		
 		   		{
 		   			name:                  "Negativae test POST - Put long URL for short - notUniq",
 		   			inputMetod:            http.MethodPost,
