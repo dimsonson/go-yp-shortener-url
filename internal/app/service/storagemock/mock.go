@@ -86,7 +86,7 @@ func (s *StorageMock) Delete(key string, userid string) (err error) {
 
 func (ms *StorageMock) Len(ctx context.Context) (lenn int) {
 
-	return 1
+	return 8
 
 }
 
@@ -107,5 +107,5 @@ type RandMock struct {
 
 
 func (sr *RandMock) RandSeq(n int) (random string, ok error) {
-	return "999", ok
+	return "xyz9k", ok
 }
