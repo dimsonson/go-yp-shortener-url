@@ -84,28 +84,23 @@ func (s *StorageMock) Delete(key string, userid string) (err error) {
 	return err
 }
 
-func (ms *StorageMock) Len(ctx context.Context) (lenn int) {
+func (s *StorageMock) Len(ctx context.Context) (lenn int) {
 
 	return 8
 
 }
 
-func (ms *StorageMock) Load() {
+func (s *StorageMock) Load() {
 }
 
-func (ms *StorageMock) Close() {
+func (s *StorageMock) Close() {
 
-}
-
-func (sr *StorageMock) RandSeq(n int) (random string, ok error) {
-	return "", ok
 }
 
 type RandMock struct {
 	StorageMock
 }
 
-
-func (sr *RandMock) RandSeq(n int) (random string, ok error) {
+func (s *RandMock) RandSeq(n int) (random string, ok error) {
 	return "xyz9k", ok
 }
