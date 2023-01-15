@@ -58,13 +58,13 @@ func (s *StorageMock) Get(ctx context.Context, key string) (value string, del bo
 
 // GetBatch метод реализованный для запросов через заглушку.
 func (s *StorageMock) GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error) {
-		kv := map[string]string{"xyz": "https://pkg.go.dev/io#Reader"}
-	   	switch userid {
-	   	case "ok":
-	   		return kv, nil
-	   	case "bad":
-	   		return nil, errors.New("noContent")
-	   	} 
+	kv := map[string]string{"xyz": "https://pkg.go.dev/io#Reader"}
+	switch userid {
+	case "ok":
+		return kv, nil
+	case "bad":
+		return nil, errors.New("noContent")
+	}
 	return nil, err
 }
 
@@ -85,23 +85,17 @@ func (s *StorageMock) Delete(key string, userid string) (err error) {
 	return err
 }
 
+// Len метод реализованный для запросов через заглушку.
 func (s *StorageMock) Len(ctx context.Context) (lenn int) {
-
 	return 8
-
 }
 
-func (s *StorageMock) Load() {
-}
-
-func (s *StorageMock) Close() {
-
-}
-
+// RandSeq структура реализованная для запросов через заглушку.
 type RandMock struct {
 	StorageMock
 }
 
+// RandSeq метод реализованный для запросов через заглушку.
 func (s *RandMock) RandSeq(n int) (random string, ok error) {
 	return "xyz9k", ok
 }

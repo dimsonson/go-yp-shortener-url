@@ -86,10 +86,12 @@ func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, use
 	return ec, err
 }
 
+// RandProvider интерфейс для вызова метода генератора псевдо случайной последовательности знаков.
 type RandProvider interface {
 	RandSeq(n int) (random string, ok error)
 }
 
+// Rand структура для вызова метода генератора псевдо случайной последовательности знаков.
 type Rand struct{}
 
 // RandSeq функция генерации псевдо случайной последовательности знаков.
