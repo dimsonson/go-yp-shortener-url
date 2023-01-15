@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPut тест хендлера Put.
 func TestPut(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
@@ -88,6 +89,7 @@ func TestPut(t *testing.T) {
 	}
 }
 
+// TestPutJSON тест хендлера PutJSON.
 func TestPutJSON(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
@@ -162,6 +164,7 @@ func TestPutJSON(t *testing.T) {
 	}
 }
 
+// TestPutBatch тест хендлера PutBatch.
 func TestPutBatch(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {

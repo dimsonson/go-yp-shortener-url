@@ -18,6 +18,7 @@ import (
 
 var UIDCookie = "35356630393565302d363765312d343835642d623262622d3630356636326163613566640269ca7988629be7ae55e705ac7d2b5924b95dfc00c796ea5492e17c2bbcd3f7"
 
+// // TestNewRouter тест http роутера.
 func TestNewRouter(t *testing.T) {
 	svs := &servicemock.ServiceMock{}
 	base := "http://localhost:8080"

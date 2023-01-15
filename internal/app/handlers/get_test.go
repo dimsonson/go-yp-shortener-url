@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestGet тест хендлера Get
 func TestGet(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
@@ -91,6 +92,7 @@ func TestGet(t *testing.T) {
 	}
 }
 
+// TestGetBatch тест хендлера GetBatch
 func TestGetBatch(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {

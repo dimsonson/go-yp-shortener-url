@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestDelete тест хендлера Delete.
 func TestDelete(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {

@@ -15,6 +15,7 @@ import (
 
 var s = &servicemock.ServiceMock{}
 
+// ExamplePutHandler_Put пример для PutHandler.
 func ExamplePutHandler_Put() {
 	hPut := handlers.NewPutHandler(s, "http://localhost:8080")
 
@@ -46,6 +47,7 @@ func ExamplePutHandler_Put() {
 
 }
 
+// ExampleGetHandler_Get пример для GetHandler.
 func ExampleGetHandler_Get() {
 	hGet := handlers.NewGetHandler(s, "http://localhost:8080")
 
@@ -72,6 +74,7 @@ func ExampleGetHandler_Get() {
 	// 200
 }
 
+// ExampleDeleteHandler_Delete пример для DeleteHandler.
 func ExampleDeleteHandler_Delete() {
 	hDelete := handlers.NewDeleteHandler(s, "http://localhost:8080")
 

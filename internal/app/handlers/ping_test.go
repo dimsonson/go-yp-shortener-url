@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPing тест хендлера Ping.
 func TestPing(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
