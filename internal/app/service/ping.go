@@ -12,14 +12,12 @@ type PingStorageProvider interface {
 // PingServices структура конструктора бизнес логики.
 type PingServices struct {
 	storage PingStorageProvider
-	base    string
 }
 
 // NewPingService конструктор бизнес  логики.
-func NewPingService(s PingStorageProvider, base string) *PingServices {
+func NewPingService(s PingStorageProvider) *PingServices {
 	return &PingServices{
 		s,
-		base,
 	}
 }
 

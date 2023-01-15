@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
+	github.com/tommy-muehle/go-mnd/v2 v2.5.1 
 	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 )
 

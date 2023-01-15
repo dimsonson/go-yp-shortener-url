@@ -5,104 +5,89 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service/storagemock"
-	"github.com/jackc/pgerrcode"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPut(t *testing.T) {
+func TestGet(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name          string
 		inputURL      string
 		InputUserid   string
 		expectedKey   string
+		expectedDel   bool
 		expectedError error
 	}{
 		{
 			name:          "Positive test Put service level - OK",
 			inputURL:      "https://pkg.go.dev/io#Reader",
-			InputUserid:   "ok",
-			expectedKey:   "8xyz9k",
+			InputUserid:   "del",
+			expectedKey:   "",
+			expectedDel:   true,
 			expectedError: nil,
-		},
-		{
-			name:          "Negaive test Put service level - error UniqueViolation",
-			inputURL:      "https://pkg.go.dev/io#Reader",
-			InputUserid:   "notUniq",
-			expectedKey:   "8xyz1000k",
-			expectedError: errors.New(pgerrcode.UniqueViolation),
 		},
 		{
 			name:          "Negative test Put service level - Server error",
 			inputURL:      "https://pkg.go.dev/io#Reader",
-			InputUserid:   "srv",
+			InputUserid:   "bad",
 			expectedKey:   "",
-			expectedError: errors.New("server error"),
+			expectedDel:   false,
+			expectedError: errors.New("bad"),
 		},
 	}
 	s := &storagemock.StorageMock{}
-	rand := &storagemock.RandMock{}
-	svc := service.NewPutService(s, "", rand)
-
+	svc := service.NewGetService(s, "http://localhost:8080")
 	ctx := context.Background()
 
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := svc.Put(ctx, "", tt.InputUserid)
+			key, del, err := svc.Get(ctx, tt.InputUserid)
 			// проверяем
 			assert.Equal(t, tt.expectedKey, key)
 			// получаем
 			assert.Equal(t, tt.expectedError, err)
+			// проверяем
+			assert.Equal(t, tt.expectedDel, del)
 		})
 	}
 }
 
-func TestPutBatch(t *testing.T) {
+func TestGetBatch(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name          string
 		inputURL      string
 		InputUserid   string
-		expectedKey   []models.BatchResponse
+		expectedKey   map[string]string
+		expectedDel   bool
 		expectedError error
 	}{
 		{
 			name:          "Positive test Put service level - OK",
 			inputURL:      "https://pkg.go.dev/io#Reader",
 			InputUserid:   "ok",
-			expectedKey:   []models.BatchResponse{{CorrelationID: "05d", ShortURL: "http://localhost:8080/0xyz"}},
+			expectedKey:   map[string]string{"xyz": "https://pkg.go.dev/io#Reader"},
 			expectedError: nil,
 		},
 		{
-			name:          "Negaive test Put service level - error UniqueViolation",
-			inputURL:      "https://pkg.go.dev/io#Reader",
-			InputUserid:   "notUniq",
-			expectedKey:   nil,
-			expectedError: errors.New(pgerrcode.UniqueViolation),
-		},
-
-		{
 			name:          "Negative test Put service level - Server error",
 			inputURL:      "https://pkg.go.dev/io#Reader",
-			InputUserid:   "srv",
+			InputUserid:   "bad",
 			expectedKey:   nil,
-			expectedError: errors.New("server error"),
+			expectedError: errors.New("noContent"),
 		},
 	}
 	s := &storagemock.StorageMock{}
-	rand := &storagemock.RandMock{}
-	svc := service.NewPutService(s, "http://localhost:8080", rand)
-
+	svc := service.NewGetService(s, "http://localhost:8080")
 	ctx := context.Background()
 
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := svc.PutBatch(ctx, nil, tt.InputUserid)
+			key, err := svc.GetBatch(ctx, tt.InputUserid)
 			// проверяем
 			assert.Equal(t, tt.expectedKey, key)
 			// получаем

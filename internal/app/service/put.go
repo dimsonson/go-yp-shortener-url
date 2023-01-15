@@ -70,7 +70,7 @@ func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, use
 	// пишем в базу и получаем слайс с обновленными shorturl в случае конфликта
 	dc, err = sr.storage.PutBatch(ctx, dc, userid)
 	switch {
-	case err != nil && strings.Contains(err.Error(), "23505"):
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		break
 	case err != nil:
 		return nil, err

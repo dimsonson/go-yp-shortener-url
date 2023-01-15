@@ -9,14 +9,12 @@ type SupportStorageProvider interface {
 // SupportServices структура конструктора ckjz Support бизнес логики обслуживающих методов хранилища.
 type SupportServices struct {
 	storage SupportStorageProvider
-	base    string
 }
 
 // NewSupportService конструктор бизнес  логики.
 func NewSupportService(s SupportStorageProvider, base string) *SupportServices {
 	return &SupportServices{
 		s,
-		base,
 	}
 }
 

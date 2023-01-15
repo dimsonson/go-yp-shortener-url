@@ -55,7 +55,7 @@ func main() {
 	svsDel := service.NewDeleteService(s, base)
 	hDel := handlers.NewDeleteHandler(svsDel, base)
 	// Констуктор Ping слоя.
-	svsPing := service.NewPingService(s, base)
+	svsPing := service.NewPingService(s)
 	hPing := handlers.NewPingHandler(svsPing, base)
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
