@@ -3,7 +3,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -20,8 +19,8 @@ import (
 
 // Константы по умолчанию.
 const (
-	defServAddr    = "localhost:8080"
-	defBaseURL     = "http://localhost:8080"
+	defServAddr    = "localhost:443"
+	defBaseURL     = "http://localhost:443"
 	defStoragePath = "db/keyvalue.json"
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
@@ -35,7 +34,7 @@ var (
 
 func main() {
 	// Вывод данных о версии, дате, коммите сборки.
-	fmt.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
+	log.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
 
 	// Получаем переменные из флагов или переменных оркужения.
 	dlink, path, base, addr := flagsVars()
@@ -63,7 +62,10 @@ func main() {
 	// Запуск сервера.
 	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
 	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
-	log.Fatal(http.ListenAndServe(addr, r))
+	//log.Fatal(http.ListenAndServe(addr, r))
+	//log.Println(http.Serve(autocert.NewListener(addr), r))
+	log.Println(http.ListenAndServeTLS(addr, "cert.pem", "key.pem", r))
+	//tls.Listen()
 }
 
 // flagsVars парсинг флагов и валидация переменных окружения.

@@ -14,8 +14,10 @@ require (
 	honnef.co/go/tools v0.3.3
 )
 
+require golang.org/x/net v0.5.0 // indirect
+
 require (
-	github.com/tommy-muehle/go-mnd/v2 v2.5.1 
+	github.com/tommy-muehle/go-mnd/v2 v2.5.1
 	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 )
 
@@ -32,10 +34,10 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
