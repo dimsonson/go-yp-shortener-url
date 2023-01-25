@@ -15,12 +15,13 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // Константы по умолчанию.
 const (
-	defServAddr    = "localhost:443"
-	defBaseURL     = "http://localhost:443"
+	defServAddr    = "localhost:8080"
+	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
 )
@@ -37,7 +38,7 @@ func main() {
 	log.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
 
 	// Получаем переменные из флагов или переменных оркужения.
-	dlink, path, base, addr := flagsVars()
+	dlink, path, base, addr, tls := flagsVars()
 
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
@@ -61,20 +62,23 @@ func main() {
 
 	// Запуск сервера.
 	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
+	if tls {
+		log.Println("starting", settings.ColorBlue, "https", settings.ColorReset, "server on:", settings.ColorBlue, addr, settings.ColorReset)
+		log.Println(http.Serve(autocert.NewListener(addr), r))
+		return
+	}
 	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
-	//log.Fatal(http.ListenAndServe(addr, r))
-	//log.Println(http.Serve(autocert.NewListener(addr), r))
-	log.Println(http.ListenAndServeTLS(addr, "cert.pem", "key.pem", r))
-	//tls.Listen()
+	log.Println(http.ListenAndServe(addr, r))
 }
 
 // flagsVars парсинг флагов и валидация переменных окружения.
-func flagsVars() (dlink string, path string, base string, addr string) {
+func flagsVars() (dlink string, path string, base string, addr string, tls bool) {
 	// описываем флаги
-	addrFlag := flag.String("a", defServAddr, "HTTP Server address")
+	addrFlag := flag.String("a", defServAddr, "HTTP/HTTPS Server address")
 	baseFlag := flag.String("b", defBaseURL, "Base URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
 	dlinkFlag := flag.String("d", "", "Database DSN link")
+	tlsFlag := flag.Bool("s", false, "run HTTPS server")
 	// парсим флаги в переменные
 	flag.Parse()
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
@@ -101,7 +105,13 @@ func flagsVars() (dlink string, path string, base string, addr string) {
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
-	return dlink, path, base, addr
+	tlsEnv, ok := os.LookupEnv("ENABLE_HTTPS")
+	if ok || tlsEnv != "" || *tlsFlag {
+		tls = true
+		return dlink, path, base, addr, tls
+	}
+	log.Println("eviroment variable ENABLE_HTTPS is empty or has wrong value ", tlsEnv)
+	return dlink, path, base, addr, tls
 }
 
 // newStrorageProvider инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
@@ -115,7 +125,7 @@ func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	// иначе если есть path используем для хранения файл
 	if path != "" && (govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
 		log.Println("server will start with data storage " + settings.ColorYellow + "in file and memory cash" + settings.ColorReset)
-		log.Printf("File storage path: %s\n", path)
+		log.Printf("file storage path: %s\n", path)
 		s = storage.NewFileStorage(make(map[string]string), make(map[string]string), make(map[string]bool), path)
 		s.Load()
 		return s
