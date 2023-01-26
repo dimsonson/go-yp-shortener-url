@@ -105,6 +105,7 @@ func flagsVars() (dlink string, path string, base string, addr string, tls bool)
 		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
 		path = *pathFlag
 	}
+	//проверяем наличие флага или пременной окружения для старта в https (tls)
 	tlsEnv, ok := os.LookupEnv("ENABLE_HTTPS")
 	if ok || tlsEnv != "" || *tlsFlag {
 		tls = true
