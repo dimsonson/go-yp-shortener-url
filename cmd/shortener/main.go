@@ -115,7 +115,7 @@ func flagsVars() (cfg models.Config) {
 		cfg.ServerAddress = *addrFlag
 	}
 	// если нет флага или переменной окружения используем переменную по умолчанию
-	if *addrFlag == "" {
+	if !ok && *addrFlag == "" {
 		cfg.ServerAddress = defServAddr
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
@@ -128,7 +128,7 @@ func flagsVars() (cfg models.Config) {
 		cfg.BaseURL = *baseFlag
 	}
 	// если нет флага или переменной окружения используем переменную по умолчанию
-	if *baseFlag == "" {
+	if !ok && *baseFlag == "" {
 		cfg.BaseURL = defBaseURL
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
