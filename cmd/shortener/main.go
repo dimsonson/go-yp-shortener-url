@@ -4,7 +4,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -27,6 +26,7 @@ const (
 	defBaseURL     = "http://localhost:8080"
 	defStoragePath = "db/keyvalue.json"
 	defDBlink      = "postgres://postgres:1818@localhost:5432/dbo"
+	defHTTPS       = false
 )
 
 // Глобальные переменные для использования при сборке - go run -ldflags "-X main.buildVersion=v0.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X main.buildCommit=final"  main.go.
@@ -41,103 +41,124 @@ func main() {
 	log.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
 
 	// Получаем переменные из флагов или переменных оркужения в структуру models.Config.
-	dlink, path, base, addr, tls := flagsVars()
-
+	cfg := flagsVars()
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
-	s := newStrorageProvider(dlink, path)
+	s := newStrorageProvider(cfg.DatabaseDsn, cfg.FileStoragePath)
 	defer s.Close()
 	// Конструктор Put слоя.
 	svcRand := &service.Rand{}
-	svsPut := service.NewPutService(s, base, svcRand)
-	hPut := handlers.NewPutHandler(svsPut, base)
+	svsPut := service.NewPutService(s, cfg.BaseURL, svcRand)
+	hPut := handlers.NewPutHandler(svsPut, cfg.BaseURL)
 	// Конструктор Get слоя.
-	svsGet := service.NewGetService(s, base)
-	hGet := handlers.NewGetHandler(svsGet, base)
+	svsGet := service.NewGetService(s, cfg.BaseURL)
+	hGet := handlers.NewGetHandler(svsGet, cfg.BaseURL)
 	// Конструктор Delete слоя.
-	svsDel := service.NewDeleteService(s, base)
-	hDel := handlers.NewDeleteHandler(svsDel, base)
+	svsDel := service.NewDeleteService(s, cfg.BaseURL)
+	hDel := handlers.NewDeleteHandler(svsDel, cfg.BaseURL)
 	// Констуктор Ping слоя.
 	svsPing := service.NewPingService(s)
-	hPing := handlers.NewPingHandler(svsPing, base)
+	hPing := handlers.NewPingHandler(svsPing, cfg.BaseURL)
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
 
 	// Запуск сервера.
-	log.Println("base URL:", settings.ColorGreen, base, settings.ColorReset)
-	if tls {
-		log.Println("starting", settings.ColorBlue, "https", settings.ColorReset, "server on:", settings.ColorBlue, addr, settings.ColorReset)
-		log.Println(http.Serve(autocert.NewListener(addr), r))
+	log.Println("base URL:", settings.ColorGreen, cfg.BaseURL, settings.ColorReset)
+	if cfg.EnableHTTPS {
+		log.Println("starting", settings.ColorBlue, "https", settings.ColorReset, "server on:", settings.ColorBlue, cfg.ServerAddress, settings.ColorReset)
+		log.Println(http.Serve(autocert.NewListener(cfg.ServerAddress), r))
 		return
 	}
-	log.Println("starting server on:", settings.ColorBlue, addr, settings.ColorReset)
-	log.Println(http.ListenAndServe(addr, r))
+	log.Println("starting server on:", settings.ColorBlue, cfg.ServerAddress, settings.ColorReset)
+	log.Println(http.ListenAndServe(cfg.ServerAddress, r))
 }
 
 // flagsVars парсинг флагов и валидация переменных окружения.
-func flagsVars() (dlink string, path string, base string, addr string, tls bool) {
+func flagsVars() (cfg models.Config) {
 	// описываем флаги
-	addrFlag := flag.String("a", defServAddr, "HTTP/HTTPS Server address")
-	baseFlag := flag.String("b", defBaseURL, "dase URL")
-	pathFlag := flag.String("f", defStoragePath, "File storage path")
+	addrFlag := flag.String("a", "", "HTTP/HTTPS Server address")
+	baseFlag := flag.String("b", "", "dase URL")
+	pathFlag := flag.String("f", "", "File storage path")
 	dlinkFlag := flag.String("d", "", "database DSN link")
 	tlsFlag := flag.Bool("s", false, "run HTTPS server")
 	cfgFlag := flag.String("c", "", "config json file name")
-	fmt.Println("cfgFlag:", *cfgFlag)
 	// парсим флаги в переменные
 	flag.Parse()
-	var cfg models.Config
 	var ok bool
+	// используем структуру cfg models.Config для хранения параментров необходимых для запуска сервера
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
 	cfg.ConfigJSON, ok = os.LookupEnv("CONFIG")
 	if !ok && *cfgFlag != "" {
-		log.Println("eviroment variable CONFIG is empty or has wrong value ", addr)
+		log.Println("eviroment variable CONFIG is empty or has wrong value ", cfg.ConfigJSON)
 		cfg.ConfigJSON = *cfgFlag
 	}
+	//
 	if cfg.ConfigJSON != "" {
 		configFile, err := os.ReadFile(*cfgFlag)
 		if err != nil {
 			log.Println("reading config file error:", err)
 		}
-		err = json.Unmarshal(configFile, &cfg)
-		if err != nil {
-			log.Printf("unmarshal config file error: %s", err)
+		if err == nil {
+			err = json.Unmarshal(configFile, &cfg)
+			if err != nil {
+				log.Printf("unmarshal config file error: %s", err)
+			}
 		}
-		fmt.Println(cfg)
-	}
-
-	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	addr, ok = os.LookupEnv("SERVER_ADDRESS")
-	if !ok || !govalidator.IsURL(addr) || addr == "" {
-		log.Println("eviroment variable SERVER_ADDRESS is empty or has wrong value ", addr)
-		addr = *addrFlag
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	base, ok = os.LookupEnv("BASE_URL")
-	if !ok || !govalidator.IsURL(base) || base == "" {
-		log.Println("eviroment variable BASE_URL is empty or has wrong value ", base)
-		base = *baseFlag
+	ServerAddress, ok := os.LookupEnv("SERVER_ADDRESS")
+	if ok {
+		cfg.ServerAddress = ServerAddress
+	}
+	if (!ok || !govalidator.IsURL(cfg.ServerAddress) || cfg.ServerAddress == "") && *addrFlag != "" {
+		log.Println("eviroment variable SERVER_ADDRESS is empty or has wrong value ")
+		cfg.ServerAddress = *addrFlag
+	}
+	// если нет флага или переменной окружения используем переменную по умолчанию
+	if *addrFlag == "" {
+		cfg.ServerAddress = defServAddr
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	dlink, ok = os.LookupEnv("DATABASE_DSN")
-	if !ok {
-		log.Println("eviroment variable DATABASE_DSN is not exist", dlink)
-		dlink = *dlinkFlag
+	BaseURL, ok := os.LookupEnv("BASE_URL")
+	if ok {
+		cfg.BaseURL = BaseURL
+	}
+	if (!ok || !govalidator.IsURL(cfg.BaseURL) || cfg.BaseURL == "") && *baseFlag != "" {
+		log.Println("eviroment variable BASE_URL is empty or has wrong value ")
+		cfg.BaseURL = *baseFlag
+	}
+	// если нет флага или переменной окружения используем переменную по умолчанию
+	if *baseFlag == "" {
+		cfg.BaseURL = defBaseURL
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	path, ok = os.LookupEnv("FILE_STORAGE_PATH")
-	if !ok || (path == "" || !govalidator.IsUnixFilePath(path) || govalidator.IsWinFilePath(path)) {
-		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ", path)
-		path = *pathFlag
+	DatabaseDsn, ok := os.LookupEnv("DATABASE_DSN")
+	if ok {
+		cfg.DatabaseDsn = DatabaseDsn
 	}
-	//проверяем наличие флага или пременной окружения для старта в https (tls)
-	tlsEnv, ok := os.LookupEnv("ENABLE_HTTPS")
-	if ok || tlsEnv != "" || *tlsFlag {
-		tls = true
-		return dlink, path, base, addr, tls
+	if !ok && *dlinkFlag != "" {
+		log.Println("eviroment variable DATABASE_DSN is not exist")
+		cfg.DatabaseDsn = *dlinkFlag
 	}
-	log.Println("eviroment variable ENABLE_HTTPS is empty or has wrong value ", tlsEnv)
-	return dlink, path, base, addr, tls
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
+	FileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH")
+	if ok {
+		cfg.FileStoragePath = FileStoragePath
+	}
+	if !ok || (cfg.FileStoragePath == "" || !govalidator.IsUnixFilePath(cfg.FileStoragePath) || govalidator.IsWinFilePath(cfg.FileStoragePath)) {
+		log.Println("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ")
+		cfg.FileStoragePath = *pathFlag
+	}
+	// проверяем наличие флага или пременной окружения для старта в https (tls)
+	EnableHTTPS, ok := os.LookupEnv("ENABLE_HTTPS")
+	if ok || EnableHTTPS == "true" || *tlsFlag {
+		cfg.EnableHTTPS = true
+		return cfg
+	}
+	// если нет флага или переменной окружения используем переменную по умолчанию
+	cfg.EnableHTTPS = defHTTPS
+	log.Println("eviroment variable ENABLE_HTTPS is empty or has wrong value ")
+	return cfg
 }
 
 // newStrorageProvider инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.
