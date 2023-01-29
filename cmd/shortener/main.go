@@ -2,7 +2,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +14,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
@@ -37,7 +40,7 @@ func main() {
 	// Вывод данных о версии, дате, коммите сборки.
 	log.Printf("version=%s, date=%s, commit=%s\n", buildVersion, buildDate, buildCommit)
 
-	// Получаем переменные из флагов или переменных оркужения.
+	// Получаем переменные из флагов или переменных оркужения в структуру models.Config.
 	dlink, path, base, addr, tls := flagsVars()
 
 	// Инициализируем конструкторы.
@@ -75,14 +78,36 @@ func main() {
 func flagsVars() (dlink string, path string, base string, addr string, tls bool) {
 	// описываем флаги
 	addrFlag := flag.String("a", defServAddr, "HTTP/HTTPS Server address")
-	baseFlag := flag.String("b", defBaseURL, "Base URL")
+	baseFlag := flag.String("b", defBaseURL, "dase URL")
 	pathFlag := flag.String("f", defStoragePath, "File storage path")
-	dlinkFlag := flag.String("d", "", "Database DSN link")
+	dlinkFlag := flag.String("d", "", "database DSN link")
 	tlsFlag := flag.Bool("s", false, "run HTTPS server")
+	cfgFlag := flag.String("c", "", "config json file name")
+	fmt.Println("cfgFlag:", *cfgFlag)
 	// парсим флаги в переменные
 	flag.Parse()
+	var cfg models.Config
+	var ok bool
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
-	addr, ok := os.LookupEnv("SERVER_ADDRESS")
+	cfg.ConfigJSON, ok = os.LookupEnv("CONFIG")
+	if !ok && *cfgFlag != "" {
+		log.Println("eviroment variable CONFIG is empty or has wrong value ", addr)
+		cfg.ConfigJSON = *cfgFlag
+	}
+	if cfg.ConfigJSON != "" {
+		configFile, err := os.ReadFile(*cfgFlag)
+		if err != nil {
+			log.Println("reading config file error:", err)
+		}
+		err = json.Unmarshal(configFile, &cfg)
+		if err != nil {
+			log.Printf("unmarshal config file error: %s", err)
+		}
+		fmt.Println(cfg)
+	}
+
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
+	addr, ok = os.LookupEnv("SERVER_ADDRESS")
 	if !ok || !govalidator.IsURL(addr) || addr == "" {
 		log.Println("eviroment variable SERVER_ADDRESS is empty or has wrong value ", addr)
 		addr = *addrFlag
