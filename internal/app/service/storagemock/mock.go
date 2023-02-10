@@ -91,13 +91,13 @@ func (s *StorageMock) Len(ctx context.Context) (lenn int) {
 }
 
 // UsersQty метод получения количества уникальных пользователей.
-func (ms *StorageMock) UsersQty(ctx context.Context) (usersQty int, err error) {
+func (s *StorageMock) UsersQty(ctx context.Context) (usersQty int, err error) {
 
 	return usersQty, nil
 }
 
 // ShortsQty метод получения количества уникальных коротких ссылок.
-func (ms *StorageMock) ShortsQty(ctx context.Context) (shortsQty int, err error) {
+func (s *StorageMock) ShortsQty(ctx context.Context) (shortsQty int, err error) {
 
 	return shortsQty, nil
 }
