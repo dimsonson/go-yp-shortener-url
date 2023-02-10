@@ -574,3 +574,7 @@ jobs:
           github.head_ref == 'iter24'
         run: |
           echo "Not implemented"
+      - name: Build agent binary
+        run: |
+          cd cmd/agent
+          go build -o agent -buildvcs=false
