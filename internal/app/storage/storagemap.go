@@ -98,3 +98,27 @@ func (ms *StorageMap) Delete(key string, userid string) (err error) {
 	ms.DelURL[key] = true
 	return nil
 }
+
+// UsersQty метод получения количества уникальных пользователей.
+func (ms *StorageMap) UsersQty(ctx context.Context) (usersQty int, err error) {
+	ref := make(map[string]bool, len(ms.UserID))
+	for sh, uid := range ms.UserID {
+		if _, ok := ref[uid]; !ok {
+			if _, del := ms.DelURL[sh]; del {
+				ref[uid] = true
+				usersQty++
+			}
+		}
+	}
+	return usersQty, nil
+}
+
+// ShortsQty метод получения количества уникальных коротких ссылок.
+func (ms *StorageMap) ShortsQty(ctx context.Context) (shortsQty int, err error) {
+	for _, del := range ms.DelURL {
+		if !del {
+			shortsQty++
+		}
+	}
+	return shortsQty, nil
+}

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )
 
@@ -112,7 +113,8 @@ func BenchmarkHandlers(b *testing.B) {
 		}
 	})
 
-	hP := NewPingHandler(s, "http://localhost:8080")
+	var cfg models.Config
+	hP := NewPingHandler(s, cfg.TrustedCIDR)
 
 	b.Run("SQLping", func(b *testing.B) {
 		b.ReportAllocs()

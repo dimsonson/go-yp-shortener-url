@@ -24,20 +24,25 @@ func NewRouter(
 	// профилировщик
 	rout.Mount("/debug", middleware.Profiler())
 
-	// маршрут DELETE "/api/user/urls" пакетное удаление коротки ссылок
-	rout.Delete("/api/user/urls", deleteHandler.Delete)
-	// маршрут POST "/api/shorten/batch" пакетная выдача коротких ссылок
-	rout.Post("/api/shorten/batch", putHandler.PutBatch)
-	// маршрут GET "/ping" проверка доступности PostgreSQL
-	rout.Get("/ping", pingHandler.Ping)
 	// маршрут GET "/api/user/urls"  получение ссылок пользователя
 	rout.Get("/api/user/urls", getHandler.GetBatch)
 	// маршрут GET "/{id}" получение ссылки по котороткой ссылке
 	rout.Get("/{id}", getHandler.Get)
+
+	// мапршрут GET /api/internal/stats для получеyия кол-ва shorturls и users
+	rout.Get("/api/internal/stats", pingHandler.Stat)
+	// маршрут GET "/ping" проверка доступности PostgreSQL
+	rout.Get("/ping", pingHandler.Ping)
+
+	// маршрут POST "/api/shorten/batch" пакетная выдача коротких ссылок
+	rout.Post("/api/shorten/batch", putHandler.PutBatch)
 	// маршрут POST "/api/shorten" выдача короткой ссылки по JSON в теле запроса
 	rout.Post("/api/shorten", putHandler.PutJSON)
 	// маршрут POST "/" выдача короткой ссылки по текстовыму URL в теле запроса
 	rout.Post("/", putHandler.Put)
+
+	// маршрут DELETE "/api/user/urls" пакетное удаление коротки ссылок
+	rout.Delete("/api/user/urls", deleteHandler.Delete)
 
 	// возврат ошибки 404 для всех остальных запросов - роутер chi
 

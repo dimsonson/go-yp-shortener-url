@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
 )
@@ -50,7 +51,8 @@ func TestPing(t *testing.T) {
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	h := NewPingHandler(s, "http://localhost:8080")
+	var cfg models.Config
+	h := NewPingHandler(s, cfg.TrustedCIDR)
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {

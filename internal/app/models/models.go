@@ -1,6 +1,8 @@
 // Package models пакет моделей структур используемых в различных пакетах.
 package models
 
+import "net"
+
 // BatchRequest слайс структур декодирования JSON из POST запроса.
 type BatchRequest []struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
@@ -33,10 +35,18 @@ type UserURL struct {
 // Config структура конфигурации сервиса, при запуске сервиса с флагом -c/config
 // и отсутствии иных флагов и переменных окружения заполняется из файла указанного в этом флаге или переменной окружения CONFIG.
 type Config struct {
-	ServerAddress   string `json:"server_address"`
-	BaseURL         string `json:"base_url"`
-	FileStoragePath string `json:"file_storage_path"`
-	DatabaseDsn     string `json:"database_dsn"`
-	EnableHTTPS     bool   `json:"enable_https"`
-	ConfigJSON      string `json:"-"`
+	ServerAddress   string     `json:"server_address"`
+	BaseURL         string     `json:"base_url"`
+	FileStoragePath string     `json:"file_storage_path"`
+	DatabaseDsn     string     `json:"database_dsn"`
+	EnableHTTPS     bool       `json:"enable_https"`
+	TrustedSubnet   string     `json:"trusted_subnet"`
+	TrustedCIDR     *net.IPNet `json:"-"`
+	ConfigJSON      string     `json:"-"`
+}
+
+// Stat структура для вывода статитстики по количеству сокращенных url и пользователей сервиса
+type Stat struct {
+	Urls  int `json:"urls"`
+	Users int `json:"users"`
 }

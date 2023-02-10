@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
@@ -49,7 +50,7 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	}
 	b := bf.String()
 
-	// не эффективные варианты чтения Body
+	// не эффективные по памяти варианты чтения Body
 
 	//now := bufio.NewScanner(r.Body)
 	//now.Scan()
@@ -91,7 +92,7 @@ func (hn PutHandler) Put(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte(hn.base + "/" + key))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 }
@@ -136,7 +137,7 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 }
@@ -174,7 +175,7 @@ func (hn PutHandler) PutBatch(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(ec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 }

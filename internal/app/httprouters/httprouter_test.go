@@ -12,6 +12,7 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,10 +23,11 @@ var UIDCookie = "35356630393565302d363765312d343835642d623262622d363035663632616
 func TestNewRouter(t *testing.T) {
 	svs := &servicemock.ServiceMock{}
 	base := "http://localhost:8080"
+	var cfg models.Config
 	hPut := handlers.NewPutHandler(svs, base)
 	hGet := handlers.NewGetHandler(svs, base)
 	hDel := handlers.NewDeleteHandler(svs, base)
-	hPing := handlers.NewPingHandler(svs, base)
+	hPing := handlers.NewPingHandler(svs, cfg.TrustedCIDR)
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
 	ts := httptest.NewServer(r)
 	defer ts.Close()

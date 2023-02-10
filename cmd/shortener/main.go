@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -68,7 +69,7 @@ func main() {
 	hDel := handlers.NewDeleteHandler(svsDel, cfg.BaseURL)
 	// Констуктор Ping слоя.
 	svsPing := service.NewPingService(s)
-	hPing := handlers.NewPingHandler(svsPing, cfg.BaseURL)
+	hPing := handlers.NewPingHandler(svsPing, cfg.TrustedCIDR)
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
 
@@ -108,8 +109,9 @@ func flagsVars() (cfg models.Config) {
 	baseFlag := flag.String("b", "", "dase URL")
 	pathFlag := flag.String("f", "", "File storage path")
 	dlinkFlag := flag.String("d", "", "database DSN link")
-	tlsFlag := flag.Bool("s", false, "run HTTPS server")
+	tlsFlag := flag.Bool("s", false, "run as HTTPS server")
 	cfgFlag := flag.String("c", "", "config json file name")
+	trustFlag := flag.String("t", "", "trusted subnet CIDR for /api/internal/stats")
 	// парсим флаги в переменные
 	flag.Parse()
 	var ok bool
@@ -120,7 +122,7 @@ func flagsVars() (cfg models.Config) {
 		log.Print("eviroment variable CONFIG is empty or has wrong value ", cfg.ConfigJSON)
 		cfg.ConfigJSON = *cfgFlag
 	}
-	//
+	// читаем конфигурвационный файл и парксим в стркутуру
 	if cfg.ConfigJSON != "" {
 		configFile, err := os.ReadFile(*cfgFlag)
 		if err != nil {
@@ -131,6 +133,21 @@ func flagsVars() (cfg models.Config) {
 			if err != nil {
 				log.Printf("unmarshal config file error: %s", err)
 			}
+		}
+	}
+	// проверяем наличие флага или пременной окружения для CIDR доверенной сети эндпойнта /api/internal/stats
+	TrustedSubnet, ok := os.LookupEnv("TRUSTED_SUBNET")
+	if ok {
+		cfg.TrustedSubnet = TrustedSubnet
+	}
+	if *trustFlag != "" {
+		cfg.TrustedSubnet = *trustFlag
+	}
+	if cfg.TrustedSubnet != "" {
+		var err error
+		_, cfg.TrustedCIDR, err = net.ParseCIDR(cfg.TrustedSubnet)
+		if err != nil {
+			log.Print("parse CIDR error: ", err)
 		}
 	}
 	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага

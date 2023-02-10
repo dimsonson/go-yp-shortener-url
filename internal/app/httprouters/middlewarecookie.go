@@ -5,8 +5,9 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func middlewareCookie(next http.Handler) http.Handler {
 		userCookie, err := r.Cookie("token")
 		// если токена нет в куке, токен не подписан, токена нет в хранилище - присвоение уникального userid
 		if err != nil || userCookie.Value == "" || !TokenCheckSign(userCookie.Value, []byte(settings.SignKey)) {
-			log.Println("request does not consist token cookie or empty - err:", err)
+			log.Print("request does not consist token cookie or empty - err:", err)
 			userid = uuid.New().String()
 			// подписание токена для возарата в ответе
 			userTokenOut := TokenCreateSign(userid, []byte(settings.SignKey))
@@ -42,7 +43,7 @@ func middlewareCookie(next http.Handler) http.Handler {
 			userid = string(useridByte)
 		}
 		// наследуем контекст, оснащаем его Value
-		log.Println(userid)
+		log.Print(userid)
 		ctx := context.WithValue(r.Context(), settings.CtxKeyUserID, userid)
 		// отправляем контекст дальше
 		r = r.WithContext(ctx)
@@ -68,7 +69,7 @@ func TokenCheckSign(token string, key []byte) (ok bool) {
 	if token == tokenNew {
 		ok = true
 	}
-	log.Println("tokenCheckSign - ok :", ok)
+	log.Print("tokenCheckSign - ok :", ok)
 	return ok
 }
 

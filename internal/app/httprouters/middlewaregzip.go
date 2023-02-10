@@ -3,9 +3,10 @@ package httprouters
 import (
 	"compress/gzip"
 	"io"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // gzipWriter структура для записи сжатого ответа.
@@ -47,7 +48,7 @@ func middlewareGzip(next http.Handler) http.Handler {
 			// читаем и распаковываем тело запроса с gzip
 			gzR, err := gzip.NewReader(r.Body)
 			if err != nil {
-				log.Println("gzip error: ", err)
+				log.Print("gzip error: ", err)
 				return
 			}
 			defer gzR.Close()
@@ -59,7 +60,7 @@ func middlewareGzip(next http.Handler) http.Handler {
 			// создаём gzip.Writer поверх текущего w для записи сжатого ответа
 			gzW, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 			if err != nil {
-				log.Println("gzip encodimg error:", err)
+				log.Print("gzip encodimg error:", err)
 				return
 			}
 			defer gzW.Close()

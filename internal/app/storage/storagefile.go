@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
@@ -33,15 +34,15 @@ func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
-		log.Println("storage file opening error: ", err)
+		log.Print("storage file opening error: ", err)
 		return "", err
 	}
 	defer sfile.Close()
 	// кодирование в JSON
 	js, err := json.Marshal(ms)
 	if err != nil {
-		log.Println("JSON marshalling from struct error: ", err)
-		return //err
+		log.Print("JSON marshalling from struct error: ", err)
+		return "", err
 	}
 	// запись в файл
 	_, err = sfile.Write(js)
@@ -101,14 +102,14 @@ func (ms *StorageFile) Load() {
 	if os.IsNotExist(pathOk) {
 		err := os.MkdirAll(filepath.Dir(p), 0777)
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 			return
 		}
 		log.Printf("folder %s created\n", filepath.Dir(p))
 	}
 	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
-		log.Fatal("file creating error: ", err)
+		log.Fatal().AnErr("file creating error: ", err)
 	}
 	defer sfile.Close()
 
@@ -116,11 +117,11 @@ func (ms *StorageFile) Load() {
 	if fileInfo.Size() != 0 {
 		b, err := io.ReadAll(sfile)
 		if err != nil {
-			log.Println("file storage reading error:", err)
+			log.Print("file storage reading error:", err)
 		}
 		err = json.Unmarshal(b, &ms)
 		if err != nil {
-			log.Println("JSON unmarshalling to struct error:", err)
+			log.Print("JSON unmarshalling to struct error:", err)
 		}
 	}
 }
@@ -151,4 +152,28 @@ func (ms *StorageFile) Delete(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
 	return nil
+}
+
+// UsersQty метод получения количества уникальных пользователей.
+func (ms *StorageFile) UsersQty(ctx context.Context) (usersQty int, err error) {
+	ref := make(map[string]bool, len(ms.UserID))
+	for sh, uid := range ms.UserID {
+		if _, ok := ref[uid]; !ok {
+			if _, del := ms.DelURL[sh]; del {
+				ref[uid] = true
+				usersQty++
+			}
+		}
+	}
+	return usersQty, nil
+}
+
+// ShortsQty метод получения количества уникальных коротких ссылок.
+func (ms *StorageFile) ShortsQty(ctx context.Context) (shortsQty int, err error) {
+	for _, del := range ms.DelURL {
+		if !del {
+			shortsQty++
+		}
+	}
+	return shortsQty, nil
 }

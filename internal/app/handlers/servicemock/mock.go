@@ -83,3 +83,8 @@ func (s *ServiceMock) Ping(ctx context.Context) (bool, error) {
 // Delete метод реализованный для запросов через заглушку.
 func (s *ServiceMock) Delete(shURLs []([2]string)) {
 }
+
+// Stat метод получения статистики по пользователям и количеству обработанных ссылок.
+func (sr *ServiceMock) Stat(ctx context.Context) (stat models.Stat, err error) {
+	return stat, err
+}

@@ -3,5 +3,6 @@
     "base_url": "http://localhost", 
     "file_storage_path": "db/keyvalue.json", 
     "database_dsn": "postgres://postgres:1818@localhost:5432/dbo", 
-    "enable_https": false 
+    "enable_https": false ,
+    "trusted_subnet": "192.168.1.0/24"
 }

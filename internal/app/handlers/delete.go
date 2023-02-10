@@ -4,8 +4,9 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 )

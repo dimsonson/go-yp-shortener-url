@@ -3,8 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -60,7 +61,7 @@ func (hn GetHandler) Get(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(value))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Println(err)
+			log.Print(err)
 			return
 		}
 	}
@@ -94,7 +95,7 @@ func (hn GetHandler) GetBatch(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(UserURLs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 }
