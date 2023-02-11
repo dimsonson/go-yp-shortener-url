@@ -76,7 +76,7 @@ func (ms *StorageSQL) Put(ctx context.Context, key string, value string, userid 
 		log.Print("insert SQL request PutToStorage scan error:", err)
 		return "", err
 	}
-	return existKey, nil
+	return existKey, err
 }
 
 // PutBatch метод пакетной записи id:url в хранилище PostgreSQL.
@@ -120,7 +120,7 @@ func (ms *StorageSQL) PutBatch(ctx context.Context, dc models.BatchRequest, user
 	if err = tx.Commit(); err != nil {
 		log.Print("error PutBatchToStorage tx.Commit : ", err)
 	}
-	return dc, nil
+	return dc, err
 }
 
 // Get метод получения записи из хранилища PostgreSQL.
@@ -181,7 +181,7 @@ func (ms *StorageSQL) GetBatch(ctx context.Context, userid string) (userURLs map
 	if len(userURLs) == 0 {
 		err = fmt.Errorf("userid not found in the storage")
 	}
-	return userURLs, nil
+	return userURLs, err
 }
 
 // Load метод загрузки хранилища в кеш при инциализации файлового хранилища.
@@ -194,7 +194,7 @@ func (ms *StorageSQL) Ping(ctx context.Context) (ok bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	return true, nil
+	return true, err
 }
 
 // Close метод закрытия совединения с SQL базой PostgreSQL.
@@ -211,7 +211,7 @@ func (ms *StorageSQL) Delete(key string, userid string) (err error) {
 	if err != nil {
 		log.Print("update SQL request StorageDeleteURL error:", err)
 	}
-	return nil
+	return err
 }
 
 // UsersQty метод получения количества уникальных пользователей.
@@ -223,7 +223,7 @@ func (ms *StorageSQL) UsersQty(ctx context.Context) (usersQty int, err error) {
 		log.Print("select UsersQty SQL request scan error:", err)
 		return 0, err
 	}
-	return usersQty, nil
+	return usersQty, err
 }
 
 // ShortsQty метод получения количества уникальных коротких ссылок.
@@ -235,5 +235,5 @@ func (ms *StorageSQL) ShortsQty(ctx context.Context) (shortsQty int, err error) 
 		log.Print("select ShortsQty SQL request scan error:", err)
 		return 0, err
 	}
-	return shortsQty, nil
+	return shortsQty, err
 }

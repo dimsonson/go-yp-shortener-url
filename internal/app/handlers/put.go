@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -123,9 +124,11 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
 	key, err := hn.service.Put(ctx, dc.URL, userid)
+	fmt.Println(key, err)
 	// устанавливаем статус-код 201, 500 или 409
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
+		ec.Result = hn.base + "/" + key
 		w.WriteHeader(http.StatusConflict)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
