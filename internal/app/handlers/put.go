@@ -105,7 +105,7 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	var dc models.DecodeJSON
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
-		log.Printf("unmarshal PutJSON error: %s", err)
+		log.Printf("unmarshal error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
 	// валидация URL
