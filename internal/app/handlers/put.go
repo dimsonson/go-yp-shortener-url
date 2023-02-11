@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -106,7 +105,7 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	var dc models.DecodeJSON
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
-		log.Printf("Unmarshal error: %s", err)
+		log.Printf("unmarshal PutJSON error: %s", err)
 		http.Error(w, "invalid JSON structure received", http.StatusBadRequest)
 	}
 	// валидация URL
@@ -124,7 +123,6 @@ func (hn PutHandler) PutJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	// создаем ключ, userid token, ошибку создания в случае налияи URL в базе
 	key, err := hn.service.Put(ctx, dc.URL, userid)
-	fmt.Println(key, err)
 	// устанавливаем статус-код 201, 500 или 409
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
