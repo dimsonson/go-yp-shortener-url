@@ -1,3 +1,4 @@
+// server пакет конфигурирования, запуска, остановки серверов HTTP или GRPC в заисимости от конфигурации.
 package server
 
 import (
@@ -29,6 +30,7 @@ const (
 	defHTTPS       = false
 )
 
+// Server структура для хранения серверов.
 type Server struct {
 	GRPCserver *grpc.Server
 	HTTPserver *http.Server
@@ -51,6 +53,7 @@ type Config struct {
 	ConfigJSON      string     `json:"-"`
 }
 
+// NewServer конструктор создания нового сервера в соответствии с существующей конфигурацией.
 func NewServer(ctx context.Context, cfg Config) *Server {
 	return &Server{
 		Config: cfg,
@@ -58,10 +61,12 @@ func NewServer(ctx context.Context, cfg Config) *Server {
 	}
 }
 
+// NewConfig конструктор создания конфигурации сервера из переменных оружения, флагов, конфиг файла, а так же значений по умолчанию.
 func NewConfig() *Config {
 	return &Config{}
 }
 
+// Parse метод парсинга и получения значений из переменных оружения, флагов, конфиг файла, а так же значений по умолчанию.
 func (cfg *Config) Parse() {
 	// описываем флаги
 	addrFlag := flag.String("a", "", "HTTP/HTTPS Server address")
@@ -164,8 +169,9 @@ func (cfg *Config) Parse() {
 	log.Print("eviroment variable ENABLE_HTTPS is empty or has wrong value ")
 }
 
+// Start метод запуска сервара, вид запвсукаемого сервера зависит от EnableGRPC в структуре Config.
 func (srv *Server) Start() {
-	if srv.Config.EnableGRPC {
+	if srv.EnableGRPC {
 		srv.StartGRPC()
 		return
 	}
@@ -174,49 +180,52 @@ func (srv *Server) Start() {
 	srv.StartHTTPS()
 }
 
+// StartHTTPS запуск HTTP сервера.
 func (srv *Server) StartHTTPS() {
-
 	// Запуск сервера.
-	log.Print("base URL:", settings.ColorGreen, srv.Config.BaseURL, settings.ColorReset)
+	log.Print("base URL:", settings.ColorGreen, srv.BaseURL, settings.ColorReset)
 	// Выбор варианта запуска сервера http или https.
-	if srv.Config.EnableHTTPS {
-		log.Print("starting", settings.ColorBlue, "https", settings.ColorReset, "server on:", settings.ColorBlue, srv.Config.ServerAddress, settings.ColorReset)
+	if srv.EnableHTTPS {
+		log.Print("starting", settings.ColorBlue, "https", settings.ColorReset, "server on:", settings.ColorBlue, srv.ServerAddress, settings.ColorReset)
 		log.Print(srv.HTTPserver.Serve(autocert.NewListener()))
 	} else {
-		log.Print("starting server on:", settings.ColorBlue, srv.Config.ServerAddress, settings.ColorReset)
+		log.Print("starting server on:", settings.ColorBlue, srv.ServerAddress, settings.ColorReset)
 		log.Print(srv.HTTPserver.ListenAndServe())
 	}
 }
 
+// InitHTTPS инциализация HTTP сервера.
 func (srv *Server) InitHTTPS() {
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
-	s := newStrorageProvider(srv.Config.DatabaseDsn, srv.Config.FileStoragePath)
+	s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
 
 	// Конструктор Put слоя.
 	svcRand := &service.Rand{}
-	svsPut := service.NewPutService(s, srv.Config.BaseURL, svcRand)
-	hPut := handlers.NewPutHandler(svsPut, srv.Config.BaseURL)
+	svsPut := service.NewPutService(s, srv.BaseURL, svcRand)
+	hPut := handlers.NewPutHandler(svsPut, srv.BaseURL)
 	// Конструктор Get слоя.
-	svsGet := service.NewGetService(s, srv.Config.BaseURL)
-	hGet := handlers.NewGetHandler(svsGet, srv.Config.BaseURL)
+	svsGet := service.NewGetService(s, srv.BaseURL)
+	hGet := handlers.NewGetHandler(svsGet, srv.BaseURL)
 	// Конструктор Delete слоя.
-	svsDel := service.NewDeleteService(s, srv.Config.BaseURL)
-	hDel := handlers.NewDeleteHandler(svsDel, srv.Config.BaseURL)
+	svsDel := service.NewDeleteService(s, srv.BaseURL)
+	hDel := handlers.NewDeleteHandler(svsDel, srv.BaseURL)
 	// Констуктор Ping слоя.
 	svsPing := service.NewPingService(s)
-	hPing := handlers.NewPingHandler(svsPing, srv.Config.TrustedCIDR)
+	hPing := handlers.NewPingHandler(svsPing, srv.TrustedCIDR)
 	// Инциализация хендлеров.
 	r := httprouters.NewRouter(hPut, hGet, hDel, hPing)
 
 	// конфигурирование http сервера
-	srv.HTTPserver = &http.Server{Addr: srv.Config.ServerAddress, Handler: r}
+	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
+// StartGRPC запуск GRPC сервера.
 func (srv *Server) StartGRPC() {
 
 }
 
+// GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
 func (srv *Server) GracefullShotdown() {
 	// добавляем счетчик горутины
 	srv.Wg.Add(1)
@@ -246,7 +255,7 @@ func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	return s
 }
 
-// httpServerShutdown реализует gracefull shutdown для ListenAndServe
+// httpServerShutdown реализует gracefull shutdown для ListenAndServe.
 func httpServerShutdown(ctx context.Context, wg *sync.WaitGroup, srv *http.Server) {
 	// получаем сигнал о завершении приложения
 	<-ctx.Done()
