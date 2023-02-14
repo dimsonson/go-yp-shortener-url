@@ -15,15 +15,13 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/server"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 func init() {
@@ -51,7 +49,23 @@ func main() {
 	// Вывод данных о версии, дате, коммите сборки.
 	log.Printf("version=%s, date=%s, commit=%s", buildVersion, buildDate, buildCommit)
 
-	// Получаем переменные из флагов или переменных оркужения в структуру models.Config.
+	var stop context.CancelFunc
+	// опередяляем контекст уведомления о сигнале прерывания
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	cfg := server.NewConfig()
+	cfg.Parse()
+	srv := server.NewServer(ctx, *cfg)
+	srv.Start()
+
+	// остановка всех сущностей, куда передан контекст по прерыванию
+	stop()
+	// ожидаем выполнение горутин
+	srv.Wg.Wait()
+	// логирование закрытия сервера без ошибок
+	log.Print("http server gracefully shutdown")
+
+	/* // Получаем переменные из флагов или переменных оркужения в структуру models.Config.
 	cfg := flagsVars()
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
@@ -99,7 +113,7 @@ func main() {
 	// ожидаем выполнение горутин
 	wg.Wait()
 	// логирование закрытия сервера без ошибок
-	log.Print("http server gracefully shutdown")
+	log.Print("http server gracefully shutdown") */
 }
 
 // flagsVars парсинг флагов и валидация переменных окружения.
