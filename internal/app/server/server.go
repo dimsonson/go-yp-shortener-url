@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -171,7 +172,9 @@ func (srv *Server) Start() {
 	}
 	srv.InitHTTPS()
 	srv.GracefullShotdown()
+	fmt.Println(srv.DatabaseDsn)
 	srv.StartHTTPS()
+		//defer s.Close()
 }
 
 func (srv *Server) StartHTTPS() {
@@ -186,14 +189,13 @@ func (srv *Server) StartHTTPS() {
 		log.Print("starting server on:", settings.ColorBlue, srv.Config.ServerAddress, settings.ColorReset)
 		log.Print(srv.HTTPserver.ListenAndServe())
 	}
-
 }
 
 func (srv *Server) InitHTTPS() {
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
 	s := newStrorageProvider(srv.Config.DatabaseDsn, srv.Config.FileStoragePath)
-	defer s.Close()
+	
 	// Конструктор Put слоя.
 	svcRand := &service.Rand{}
 	svsPut := service.NewPutService(s, srv.Config.BaseURL, svcRand)
@@ -230,6 +232,7 @@ func newStrorageProvider(dlink, path string) (s service.StorageProvider) {
 	// если переменная SQL url не пустая, то используем SQL хранилище
 	if dlink != "" {
 		s = storage.NewSQLStorage(dlink)
+		fmt.Println(s)
 		log.Print("server will start with data storage "+settings.ColorYellow+"in PostgreSQL:", dlink, settings.ColorReset)
 		return s
 	}
