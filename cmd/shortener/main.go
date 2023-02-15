@@ -14,9 +14,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+
 func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006/01/02 15:04:05"})
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	//log.Logger := zerolog.New(os.Stderr)
 }
 
 // Глобальные переменные для использования при сборке - go run -ldflags "-X main.buildVersion=v0.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X main.buildCommit=final"  main.go.
@@ -37,7 +40,7 @@ func main() {
 	// парсинг конфигурации сервера
 	cfg.Parse()
 	// создание сервера
-	srv := server.NewServer(ctx, *cfg)
+	srv := server.NewServer(ctx, stop, *cfg)
 	// запуск сервера
 	srv.Start()
 	// остановка всех сущностей, куда передан контекст по прерыванию
@@ -45,5 +48,5 @@ func main() {
 	// ожидаем выполнение горутин
 	srv.Wg.Wait()
 	// логирование закрытия сервера без ошибок
-	log.Print("http server gracefully shutdown")
+	log.Print("http/grpc server gracefully shutdown")
 }

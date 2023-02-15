@@ -5,17 +5,24 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"sync"
 
 	"github.com/asaskevich/govalidator"
+	pb "github.com/dimsonson/go-yp-shortener-url/internal/app/api/grpc/proto"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
+	grpczerolog "github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+
+	//grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
@@ -35,8 +42,9 @@ type Server struct {
 	GRPCserver *grpc.Server
 	HTTPserver *http.Server
 	Config
-	Wg  sync.WaitGroup
-	Ctx context.Context
+	Wg   sync.WaitGroup
+	Ctx  context.Context
+	Stop context.CancelFunc
 }
 
 // Config структура конфигурации сервиса, при запуске сервиса с флагом -c/config
@@ -48,16 +56,17 @@ type Config struct {
 	DatabaseDsn     string     `json:"database_dsn"`
 	EnableHTTPS     bool       `json:"enable_https"`
 	TrustedSubnet   string     `json:"trusted_subnet"`
-	EnableGRPC      bool       `json:"grpc_server"`
+	EnableGRPC      bool       `json:"enable_grpc"`
 	TrustedCIDR     *net.IPNet `json:"-"`
 	ConfigJSON      string     `json:"-"`
 }
 
 // NewServer конструктор создания нового сервера в соответствии с существующей конфигурацией.
-func NewServer(ctx context.Context, cfg Config) *Server {
+func NewServer(ctx context.Context, stop context.CancelFunc, cfg Config) *Server {
 	return &Server{
 		Config: cfg,
 		Ctx:    ctx,
+		Stop:   stop,
 	}
 }
 
@@ -172,11 +181,13 @@ func (cfg *Config) Parse() {
 // Start метод запуска сервара, вид запвсукаемого сервера зависит от EnableGRPC в структуре Config.
 func (srv *Server) Start() {
 	if srv.EnableGRPC {
+		srv.InitGRPC()
+		srv.grpcGracefullShotdown()
 		srv.StartGRPC()
 		return
 	}
 	srv.InitHTTPS()
-	srv.GracefullShotdown()
+	srv.httpGracefullShotdown()
 	srv.StartHTTPS()
 }
 
@@ -220,13 +231,87 @@ func (srv *Server) InitHTTPS() {
 	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
-// StartGRPC запуск GRPC сервера.
-func (srv *Server) StartGRPC() {
+type PutServer struct {
+	pb.UnimplementedPutServer
+}
+
+// InitGRPC инциализация GRPC сервера.
+func (srv *Server) InitGRPC() {
+	//logger := zerolog.New(os.Stderr)
+	// определяем порт для сервера
+	//	listen, err := net.Listen("tcp", ":3200")
+	// if err != nil {
+	//}
+
+	// создаём gRPC-сервер без зарегистрированной службы
+	srv.GRPCserver = grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
+		),
+		//grpc_recovery.UnaryServerInterceptor(),
+	)
 
 }
 
+// type PutServer struct{
+// 	pb.UnimplementedPutServer
+// }
+
+// StartGRPC запуск GRPC сервера.
+func (srv *Server) StartGRPC() {
+
+	listen, err := net.Listen("tcp", ":8080")
+	if err != nil {
+
+	}
+
+	PutServer := &PutServer{}
+	pb.RegisterPutServer(srv.GRPCserver, PutServer)
+
+	fmt.Println("Сервер gRPC начал работу")
+	// получаем запрос gRPC
+	if err := srv.GRPCserver.Serve(listen); err != nil {
+
+	}
+
+}
+
+func (s *PutServer) Put(context.Context, *pb.PutRequest) (*pb.PutResponse, error) {
+
+	var response pb.PutResponse
+	response.ExistKey = "3GSFHJY"
+	return &response, nil
+}
+
+func (s *PutServer) PutBatch(context.Context, *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
+	var response pb.PutBatchResponse
+	response.DcCorr.CorrelationID = "3GSFHJY"
+	return &response, nil
+}
+
+type greeterServer struct {
+	intCh <-chan int
+}
+
 // GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
-func (srv *Server) GracefullShotdown() {
+func (srv *Server) grpcGracefullShotdown() {
+	srv.Wg.Add(1)
+	go func() {
+		// получаем сигнал о завершении приложения
+		<-srv.Ctx.Done()
+		log.Printf("got signal, attempting graceful shutdown")
+		//srv.Stop()
+		srv.GRPCserver.GracefulStop()
+		// grpc.Stop() // leads to error while receiving stream response: rpc error: code = Unavailable desc = transport is closing
+		srv.Wg.Done()
+	}()
+
+	//srv.Wg.Wait()
+	//log.Print("clean shutdown")
+}
+
+// GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
+func (srv *Server) httpGracefullShotdown() {
 	// добавляем счетчик горутины
 	srv.Wg.Add(1)
 	// запуск горутины shutdown http сервера
