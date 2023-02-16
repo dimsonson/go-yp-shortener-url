@@ -47,7 +47,7 @@ func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key 
 	// добавляем уникальный префикс к ключу
 	key = fmt.Sprintf("%d%s", sr.storage.Len(ctx), key)
 	// создаем запись userid-ключ-значение в базе
-	existKey, err := "321", nil //sr.storage.Put(ctx, key, url, userid)
+	existKey, err := sr.storage.Put(ctx, key, url, userid)
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		key = existKey

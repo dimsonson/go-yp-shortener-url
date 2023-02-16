@@ -252,7 +252,7 @@ func (srv *Server) InitGRPC() {
 	// Конструктор хранилища.
 	//s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
 
-	//fmt.Println(s.Len(srv.Ctx))
+	//fmt.Println(srv.PutServ(srv.Ctx))
 
 	// Конструкторы.
 	//svcRand := &service.Rand{}
