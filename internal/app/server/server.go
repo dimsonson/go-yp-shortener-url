@@ -20,12 +20,15 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	grpczerolog "github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 
-	//grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Константы по умолчанию.
@@ -298,12 +301,22 @@ func (svs *Server) InitGRPCservice() {
 	// Констуктор Ping слоя.
 	svs.PutService.svsPing = service.NewPingService(s)
 
+	// Define customfunc to handle panic
+	customFunc := func(p interface{}) (err error) {
+		return status.Errorf(codes.Unknown, "panic triggered: %v", p)
+	}
+	// Shared options for the logger, with a custom gRPC code to log level function.
+	opts := []recovery.Option{
+		recovery.WithRecoveryHandler(customFunc),
+	}
+
 	// создаём gRPC-сервер без зарегистрированной службы
 	svs.GRPCserver = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
+			grpc_recovery.UnaryServerInterceptor(opts...),
 		),
-		//grpc_recovery.UnaryServerInterceptor(),
+		
 	)
 
 }
