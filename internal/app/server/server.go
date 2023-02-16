@@ -45,6 +45,9 @@ type Server struct {
 	Wg   sync.WaitGroup
 	Ctx  context.Context
 	Stop context.CancelFunc
+	//PutServer
+	PutServicePrivider
+	PutService *PutServices
 }
 
 // Config структура конфигурации сервиса, при запуске сервиса с флагом -c/config
@@ -182,17 +185,19 @@ func (cfg *Config) Parse() {
 func (srv *Server) Start() {
 	if srv.EnableGRPC {
 		srv.InitGRPC()
+		srv.InitGRPCservice()
+		//	srv.InitGRPC()
 		srv.grpcGracefullShotdown()
 		srv.StartGRPC()
 		return
 	}
-	srv.InitHTTPS()
+	srv.InitHTTP()
 	srv.httpGracefullShotdown()
-	srv.StartHTTPS()
+	srv.StartHTTP()
 }
 
 // StartHTTPS запуск HTTP сервера.
-func (srv *Server) StartHTTPS() {
+func (srv *Server) StartHTTP() {
 	// Запуск сервера.
 	log.Print("base URL:", settings.ColorGreen, srv.BaseURL, settings.ColorReset)
 	// Выбор варианта запуска сервера http или https.
@@ -205,15 +210,15 @@ func (srv *Server) StartHTTPS() {
 	}
 }
 
-// InitHTTPS инциализация HTTP сервера.
-func (srv *Server) InitHTTPS() {
+// InitHTTP инциализация HTTP сервера.
+func (srv *Server) InitHTTP() {
 	// Инициализируем конструкторы.
 	// Конструктор хранилища.
 	s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
 
-	// Конструктор Put слоя.
-	svcRand := &service.Rand{}
-	svsPut := service.NewPutService(s, srv.BaseURL, svcRand)
+	// Конструкторы.
+	//svcRand := &service.Rand{}
+	svsPut := service.NewPutService(s, srv.BaseURL)
 	hPut := handlers.NewPutHandler(svsPut, srv.BaseURL)
 	// Конструктор Get слоя.
 	svsGet := service.NewGetService(s, srv.BaseURL)
@@ -231,26 +236,80 @@ func (srv *Server) InitHTTPS() {
 	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
-type PutServer struct {
+type PutServices struct {
+	svsPut  *service.PutServices
+	svsGet  *service.GetServices
+	svsDel  *service.DeleteServices
+	svsPing *service.PingServices
 	pb.UnimplementedPutServer
+	Server
 }
 
 // InitGRPC инциализация GRPC сервера.
 func (srv *Server) InitGRPC() {
-	//logger := zerolog.New(os.Stderr)
-	// определяем порт для сервера
-	//	listen, err := net.Listen("tcp", ":3200")
-	// if err != nil {
-	//}
+	srv.PutService = &PutServices{}
+	// Инициализируем конструкторы.
+	// Конструктор хранилища.
+	//s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
+
+	//fmt.Println(s.Len(srv.Ctx))
+
+	// Конструкторы.
+	//svcRand := &service.Rand{}
+	//srv.svsPut = service.NewPutService(s, srv.BaseURL) //, svcRand)
+
+	//fmt.Println(srv.svsPut.Put(srv.Ctx, "888", "999"))
+
+	// Конструктор Get слоя.
+	//srv.svsGet = service.NewGetService(s, srv.BaseURL)
+	// Конструктор Delete слоя.
+	//srv.svsDel = service.NewDeleteService(s, srv.BaseURL)
+	// Констуктор Ping слоя.
+	//srv.svsPing = service.NewPingService(s)
 
 	// создаём gRPC-сервер без зарегистрированной службы
-	srv.GRPCserver = grpc.NewServer(
+	// srv.GRPCserver = grpc.NewServer(
+	// 	grpc.ChainUnaryInterceptor(
+	// 		logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
+	// 	),
+	// 	//grpc_recovery.UnaryServerInterceptor(),
+	// )
+
+}
+
+// InitGRPC инциализация GRPC сервера.
+func (svs *Server) InitGRPCservice() {
+	// Инициализируем конструкторы.
+	// Конструктор хранилища.
+	s := newStrorageProvider(svs.DatabaseDsn, svs.FileStoragePath)
+
+	//fmt.Println(s.Len(srv.Ctx))
+
+	// Конструкторы.
+	//svcRand := &service.Rand{}
+	svs.PutService.svsPut = service.NewPutService(s, svs.BaseURL) //, svcRand)
+
+	//fmt.Println(srv.svsPut.Put(srv.Ctx, "888", "999"))
+
+	// Конструктор Get слоя.
+	svs.PutService.svsGet = service.NewGetService(s, svs.BaseURL)
+	// Конструктор Delete слоя.
+	svs.PutService.svsDel = service.NewDeleteService(s, svs.BaseURL)
+	// Констуктор Ping слоя.
+	svs.PutService.svsPing = service.NewPingService(s)
+
+	// создаём gRPC-сервер без зарегистрированной службы
+	svs.GRPCserver = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
 		),
 		//grpc_recovery.UnaryServerInterceptor(),
 	)
 
+}
+
+type PutServicePrivider interface {
+	InitGRPCservice()
 }
 
 // type PutServer struct{
@@ -265,8 +324,8 @@ func (srv *Server) StartGRPC() {
 
 	}
 
-	PutServer := &PutServer{}
-	pb.RegisterPutServer(srv.GRPCserver, PutServer)
+	//PutServer := &PutServices{}
+	pb.RegisterPutServer(srv.GRPCserver, srv.PutService)
 
 	fmt.Println("Сервер gRPC начал работу")
 	// получаем запрос gRPC
@@ -276,24 +335,31 @@ func (srv *Server) StartGRPC() {
 
 }
 
-func (s *PutServer) Put(context.Context, *pb.PutRequest) (*pb.PutResponse, error) {
+func (s *PutServices) Put(ctx context.Context, rq *pb.PutRequest) (*pb.PutResponse, error) {
 
+	//	st := newStrorageProvider(s.DatabaseDsn, s.FileStoragePath)
+
+	//fmt.Println(s.Len(srv.Ctx))
+
+	// Конструкторы.
+	//svcRand := &service.Rand{}
+	//	svsPut := service.NewPutService(st, s.BaseURL) //, svcRand)
 	var response pb.PutResponse
-	response.ExistKey = "3GSFHJY"
-	return &response, nil
+	//ctx = context.Background()
+	key, _ := s.svsPut.Put(ctx, rq.Value, rq.Userid)
+	fmt.Println(key)
+	response.ExistKey = key //"358ksdHJ" //key //s.svsPut.Put()
+	return &response, nil   //err
 }
 
-func (s *PutServer) PutBatch(context.Context, *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
+func (s *PutServices) PutBatch(ctx context.Context, rq *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
 	var response pb.PutBatchResponse
 	response.DcCorr.CorrelationID = "3GSFHJY"
+	//s.svsPut.Put()
 	return &response, nil
 }
 
-type greeterServer struct {
-	intCh <-chan int
-}
-
-// GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
+// grpcGracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
 func (srv *Server) grpcGracefullShotdown() {
 	srv.Wg.Add(1)
 	go func() {
@@ -305,9 +371,6 @@ func (srv *Server) grpcGracefullShotdown() {
 		// grpc.Stop() // leads to error while receiving stream response: rpc error: code = Unavailable desc = transport is closing
 		srv.Wg.Done()
 	}()
-
-	//srv.Wg.Wait()
-	//log.Print("clean shutdown")
 }
 
 // GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
