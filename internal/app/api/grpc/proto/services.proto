@@ -4,29 +4,17 @@ package proto;
 
 option go_package = "internal/app/api/grpc/proto";
 
-/*
-key string, 
-value string, 
-userid string,
-existKey string,
-
-models.BatchRequest,
-dcCorr models.BatchRequest,
-err error
-*/
-
-
-
+// Put
 
 message PutRequest {
-    string key = 1;
-    string value = 2;
-    string userid = 3;
+    string value = 1;
+    string userid = 2;
   }
 
-message PutResponse {
-    string existKey = 1;
-    string error = 2; // ошибка
+message PutResponse {    
+    string key = 1;
+    string existKey = 2;
+    string error = 3; // ошибка
   }
 
 
@@ -52,75 +40,87 @@ service Put {
     rpc PutBatch(PutBatchRequest) returns (PutBatchResponse);
   }
   
+// Get
 
-
-/*
-
-
-
-message User {
-  string name = 1; // имя пользователя
-  enum Sex {
-      UNSPECIFIED = 0;
-      MALE = 1;
-      FEMALE = 2;
+message GetRequest {
+    string key = 1;
   }
-  // (1) добавьте поля для пола и email
-  Sex sex = 2;      // пол
-  string email = 3; // email
 
+message GetResponse {    
+    string value = 1;
+    bool del = 2;
+    string error = 3; // ошибка
+  }
+
+
+message GetBatchRequest {
+  string userid = 1;
+	}
+
+  
+message GetBatchResponse {
+  repeated userURL userURLsMap = 1;
+  string error = 2; // ошибка
+  }
+
+message UserURL {
+  string user = 1;
+  string URL = 2; 
+  }
+
+service Get {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+  }
+
+// Delete
+
+message DeleteRequest {
+    string key = 1;
+    string userid = 2;
+  }
+
+message DeleteResponse {    
+    string error = 1; // ошибка
+  }
+
+service Delete {
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  }
+
+// Info
+
+message PingRequest {
 }
 
-message AddUserRequest {
-  User user = 1;
+message PingResponse {    
+  bool ok = 1;
+  string error = 2; // ошибка
 }
 
-message AddUserResponse {
-  string error = 1; // ошибка
+message StatRequest {
 }
 
-message ListUsersRequest {
-  int32 offset = 1; // смещение выборки
-  int32 limit = 2;  // количество элементов
+message StatResponse {    
+  Stat stat = 1;
+  string error = 2; // ошибка
 }
 
-message ListUsersResponse {
-  int32 count = 1; // общее количество пользователей
-  // (2) добавьте поле для списка email
-  repeated string emails = 2; // список email
+message Stat {    
+  int64 Urls = 1;
+  int64 Users = 2; 
 }
 
-message GetUserRequest {
-  string email = 1;
-}
-
-message GetUserResponse {
-  User   user = 1;
-  string error = 2;
-}
-
-// (3) добавьте DelUserRequest
-message DelUserRequest {
-    string email = 1;
-}
-
-message DelUserResponse {
-  string error = 1;
-}
-
-service Users {
-  rpc AddUser(AddUserRequest) returns (AddUserResponse);
-  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
-  rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  // (4) добавьте интерфейс DelUser
-  rpc DelUser(DelUserRequest) returns (DelUserResponse);
+service Get {
+  rpc Ping(PingRequest) returns (PintResponse);
+  rpc Stat(StatRequest) returns (StatResponse);
 }
 
 
-*/
+
 
 /*
 protoc --go_out=. --go_opt=paths=source_relative \
   --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-  adder.proto
+  services.proto
 */
