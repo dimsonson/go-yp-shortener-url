@@ -91,6 +91,7 @@ func (cfg *Config) Parse() {
 	tlsFlag := flag.Bool("s", false, "run as HTTPS server")
 	cfgFlag := flag.String("c", "", "config json file name")
 	trustFlag := flag.String("t", "", "trusted subnet CIDR for /api/internal/stats")
+	grpcFlag := flag.Bool("g", false, "run as GRPC server")
 	// парсим флаги в переменные
 	flag.Parse()
 	var ok bool
@@ -173,9 +174,17 @@ func (cfg *Config) Parse() {
 		log.Print("eviroment variable FILE_STORAGE_PATH is empty or has wrong value ")
 		cfg.FileStoragePath = *pathFlag
 	}
+	// проверяем наличие переменной окружения, если ее нет или она не валидна, то используем значение из флага
+	EnableGRPC, ok := os.LookupEnv("ENABLE_GRPC")
+	if ok && EnableGRPC == "true" || *grpcFlag {
+		cfg.EnableGRPC = true
+	}
+	if !ok {
+		log.Print("eviroment variable ENABLE_GRPC is empty or has wrong value ")
+	}
 	// проверяем наличие флага или пременной окружения для старта в https (tls)
 	EnableHTTPS, ok := os.LookupEnv("ENABLE_HTTPS")
-	if ok || EnableHTTPS == "true" || *tlsFlag {
+	if ok && EnableHTTPS == "true" || *tlsFlag {
 		cfg.EnableHTTPS = true
 		return
 	}
@@ -316,7 +325,6 @@ func (svs *Server) InitGRPCservice() {
 			logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
 			grpc_recovery.UnaryServerInterceptor(opts...),
 		),
-		
 	)
 
 }
