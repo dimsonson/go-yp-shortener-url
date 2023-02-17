@@ -230,7 +230,7 @@ func (srv *Server) InitHTTP() {
 
 	// Конструкторы.
 	//svcRand := &service.Rand{}
-	svsPut := service.NewPutService(s, srv.BaseURL)
+	svsPut := service.NewPutService(s, srv.BaseURL) //, svcRand)
 	hPut := handlers.NewPutHandler(svsPut, srv.BaseURL)
 	// Конструктор Get слоя.
 	svsGet := service.NewGetService(s, srv.BaseURL)
@@ -253,7 +253,7 @@ type PutServices struct {
 	svsGet  *service.GetServices
 	svsDel  *service.DeleteServices
 	svsPing *service.PingServices
-	pb.UnimplementedPutServer
+	pb.UnimplementedShortServiceServer
 	Server
 }
 
@@ -298,8 +298,8 @@ func (svs *Server) InitGRPCservice() {
 	//fmt.Println(s.Len(srv.Ctx))
 
 	// Конструкторы.
-	//svcRand := &service.Rand{}
-	svs.PutService.svsPut = service.NewPutService(s, svs.BaseURL) //, svcRand)
+	// svcRand := &service.Rand{}
+	svs.PutService.svsPut = service.NewPutService(s, svs.BaseURL)   //, svcRand)
 
 	//fmt.Println(srv.svsPut.Put(srv.Ctx, "888", "999"))
 
@@ -346,7 +346,7 @@ func (srv *Server) StartGRPC() {
 	}
 
 	//PutServer := &PutServices{}
-	pb.RegisterPutServer(srv.GRPCserver, srv.PutService)
+	pb.RegisterShortServiceServer(srv.GRPCserver, srv.PutService)
 
 	fmt.Println("Сервер gRPC начал работу")
 	// получаем запрос gRPC

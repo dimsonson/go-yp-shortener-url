@@ -18,122 +18,302 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// PutClient is the client API for Put service.
+// ShortServiceClient is the client API for ShortService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PutClient interface {
+type ShortServiceClient interface {
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
 	PutBatch(ctx context.Context, in *PutBatchRequest, opts ...grpc.CallOption) (*PutBatchResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetBatch(ctx context.Context, in *GetBatchRequest, opts ...grpc.CallOption) (*GetBatchResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error)
 }
 
-type putClient struct {
+type shortServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPutClient(cc grpc.ClientConnInterface) PutClient {
-	return &putClient{cc}
+func NewShortServiceClient(cc grpc.ClientConnInterface) ShortServiceClient {
+	return &shortServiceClient{cc}
 }
 
-func (c *putClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
+func (c *shortServiceClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
 	out := new(PutResponse)
-	err := c.cc.Invoke(ctx, "/proto.Put/Put", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/Put", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *putClient) PutBatch(ctx context.Context, in *PutBatchRequest, opts ...grpc.CallOption) (*PutBatchResponse, error) {
+func (c *shortServiceClient) PutBatch(ctx context.Context, in *PutBatchRequest, opts ...grpc.CallOption) (*PutBatchResponse, error) {
 	out := new(PutBatchResponse)
-	err := c.cc.Invoke(ctx, "/proto.Put/PutBatch", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/PutBatch", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PutServer is the server API for Put service.
-// All implementations must embed UnimplementedPutServer
+func (c *shortServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shortServiceClient) GetBatch(ctx context.Context, in *GetBatchRequest, opts ...grpc.CallOption) (*GetBatchResponse, error) {
+	out := new(GetBatchResponse)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/GetBatch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shortServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shortServiceClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
+	out := new(PingResponse)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/Ping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shortServiceClient) Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error) {
+	out := new(StatResponse)
+	err := c.cc.Invoke(ctx, "/proto.ShortService/Stat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ShortServiceServer is the server API for ShortService service.
+// All implementations must embed UnimplementedShortServiceServer
 // for forward compatibility
-type PutServer interface {
+type ShortServiceServer interface {
 	Put(context.Context, *PutRequest) (*PutResponse, error)
 	PutBatch(context.Context, *PutBatchRequest) (*PutBatchResponse, error)
-	mustEmbedUnimplementedPutServer()
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetBatch(context.Context, *GetBatchRequest) (*GetBatchResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	Stat(context.Context, *StatRequest) (*StatResponse, error)
+	mustEmbedUnimplementedShortServiceServer()
 }
 
-// UnimplementedPutServer must be embedded to have forward compatible implementations.
-type UnimplementedPutServer struct {
+// UnimplementedShortServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedShortServiceServer struct {
 }
 
-func (UnimplementedPutServer) Put(context.Context, *PutRequest) (*PutResponse, error) {
+func (UnimplementedShortServiceServer) Put(context.Context, *PutRequest) (*PutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
 }
-func (UnimplementedPutServer) PutBatch(context.Context, *PutBatchRequest) (*PutBatchResponse, error) {
+func (UnimplementedShortServiceServer) PutBatch(context.Context, *PutBatchRequest) (*PutBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutBatch not implemented")
 }
-func (UnimplementedPutServer) mustEmbedUnimplementedPutServer() {}
+func (UnimplementedShortServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedShortServiceServer) GetBatch(context.Context, *GetBatchRequest) (*GetBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBatch not implemented")
+}
+func (UnimplementedShortServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedShortServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedShortServiceServer) Stat(context.Context, *StatRequest) (*StatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stat not implemented")
+}
+func (UnimplementedShortServiceServer) mustEmbedUnimplementedShortServiceServer() {}
 
-// UnsafePutServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PutServer will
+// UnsafeShortServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ShortServiceServer will
 // result in compilation errors.
-type UnsafePutServer interface {
-	mustEmbedUnimplementedPutServer()
+type UnsafeShortServiceServer interface {
+	mustEmbedUnimplementedShortServiceServer()
 }
 
-func RegisterPutServer(s grpc.ServiceRegistrar, srv PutServer) {
-	s.RegisterService(&Put_ServiceDesc, srv)
+func RegisterShortServiceServer(s grpc.ServiceRegistrar, srv ShortServiceServer) {
+	s.RegisterService(&ShortService_ServiceDesc, srv)
 }
 
-func _Put_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ShortService_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PutServer).Put(ctx, in)
+		return srv.(ShortServiceServer).Put(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Put/Put",
+		FullMethod: "/proto.ShortService/Put",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PutServer).Put(ctx, req.(*PutRequest))
+		return srv.(ShortServiceServer).Put(ctx, req.(*PutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Put_PutBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ShortService_PutBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutBatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PutServer).PutBatch(ctx, in)
+		return srv.(ShortServiceServer).PutBatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Put/PutBatch",
+		FullMethod: "/proto.ShortService/PutBatch",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PutServer).PutBatch(ctx, req.(*PutBatchRequest))
+		return srv.(ShortServiceServer).PutBatch(ctx, req.(*PutBatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Put_ServiceDesc is the grpc.ServiceDesc for Put service.
+func _ShortService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ShortService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShortService_GetBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortServiceServer).GetBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ShortService/GetBatch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortServiceServer).GetBatch(ctx, req.(*GetBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShortService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ShortService/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortServiceServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShortService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortServiceServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ShortService/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortServiceServer).Ping(ctx, req.(*PingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShortService_Stat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortServiceServer).Stat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ShortService/Stat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortServiceServer).Stat(ctx, req.(*StatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ShortService_ServiceDesc is the grpc.ServiceDesc for ShortService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Put_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Put",
-	HandlerType: (*PutServer)(nil),
+var ShortService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.ShortService",
+	HandlerType: (*ShortServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Put",
-			Handler:    _Put_Put_Handler,
+			Handler:    _ShortService_Put_Handler,
 		},
 		{
 			MethodName: "PutBatch",
-			Handler:    _Put_PutBatch_Handler,
+			Handler:    _ShortService_PutBatch_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _ShortService_Get_Handler,
+		},
+		{
+			MethodName: "GetBatch",
+			Handler:    _ShortService_GetBatch_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _ShortService_Delete_Handler,
+		},
+		{
+			MethodName: "Ping",
+			Handler:    _ShortService_Ping_Handler,
+		},
+		{
+			MethodName: "Stat",
+			Handler:    _ShortService_Stat_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

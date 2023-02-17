@@ -28,7 +28,7 @@ type PutServices struct {
 }
 
 // NewPutService конструктор бизнес логики.
-func NewPutService(s PutStorageProvider, base string) *PutServices { //    , rand RandProvider) *PutServices {
+func NewPutService(s PutStorageProvider, base string) *PutServices { //, rand RandProvider) *PutServices {
 	return &PutServices{
 		s,
 		base,
@@ -111,7 +111,6 @@ func (r *Rand) RandSeq(n int) (random string, ok error) {
 	random = string(b)
 	return random, nil
 }
-
 
 func RandS(n int) (random string, ok error) {
 	if n < 1 {

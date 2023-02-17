@@ -35,9 +35,14 @@ message PutBatchResponse {
     string error = 2; // ошибка
   }
 
-service Put {
+service ShortService {
     rpc Put(PutRequest) returns (PutResponse);
     rpc PutBatch(PutBatchRequest) returns (PutBatchResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc Stat(StatRequest) returns (StatResponse);
   }
   
 // Get
@@ -52,26 +57,24 @@ message GetResponse {
     string error = 3; // ошибка
   }
 
-
 message GetBatchRequest {
   string userid = 1;
 	}
-
   
 message GetBatchResponse {
   repeated userURL userURLsMap = 1;
   string error = 2; // ошибка
   }
 
-message UserURL {
+message userURL {
   string user = 1;
   string URL = 2; 
   }
 
-service Get {
-    rpc Get(GetRequest) returns (GetResponse);
-    rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
-  }
+// service Get {
+//     rpc Get(GetRequest) returns (GetResponse);
+//     rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+//   }
 
 // Delete
 
@@ -84,9 +87,9 @@ message DeleteResponse {
     string error = 1; // ошибка
   }
 
-service Delete {
-  rpc Delete(DeleteRequest) returns (DeleteResponse);
-  }
+// service Delete {
+//   rpc Delete(DeleteRequest) returns (DeleteResponse);
+//   }
 
 // Info
 
@@ -102,19 +105,19 @@ message StatRequest {
 }
 
 message StatResponse {    
-  Stat stat = 1;
+  StatData stat = 1;
   string error = 2; // ошибка
 }
 
-message Stat {    
+message StatData {    
   int64 Urls = 1;
   int64 Users = 2; 
 }
 
-service Get {
-  rpc Ping(PingRequest) returns (PintResponse);
-  rpc Stat(StatRequest) returns (StatResponse);
-}
+// service Stat {
+//   rpc Ping(PingRequest) returns (PingResponse);
+//   rpc Stat(StatRequest) returns (StatResponse);
+// }
 
 
 
