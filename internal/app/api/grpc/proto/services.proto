@@ -17,29 +17,18 @@ message PutResponse {
   }
 
 
-
-
-
 message BatchRequest {
     string CorrelationID = 1;
     string OriginalURL = 2;
     string ShortURL = 3;
   }
 
-/* message PutBatch {
-    repeated BatchRequest dc = 1;
-  } */
 
 message PutBatchRequest {
     string userid = 1;
     repeated BatchRequest dcc = 2;
   }
 
-
-
-/*  message PutBatchResp {
- repeated BatchResponse dc = 1;
- } */
 
 message PutBatchResponse {
   string error = 1; // ошибка
@@ -88,29 +77,26 @@ message GetBatchResponse {
   }
 
 message userURL {
-  string user = 1;
+  string shortURL = 1;
   string URL = 2; 
   }
 
-// service Get {
-//     rpc Get(GetRequest) returns (GetResponse);
-//     rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
-//   }
-
 // Delete
 
-message DeleteRequest {
+message Delete {
     string key = 1;
     string userid = 2;
+  }
+
+message DeleteRequest {
+    repeated Delete shurls = 1;
   }
 
 message DeleteResponse {    
     string error = 1; // ошибка
   }
 
-// service Delete {
-//   rpc Delete(DeleteRequest) returns (DeleteResponse);
-//   }
+
 
 // Info
 
@@ -134,12 +120,6 @@ message StatData {
   int64 Urls = 1;
   int64 Users = 2; 
 }
-
-// service Stat {
-//   rpc Ping(PingRequest) returns (PingResponse);
-//   rpc Stat(StatRequest) returns (StatResponse);
-// }
-
 
 
 

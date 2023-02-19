@@ -230,8 +230,8 @@ func (srv *Server) InitHTTP() {
 	s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
 
 	// Конструкторы.
-	//svcRand := &service.Rand{}
-	svsPut := service.NewPutService(s, srv.BaseURL) //, svcRand)
+	svcRand := &service.Rand{}
+	svsPut := service.NewPutService(s, srv.BaseURL, svcRand)
 	hPut := handlers.NewPutHandler(svsPut, srv.BaseURL)
 	// Конструктор Get слоя.
 	svsGet := service.NewGetService(s, srv.BaseURL)
@@ -268,8 +268,8 @@ func (srv *Server) InitGRPCservice() {
 	//fmt.Println(s.Len(srv.Ctx))
 
 	// Конструкторы.
-	// svcRand := &service.Rand{}
-	srv.ShortService.svsPut = service.NewPutService(s, srv.BaseURL) //, svcRand)
+	svcRand := &service.Rand{}
+	srv.ShortService.svsPut = service.NewPutService(s, srv.BaseURL, svcRand)
 
 	//fmt.Println(srv.srvPut.Put(srv.Ctx, "888", "999"))
 
@@ -326,14 +326,12 @@ func (s *ShortServices) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResp
 	var out pb.PutResponse
 	var err error
 	out.Key, err = s.svsPut.Put(ctx, in.Value, in.Userid)
-	if err != nil {
-		log.Printf("call Put error: %v", err)
-	}
 	switch {
 	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
 		err = status.Errorf(codes.AlreadyExists, `this link already shortened: %s`, in.Value)
 		out.Error = codes.AlreadyExists.String()
 	case err != nil:
+		log.Printf("call Put error: %v", err)
 		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
 		out.Error = codes.Internal.String()
 	default:
@@ -355,6 +353,7 @@ func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*
 	}
 
 	dcCorr, err := s.svsPut.PutBatch(ctx, dcc, in.Userid)
+
 	tmpOut := pb.BatchResponse{}
 	for _, v := range dcCorr {
 		tmpOut.CorrelationID = v.CorrelationID
@@ -373,6 +372,110 @@ func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*
 	default:
 		out.Error = codes.OK.String()
 	}
+	return &out, err
+}
+
+func (s *ShortServices) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+	var out pb.GetResponse
+	var err error
+	out.Value, out.Del, err = s.svsGet.Get(ctx, in.Key)
+
+	if err != nil {
+		log.Printf("call Put error: %v", err)
+		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
+		out.Error = codes.Internal.String()
+	}
+
+	switch out.Del {
+	case true:
+		// сообщаем что ссылка удалена
+		err = status.Errorf(codes.NotFound, `this link already deleted: %s`, in.Key)
+		out.Error = codes.NotFound.String()
+	case false:
+		// отправляем сокращенную сылку
+		out.Error = codes.OK.String()
+		return &out, err
+	}
+
+	return &out, err
+}
+
+func (s *ShortServices) GetBatch(ctx context.Context, in *pb.GetBatchRequest) (*pb.GetBatchResponse, error) {
+	var out pb.GetBatchResponse
+	userURLsMap, err := s.svsGet.GetBatch(ctx, in.Userid)
+
+	tmpOut := pb.UserURL{}
+	for k, v := range userURLsMap {
+		tmpOut.ShortURL = k
+		tmpOut.URL = v
+		out.UserURLsMap = append(out.UserURLsMap, &tmpOut)
+	}
+
+	switch {
+	case err != nil:
+		log.Printf("call Put error: %v", err)
+		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
+		out.Error = codes.Internal.String()
+	default:
+		out.Error = codes.OK.String()
+	}
+	return &out, err
+}
+
+func (s *ShortServices) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	var out pb.DeleteResponse
+	var err error
+
+	var shurl [2]string
+	var shURLs []([2]string)
+	for _, v := range in.Key {
+		shurl[0] = v.Key
+		shurl[1] = v.Userid
+		shURLs = append(shURLs, shurl)
+	}
+
+	go s.svsDel.Delete(shURLs)
+
+	out.Error = codes.OK.String()
+	return &out, err
+}
+
+func (s *ShortServices) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
+	var out pb.PingResponse
+	var err error
+
+	out.Ok, err = s.svsPing.Ping(ctx)
+
+	switch out.Ok {
+	case true:
+		// сообщаем что пинг ок
+		out.Error = codes.OK.String()
+	case false:
+		// сообщаем что пинг не ок
+		err = status.Errorf(codes.FailedPrecondition, `db ping returned error: %s`, err)
+		out.Error = codes.FailedPrecondition.String()
+	}
+
+	return &out, err
+}
+
+func (s *ShortServices) Stat(ctx context.Context, in *pb.StatRequest) (*pb.StatResponse, error) {
+	var out pb.StatResponse
+
+	stat, err := s.svsPing.Stat(ctx)
+
+	out.Stat.Urls = int64(stat.Urls)
+	out.Stat.Users = int64(stat.Users)
+
+	switch {
+	case err != nil:
+		log.Printf("call Stat error: %v", err)
+		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
+		out.Error = codes.Internal.String()
+	default:
+		out.Error = codes.OK.String()
+	}
+
 	return &out, err
 }
 

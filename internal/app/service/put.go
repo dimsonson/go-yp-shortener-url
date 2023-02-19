@@ -24,23 +24,23 @@ type PutStorageProvider interface {
 type PutServices struct {
 	storage PutStorageProvider
 	base    string
-	//RandProvider
+	RandProvider
 }
 
 // NewPutService конструктор бизнес логики.
-func NewPutService(s PutStorageProvider, base string) *PutServices { //, rand RandProvider) *PutServices {
+func NewPutService(s PutStorageProvider, base string, rand RandProvider) *PutServices {
 	return &PutServices{
 		s,
 		base,
-		//rand,
+		rand,
 	}
 }
 
 // Put метод создание пары id : URL.
 func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key string, err error) {
 	// создаем и присваиваем значение короткой ссылки
-	//key, err = sr.RandSeq(settings.KeyLeght)
-	key, err = RandS(settings.KeyLeght)
+	key, err = sr.RandSeq(settings.KeyLeght)
+	//key, err = RandS(settings.KeyLeght)
 	if err != nil {
 		log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 	}

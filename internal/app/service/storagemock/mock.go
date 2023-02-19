@@ -29,10 +29,10 @@ func (s *StorageMock) Put(ctx context.Context, key string, value string, userid 
 }
 
 // PutBatch метод реализованный для запросов через заглушку.
-func (s *StorageMock) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+func (s *StorageMock) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error) {
 	switch userid {
 	case "ok":
-		dcCorr = models.BatchRequest{{CorrelationID: "05d", OriginalURL: "05id", ShortURL: "0xyz"}}
+		dcCorr = []models.BatchRequest{{CorrelationID: "05d", OriginalURL: "05id", ShortURL: "0xyz"}}
 		return dcCorr, nil
 	case "srv":
 		return nil, errors.New("server error")

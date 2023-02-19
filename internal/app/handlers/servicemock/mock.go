@@ -29,7 +29,7 @@ func (s *ServiceMock) Put(ctx context.Context, url string, userid string) (key s
 }
 
 // PutBatch метод реализованный для запросов через заглушку.
-func (s *ServiceMock) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
+func (s *ServiceMock) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	switch userid {
 	case "ok":
 		ec = []models.BatchResponse{{CorrelationID: "05id", ShortURL: "http://localhost:8080/0xyz"}}
