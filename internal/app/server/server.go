@@ -21,7 +21,6 @@ import (
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	grpczerolog "github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/jackc/pgerrcode"
 
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -284,8 +283,8 @@ func (srv *Server) InitGRPCservice() {
 		return status.Errorf(codes.Unknown, "panic triggered: %v", p)
 	}
 	// Опции для логгера и восстановления после паники.
-	opts := []recovery.Option{
-		recovery.WithRecoveryHandler(customFunc),
+	opts := []grpc_recovery.Option{
+		grpc_recovery.WithRecoveryHandler(customFunc),
 	}
 	// создаём gRPC-сервер без зарегистрированной службы
 	srv.GRPCserver = grpc.NewServer(
