@@ -61,8 +61,8 @@ func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key 
 func (sr *PutServices) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
-		//key, err := sr.RandSeq(settings.KeyLeght)
-		key, err := RandS(settings.KeyLeght)
+		key, err := sr.RandSeq(settings.KeyLeght)
+		//key, err := RandS(settings.KeyLeght)
 		if err != nil {
 			log.Fatal(err) //RandSeq настраивается на этапе запуска http сервера
 		}
@@ -98,21 +98,6 @@ type Rand struct{}
 
 // RandSeq функция генерации псевдо случайной последовательности знаков.
 func (r *Rand) RandSeq(n int) (random string, ok error) {
-	if n < 1 {
-		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
-		return "", err
-	}
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	random = string(b)
-	return random, nil
-}
-
-func RandS(n int) (random string, ok error) {
 	if n < 1 {
 		err := fmt.Errorf("wromg argument: number %v less than 1\n ", n)
 		return "", err
