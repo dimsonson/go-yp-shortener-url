@@ -13,8 +13,8 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	pb "github.com/dimsonson/go-yp-shortener-url/internal/app/api/grpc/proto"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
@@ -42,6 +42,11 @@ const (
 	defHTTPS       = false
 )
 
+// ShortServicePrivider интерфейс реализации паттерна компоновщик для использования сервисов в серверах.
+type ShortServicePrivider interface {
+	InitGRPCservice()
+}
+
 // Server структура для хранения серверов.
 type Server struct {
 	GRPCserver *grpc.Server
@@ -66,6 +71,16 @@ type Config struct {
 	EnableGRPC      bool       `json:"enable_grpc"`
 	TrustedCIDR     *net.IPNet `json:"-"`
 	ConfigJSON      string     `json:"-"`
+}
+
+// ShortServices структура сервислсв для использования в сервере.
+type ShortServices struct {
+	svsPut  *service.PutServices
+	svsGet  *service.GetServices
+	svsDel  *service.DeleteServices
+	svsPing *service.PingServices
+	pb.UnimplementedShortServiceServer
+	Server
 }
 
 // NewServer конструктор создания нового сервера в соответствии с существующей конфигурацией.
@@ -249,16 +264,6 @@ func (srv *Server) InitHTTP() {
 	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
-// ShortServices структура сервислсв для использования в сервере. 
-type ShortServices struct {
-	svsPut  *service.PutServices
-	svsGet  *service.GetServices
-	svsDel  *service.DeleteServices
-	svsPing *service.PingServices
-	pb.UnimplementedShortServiceServer
-	Server
-}
-
 // InitGRPC инциализация GRPC сервера.
 func (srv *Server) InitGRPCservice() {
 	// Инициализируем конструкторы.
@@ -291,11 +296,6 @@ func (srv *Server) InitGRPCservice() {
 	)
 }
 
-// ShortServicePrivider интерфейс реализации паттерна компоновщик для использования сервисов в серверах.
-type ShortServicePrivider interface {
-	InitGRPCservice()
-}
-
 // StartGRPC запуск GRPC сервера.
 func (srv *Server) StartGRPC() {
 	listen, err := net.Listen("tcp", ":8080")
@@ -308,6 +308,26 @@ func (srv *Server) StartGRPC() {
 	if err := srv.GRPCserver.Serve(listen); err != nil {
 		log.Printf("gRPC server error: %v", err)
 	}
+}
+
+// grpcGracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
+func (srv *Server) grpcGracefullShotdown() {
+	srv.Wg.Add(1)
+	go func() {
+		// получаем сигнал о завершении приложения
+		<-srv.Ctx.Done()
+		log.Print("got signal, attempting graceful shutdown")
+		srv.GRPCserver.GracefulStop()
+		srv.Wg.Done()
+	}()
+}
+
+// GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
+func (srv *Server) httpGracefullShotdown() {
+	// добавляем счетчик горутины
+	srv.Wg.Add(1)
+	// запуск горутины shutdown http сервера
+	go httpServerShutdown(srv.Ctx, &srv.Wg, srv.HTTPserver)
 }
 
 // Put метод обработки gPRC запроса с text URL и возврат короткого URL.
@@ -364,6 +384,7 @@ func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*
 	}
 	return &out, err
 }
+
 // Get метод обработки gPRC запроса c id и возврат полного URL.
 func (s *ShortServices) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	var out pb.GetResponse
@@ -412,6 +433,7 @@ func (s *ShortServices) GetBatch(ctx context.Context, in *pb.GetBatchRequest) (*
 	}
 	return &out, err
 }
+
 // Delete метод обработки gRPC запроса с слайсом short_url в теле.
 func (s *ShortServices) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	var out pb.DeleteResponse
@@ -450,6 +472,7 @@ func (s *ShortServices) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingR
 
 	return &out, err
 }
+
 // Stat метод обработки gRPC запроса и возвратом JSON c стат данными из хранилища.
 func (s *ShortServices) Stat(ctx context.Context, in *pb.StatRequest) (*pb.StatResponse, error) {
 	var out pb.StatResponse
@@ -469,26 +492,6 @@ func (s *ShortServices) Stat(ctx context.Context, in *pb.StatRequest) (*pb.StatR
 	}
 
 	return &out, err
-}
-
-// grpcGracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
-func (srv *Server) grpcGracefullShotdown() {
-	srv.Wg.Add(1)
-	go func() {
-		// получаем сигнал о завершении приложения
-		<-srv.Ctx.Done()
-		log.Print("got signal, attempting graceful shutdown")
-		srv.GRPCserver.GracefulStop()
-		srv.Wg.Done()
-	}()
-}
-
-// GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
-func (srv *Server) httpGracefullShotdown() {
-	// добавляем счетчик горутины
-	srv.Wg.Add(1)
-	// запуск горутины shutdown http сервера
-	go httpServerShutdown(srv.Ctx, &srv.Wg, srv.HTTPserver)
 }
 
 // newStrorageProvider инциализация интерфейса хранилища в зависимости от переменных окружения и флагов.

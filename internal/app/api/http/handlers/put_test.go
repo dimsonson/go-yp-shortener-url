@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
 )

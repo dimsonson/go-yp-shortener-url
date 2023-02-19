@@ -2,7 +2,7 @@
 package httprouters
 
 import (
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )

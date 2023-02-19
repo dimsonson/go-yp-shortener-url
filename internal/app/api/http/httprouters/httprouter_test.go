@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers/servicemock"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/httprouters"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

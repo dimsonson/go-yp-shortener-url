@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"

@@ -7,14 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock"
-	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers/servicemock"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/stretchr/testify/assert"
 )
 
-// TestPing тест хендлера Ping.
-func TestPing(t *testing.T) {
+// TestDelete тест хендлера Delete.
+func TestDelete(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name                  string
@@ -28,44 +27,43 @@ func TestPing(t *testing.T) {
 		expectedHeaderContent string
 	}{
 		{
-			name:                  "Positive test - Ping - OK",
-			inputMetod:            http.MethodGet,
-			inputEndpoint:         "/ping",
+			name:                  "Positive test - Delete - OK",
+			inputMetod:            http.MethodDelete,
+			inputEndpoint:         "/api/user/urls",
 			inputBody:             "",
 			inputUserID:           "ok",
-			expectedStatusCode:    http.StatusOK,
-			expectedResponseBody:  "https://pkg.go.dev/io#Reader",
-			expectedHeader:        "Content-Type",
-			expectedHeaderContent: "",
-		},
-		{
-			name:                  "Negativae test - Ping - server error",
-			inputMetod:            http.MethodGet,
-			inputEndpoint:         "/ping",
-			inputBody:             "",
-			inputUserID:           "bad",
-			expectedStatusCode:    http.StatusInternalServerError,
+			expectedStatusCode:    http.StatusAccepted,
 			expectedResponseBody:  "",
 			expectedHeader:        "Content-Type",
-			expectedHeaderContent: "",
+			expectedHeaderContent: "application/json; charset=utf-8",
+		},
+		{
+			name:                  "Negativae test - Delete - no content",
+			inputMetod:            http.MethodDelete,
+			inputEndpoint:         "/api/user/urls",
+			inputBody:             "{}",
+			inputUserID:           "bad",
+			expectedStatusCode:    http.StatusBadRequest,
+			expectedResponseBody:  "",
+			expectedHeader:        "Content-Type",
+			expectedHeaderContent: "application/json; charset=utf-8",
 		},
 	}
 	s := &servicemock.ServiceMock{}
-	var cfg models.Config
-	h := NewPingHandler(s, cfg.TrustedCIDR)
+	h := NewDeleteHandler(s, "http://localhost:8080")
 	for _, tt := range tests {
-		// запускаем каждый тест
+		// Запускаем каждый тест.
 		t.Run(tt.name, func(t *testing.T) {
-			// Cоздание тестирующего запроса и рекордерю
+			// Cоздание тестирующего запроса и рекордер.
 			req := httptest.NewRequest(tt.inputMetod, tt.inputEndpoint, strings.NewReader(tt.inputBody))
 			w := httptest.NewRecorder()
 			// Создание контекста id пользователя для передачи хендлером в сервис.
 			req = req.WithContext(context.WithValue(req.Context(), settings.CtxKeyUserID, tt.inputUserID))
 			// Запускаем хендлер.
-			h.Ping(w, req)
-			// проверяем код ответа
+			h.Delete(w, req)
+			// Проверяем код ответа.
 			assert.Equal(t, tt.expectedStatusCode, w.Code)
-			// заголовок ответа
+			// Заголовок ответа.
 			assert.Contains(t, w.Header().Get(tt.expectedHeader), tt.expectedHeaderContent)
 		})
 	}

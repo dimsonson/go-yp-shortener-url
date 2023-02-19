@@ -4,14 +4,6 @@ package models
 import "net"
 
 // BatchRequest слайс структур декодирования JSON из POST запроса.
-// type BatchRequest []struct {
-// 	CorrelationID string `json:"correlation_id,omitempty"`
-// 	OriginalURL   string `json:"original_url,omitempty"`
-// 	ShortURL      string `json:"_"`
-// }
-
-
-
 type BatchRequest struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	OriginalURL   string `json:"original_url,omitempty"`
