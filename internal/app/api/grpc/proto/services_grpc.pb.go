@@ -32,7 +32,7 @@ type ShortServiceClient interface {
 }
 
 type shortServiceClient struct {
-	cc grpc.ClientConnInterface"github.com/dimsonson/go-yp-shortener-url/internal/app/api/http/handlers/servicemock"
+	cc grpc.ClientConnInterface
 }
 
 func NewShortServiceClient(cc grpc.ClientConnInterface) ShortServiceClient {

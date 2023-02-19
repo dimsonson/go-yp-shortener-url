@@ -440,7 +440,7 @@ func (s *ShortServices) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.D
 
 	var shurl [2]string
 	var shURLs []([2]string)
-	for _, v := range in.Key {
+	for _, v := range in.Shurls {
 		shurl[0] = v.Key
 		shurl[1] = v.Userid
 		shURLs = append(shURLs, shurl)
