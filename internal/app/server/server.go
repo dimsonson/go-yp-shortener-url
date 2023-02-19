@@ -249,6 +249,7 @@ func (srv *Server) InitHTTP() {
 	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
+// ShortServices структура сервислсв для использования в сервере. 
 type ShortServices struct {
 	svsPut  *service.PutServices
 	svsGet  *service.GetServices
@@ -264,31 +265,23 @@ func (srv *Server) InitGRPCservice() {
 	srv.ShortService = &ShortServices{}
 	// Конструктор хранилища.
 	s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
-
-	//fmt.Println(s.Len(srv.Ctx))
-
 	// Конструкторы.
 	svcRand := &service.Rand{}
 	srv.ShortService.svsPut = service.NewPutService(s, srv.BaseURL, svcRand)
-
-	//fmt.Println(srv.srvPut.Put(srv.Ctx, "888", "999"))
-
 	// Конструктор Get слоя.
 	srv.ShortService.svsGet = service.NewGetService(s, srv.BaseURL)
 	// Конструктор Delete слоя.
 	srv.ShortService.svsDel = service.NewDeleteService(s, srv.BaseURL)
 	// Констуктор Ping слоя.
 	srv.ShortService.svsPing = service.NewPingService(s)
-
-	// Define customfunc to handle panic
+	// Обявление customFunc для использования в обработке паники.
 	customFunc := func(p interface{}) (err error) {
 		return status.Errorf(codes.Unknown, "panic triggered: %v", p)
 	}
-	// Shared options for the logger, with a custom gRPC code to log level function.
+	// Опции для логгера и восстановления после паники.
 	opts := []recovery.Option{
 		recovery.WithRecoveryHandler(customFunc),
 	}
-
 	// создаём gRPC-сервер без зарегистрированной службы
 	srv.GRPCserver = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -296,7 +289,6 @@ func (srv *Server) InitGRPCservice() {
 			grpc_recovery.UnaryServerInterceptor(opts...),
 		),
 	)
-
 }
 
 // ShortServicePrivider интерфейс реализации паттерна компоновщик для использования сервисов в серверах.
@@ -306,22 +298,19 @@ type ShortServicePrivider interface {
 
 // StartGRPC запуск GRPC сервера.
 func (srv *Server) StartGRPC() {
-
 	listen, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Printf("gRPC listener error: %v", err)
 	}
-
-	//PutServer := &PutServices{}
 	pb.RegisterShortServiceServer(srv.GRPCserver, srv.ShortService)
-
 	log.Print("Сервер gRPC начинает работу")
-	// получаем запрос gRPC
+	// запуск gRPC сервера
 	if err := srv.GRPCserver.Serve(listen); err != nil {
 		log.Printf("gRPC server error: %v", err)
 	}
 }
 
+// Put метод обработки gPRC запроса с text URL и возврат короткого URL.
 func (s *ShortServices) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	var out pb.PutResponse
 	var err error
@@ -340,6 +329,7 @@ func (s *ShortServices) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResp
 	return &out, err
 }
 
+// PutBatch метод обработки gPRC запроса с набором URL и возврат набора коротких URL в теле
 func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
 	var out pb.PutBatchResponse
 	var dcc []models.BatchRequest
@@ -374,7 +364,7 @@ func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*
 	}
 	return &out, err
 }
-
+// Get метод обработки gPRC запроса c id и возврат полного URL.
 func (s *ShortServices) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	var out pb.GetResponse
 	var err error
@@ -400,6 +390,7 @@ func (s *ShortServices) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResp
 	return &out, err
 }
 
+// GetBatch метод обработки gPRC запроса c возвратом пользователю всех когда-либо сокращённых им URL.
 func (s *ShortServices) GetBatch(ctx context.Context, in *pb.GetBatchRequest) (*pb.GetBatchResponse, error) {
 	var out pb.GetBatchResponse
 	userURLsMap, err := s.svsGet.GetBatch(ctx, in.Userid)
@@ -421,7 +412,7 @@ func (s *ShortServices) GetBatch(ctx context.Context, in *pb.GetBatchRequest) (*
 	}
 	return &out, err
 }
-
+// Delete метод обработки gRPC запроса с слайсом short_url в теле.
 func (s *ShortServices) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	var out pb.DeleteResponse
 	var err error
@@ -440,6 +431,7 @@ func (s *ShortServices) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.D
 	return &out, err
 }
 
+// Ping метод проверки доступности базы SQL.
 func (s *ShortServices) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
 	var out pb.PingResponse
 	var err error
@@ -458,7 +450,7 @@ func (s *ShortServices) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingR
 
 	return &out, err
 }
-
+// Stat метод обработки gRPC запроса и возвратом JSON c стат данными из хранилища.
 func (s *ShortServices) Stat(ctx context.Context, in *pb.StatRequest) (*pb.StatResponse, error) {
 	var out pb.StatResponse
 
