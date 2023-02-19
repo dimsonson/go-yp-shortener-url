@@ -81,7 +81,7 @@ func (ms *StorageMap) Close() {
 }
 
 // PutBatch метод пакетной записи id:url в хранилище в памяти.
-func (ms *StorageMap) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+func (ms *StorageMap) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL

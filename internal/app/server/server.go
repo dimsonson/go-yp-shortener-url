@@ -5,22 +5,24 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/asaskevich/govalidator"
 	pb "github.com/dimsonson/go-yp-shortener-url/internal/app/api/grpc/proto"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/handlers"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters"
+	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/service"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/settings"
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/storage"
 	grpczerolog "github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/jackc/pgerrcode"
 
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 
@@ -48,9 +50,8 @@ type Server struct {
 	Wg   sync.WaitGroup
 	Ctx  context.Context
 	Stop context.CancelFunc
-	//PutServer
-	PutServicePrivider
-	PutService *PutServices
+	ShortServicePrivider
+	ShortService *ShortServices
 }
 
 // Config структура конфигурации сервиса, при запуске сервиса с флагом -c/config
@@ -196,7 +197,7 @@ func (cfg *Config) Parse() {
 // Start метод запуска сервара, вид запвсукаемого сервера зависит от EnableGRPC в структуре Config.
 func (srv *Server) Start() {
 	if srv.EnableGRPC {
-		srv.InitGRPC()
+		//srv.InitGRPC()
 		srv.InitGRPCservice()
 		//	srv.InitGRPC()
 		srv.grpcGracefullShotdown()
@@ -248,7 +249,7 @@ func (srv *Server) InitHTTP() {
 	srv.HTTPserver = &http.Server{Addr: srv.ServerAddress, Handler: r}
 }
 
-type PutServices struct {
+type ShortServices struct {
 	svsPut  *service.PutServices
 	svsGet  *service.GetServices
 	svsDel  *service.DeleteServices
@@ -258,57 +259,26 @@ type PutServices struct {
 }
 
 // InitGRPC инциализация GRPC сервера.
-func (srv *Server) InitGRPC() {
-	srv.PutService = &PutServices{}
+func (srv *Server) InitGRPCservice() {
 	// Инициализируем конструкторы.
+	srv.ShortService = &ShortServices{}
 	// Конструктор хранилища.
-	//s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
-
-	//fmt.Println(srv.PutServ(srv.Ctx))
-
-	// Конструкторы.
-	//svcRand := &service.Rand{}
-	//srv.svsPut = service.NewPutService(s, srv.BaseURL) //, svcRand)
-
-	//fmt.Println(srv.svsPut.Put(srv.Ctx, "888", "999"))
-
-	// Конструктор Get слоя.
-	//srv.svsGet = service.NewGetService(s, srv.BaseURL)
-	// Конструктор Delete слоя.
-	//srv.svsDel = service.NewDeleteService(s, srv.BaseURL)
-	// Констуктор Ping слоя.
-	//srv.svsPing = service.NewPingService(s)
-
-	// создаём gRPC-сервер без зарегистрированной службы
-	// srv.GRPCserver = grpc.NewServer(
-	// 	grpc.ChainUnaryInterceptor(
-	// 		logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
-	// 	),
-	// 	//grpc_recovery.UnaryServerInterceptor(),
-	// )
-
-}
-
-// InitGRPC инциализация GRPC сервера.
-func (svs *Server) InitGRPCservice() {
-	// Инициализируем конструкторы.
-	// Конструктор хранилища.
-	s := newStrorageProvider(svs.DatabaseDsn, svs.FileStoragePath)
+	s := newStrorageProvider(srv.DatabaseDsn, srv.FileStoragePath)
 
 	//fmt.Println(s.Len(srv.Ctx))
 
 	// Конструкторы.
 	// svcRand := &service.Rand{}
-	svs.PutService.svsPut = service.NewPutService(s, svs.BaseURL)   //, svcRand)
+	srv.ShortService.svsPut = service.NewPutService(s, srv.BaseURL) //, svcRand)
 
-	//fmt.Println(srv.svsPut.Put(srv.Ctx, "888", "999"))
+	//fmt.Println(srv.srvPut.Put(srv.Ctx, "888", "999"))
 
 	// Конструктор Get слоя.
-	svs.PutService.svsGet = service.NewGetService(s, svs.BaseURL)
+	srv.ShortService.svsGet = service.NewGetService(s, srv.BaseURL)
 	// Конструктор Delete слоя.
-	svs.PutService.svsDel = service.NewDeleteService(s, svs.BaseURL)
+	srv.ShortService.svsDel = service.NewDeleteService(s, srv.BaseURL)
 	// Констуктор Ping слоя.
-	svs.PutService.svsPing = service.NewPingService(s)
+	srv.ShortService.svsPing = service.NewPingService(s)
 
 	// Define customfunc to handle panic
 	customFunc := func(p interface{}) (err error) {
@@ -320,7 +290,7 @@ func (svs *Server) InitGRPCservice() {
 	}
 
 	// создаём gRPC-сервер без зарегистрированной службы
-	svs.GRPCserver = grpc.NewServer(
+	srv.GRPCserver = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(grpczerolog.InterceptorLogger(log.Logger)),
 			grpc_recovery.UnaryServerInterceptor(opts...),
@@ -329,55 +299,81 @@ func (svs *Server) InitGRPCservice() {
 
 }
 
-type PutServicePrivider interface {
+// ShortServicePrivider интерфейс реализации паттерна компоновщик для использования сервисов в серверах.
+type ShortServicePrivider interface {
 	InitGRPCservice()
 }
-
-// type PutServer struct{
-// 	pb.UnimplementedPutServer
-// }
 
 // StartGRPC запуск GRPC сервера.
 func (srv *Server) StartGRPC() {
 
 	listen, err := net.Listen("tcp", ":8080")
 	if err != nil {
-
+		log.Printf("gRPC listener error: %v", err)
 	}
 
 	//PutServer := &PutServices{}
-	pb.RegisterShortServiceServer(srv.GRPCserver, srv.PutService)
+	pb.RegisterShortServiceServer(srv.GRPCserver, srv.ShortService)
 
-	fmt.Println("Сервер gRPC начал работу")
+	log.Print("Сервер gRPC начинает работу")
 	// получаем запрос gRPC
 	if err := srv.GRPCserver.Serve(listen); err != nil {
+		log.Printf("gRPC server error: %v", err)
+	}
+}
 
+func (s *ShortServices) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
+	var out pb.PutResponse
+	var err error
+	out.Key, err = s.svsPut.Put(ctx, in.Value, in.Userid)
+	if err != nil {
+		log.Printf("call Put error: %v", err)
+	}
+	switch {
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
+		err = status.Errorf(codes.AlreadyExists, `this link already shortened: %s`, in.Value)
+		out.Error = codes.AlreadyExists.String()
+	case err != nil:
+		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
+		out.Error = codes.Internal.String()
+	default:
+		out.Error = codes.OK.String()
+	}
+	return &out, err
+}
+
+func (s *ShortServices) PutBatch(ctx context.Context, in *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
+	var out pb.PutBatchResponse
+	var dcc []models.BatchRequest
+
+	tmpIn := models.BatchRequest{}
+	for _, v := range in.Dcc {
+		tmpIn.CorrelationID = v.CorrelationID
+		tmpIn.OriginalURL = v.OriginalURL
+		tmpIn.ShortURL = v.ShortURL
+		dcc = append(dcc, tmpIn)
 	}
 
-}
+	dcCorr, err := s.svsPut.PutBatch(ctx, dcc, in.Userid)
+	tmpOut := pb.BatchResponse{}
+	for _, v := range dcCorr {
+		tmpOut.CorrelationID = v.CorrelationID
+		tmpOut.ShortURL = v.ShortURL
+		out.DcCorr = append(out.DcCorr, &tmpOut)
+	}
 
-func (s *PutServices) Put(ctx context.Context, rq *pb.PutRequest) (*pb.PutResponse, error) {
-
-	//	st := newStrorageProvider(s.DatabaseDsn, s.FileStoragePath)
-
-	//fmt.Println(s.Len(srv.Ctx))
-
-	// Конструкторы.
-	//svcRand := &service.Rand{}
-	//	svsPut := service.NewPutService(st, s.BaseURL) //, svcRand)
-	var response pb.PutResponse
-	//ctx = context.Background()
-	key, _ := s.svsPut.Put(ctx, rq.Value, rq.Userid)
-	fmt.Println(key)
-	response.ExistKey = key //"358ksdHJ" //key //s.svsPut.Put()
-	return &response, nil   //err
-}
-
-func (s *PutServices) PutBatch(ctx context.Context, rq *pb.PutBatchRequest) (*pb.PutBatchResponse, error) {
-	var response pb.PutBatchResponse
-	response.DcCorr.CorrelationID = "3GSFHJY"
-	//s.svsPut.Put()
-	return &response, nil
+	switch {
+	case err != nil && strings.Contains(err.Error(), pgerrcode.UniqueViolation):
+		err = status.Error(codes.AlreadyExists, `one of this this links already shortened`)
+		out.Error = codes.AlreadyExists.String()
+	case err != nil:
+		log.Printf("call Put error: %v", err)
+		status.Errorf(codes.Internal, `server error %s`, error.Error(err))
+		out.Error = codes.Internal.String()
+	default:
+		out.Error = codes.OK.String()
+	}
+	return &out, err
 }
 
 // grpcGracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
@@ -386,10 +382,8 @@ func (srv *Server) grpcGracefullShotdown() {
 	go func() {
 		// получаем сигнал о завершении приложения
 		<-srv.Ctx.Done()
-		log.Printf("got signal, attempting graceful shutdown")
-		//srv.Stop()
+		log.Print("got signal, attempting graceful shutdown")
 		srv.GRPCserver.GracefulStop()
-		// grpc.Stop() // leads to error while receiving stream response: rpc error: code = Unavailable desc = transport is closing
 		srv.Wg.Done()
 	}()
 }

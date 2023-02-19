@@ -19,7 +19,7 @@ import (
 // PutServiceProvider интерфейс методов бизнес логики слоя Put.
 type PutServiceProvider interface {
 	Put(ctx context.Context, url string, userid string) (key string, err error)
-	PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error)
+	PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (ec []models.BatchResponse, err error)
 }
 
 // PutHandler структура для конструктура обработчика.
@@ -152,7 +152,7 @@ func (hn PutHandler) PutBatch(w http.ResponseWriter, r *http.Request) {
 	// не забываем освободить ресурс
 	defer cancel()
 	// десериализация тела запроса
-	var dc models.BatchRequest
+	var dc []models.BatchRequest
 	err := json.NewDecoder(r.Body).Decode(&dc)
 	if err != nil && err != io.EOF {
 		log.Printf("unmarshal error: %s", err)

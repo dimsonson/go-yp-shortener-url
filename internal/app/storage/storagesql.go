@@ -80,7 +80,7 @@ func (ms *StorageSQL) Put(ctx context.Context, key string, value string, userid 
 }
 
 // PutBatch метод пакетной записи id:url в хранилище PostgreSQL.
-func (ms *StorageSQL) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+func (ms *StorageSQL) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error) {
 	// объявляем транзакцию
 	tx, err := ms.PostgreSQL.Begin()
 	if err != nil {

@@ -16,7 +16,7 @@ import (
 // PutStorageProvider интерфейс методов хранилища.
 type PutStorageProvider interface {
 	Put(ctx context.Context, key string, value string, userid string) (existKey string, err error)
-	PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error)
+	PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error)
 	Len(ctx context.Context) (lenn int)
 }
 
@@ -58,7 +58,7 @@ func (sr *PutServices) Put(ctx context.Context, url string, userid string) (key 
 }
 
 // PutBatch метод создание пакета пар id : URL.
-func (sr *PutServices) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
+func (sr *PutServices) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (ec []models.BatchResponse, err error) {
 	// добавление shorturl
 	for i := range dc {
 		//key, err := sr.RandSeq(settings.KeyLeght)

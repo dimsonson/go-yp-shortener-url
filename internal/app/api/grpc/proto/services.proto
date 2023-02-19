@@ -13,27 +13,48 @@ message PutRequest {
 
 message PutResponse {    
     string key = 1;
-    string existKey = 2;
-    string error = 3; // ошибка
+    string error = 2; // ошибка
   }
+
+
+
 
 
 message BatchRequest {
     string CorrelationID = 1;
-	string OriginalURL = 2;
-	string ShortURL = 3;
-}
+    string OriginalURL = 2;
+    string ShortURL = 3;
+  }
+
+/* message PutBatch {
+    repeated BatchRequest dc = 1;
+  } */
 
 message PutBatchRequest {
-    BatchRequest dc = 1;
-    string userid = 2;
+    string userid = 1;
+    repeated BatchRequest dcc = 2;
   }
 
+
+
+/*  message PutBatchResp {
+ repeated BatchResponse dc = 1;
+ } */
 
 message PutBatchResponse {
-    BatchRequest dcCorr = 1;
-    string error = 2; // ошибка
+  string error = 1; // ошибка
+  repeated BatchResponse dcCorr = 2;
   }
+
+
+message BatchResponse {
+  string CorrelationID = 1;
+  string OriginalURL = 2;
+  string ShortURL = 3;
+}
+
+
+
 
 service ShortService {
     rpc Put(PutRequest) returns (PutResponse);

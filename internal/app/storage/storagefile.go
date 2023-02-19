@@ -136,7 +136,7 @@ func (ms *StorageFile) Close() {
 }
 
 // PutBatch метод пакетной записи id:url в хранилище.
-func (ms *StorageFile) PutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+func (ms *StorageFile) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL, del
