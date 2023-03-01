@@ -12,14 +12,14 @@ import (
 	reflect "reflect"
 	sync "sync"
 )
-
+// const
 const (
 	// Verify that this generated code is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
+// PutRequest
 type PutRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -28,7 +28,7 @@ type PutRequest struct {
 	Value  string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	Userid string `protobuf:"bytes,2,opt,name=userid,proto3" json:"userid,omitempty"`
 }
-
+//Reset
 func (x *PutRequest) Reset() {
 	*x = PutRequest{}
 	if protoimpl.UnsafeEnabled {
@@ -37,13 +37,13 @@ func (x *PutRequest) Reset() {
 		ms.StoreMessageInfo(mi)
 	}
 }
-
+// String
 func (x *PutRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
-
+// ProtoMessage
 func (*PutRequest) ProtoMessage() {}
-
+// ProtoReflect
 func (x *PutRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_services_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -60,21 +60,21 @@ func (x *PutRequest) ProtoReflect() protoreflect.Message {
 func (*PutRequest) Descriptor() ([]byte, []int) {
 	return file_services_proto_rawDescGZIP(), []int{0}
 }
-
+// GetValue
 func (x *PutRequest) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
 	return ""
 }
-
+// GetUserid
 func (x *PutRequest) GetUserid() string {
 	if x != nil {
 		return x.Userid
 	}
 	return ""
 }
-
+// PutResponse
 type PutResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -83,7 +83,7 @@ type PutResponse struct {
 	Key   string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"` // ошибка
 }
-
+// Reset
 func (x *PutResponse) Reset() {
 	*x = PutResponse{}
 	if protoimpl.UnsafeEnabled {
@@ -92,13 +92,13 @@ func (x *PutResponse) Reset() {
 		ms.StoreMessageInfo(mi)
 	}
 }
-
+// String
 func (x *PutResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
-
+// ProtoMessage
 func (*PutResponse) ProtoMessage() {}
-
+// ProtoReflect
 func (x *PutResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_services_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -115,21 +115,21 @@ func (x *PutResponse) ProtoReflect() protoreflect.Message {
 func (*PutResponse) Descriptor() ([]byte, []int) {
 	return file_services_proto_rawDescGZIP(), []int{1}
 }
-
+// GetKey
 func (x *PutResponse) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
 	return ""
 }
-
+// GetError
 func (x *PutResponse) GetError() string {
 	if x != nil {
 		return x.Error
 	}
 	return ""
 }
-
+// BatchRequest
 type BatchRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -139,7 +139,7 @@ type BatchRequest struct {
 	OriginalURL   string `protobuf:"bytes,2,opt,name=OriginalURL,proto3" json:"OriginalURL,omitempty"`
 	ShortURL      string `protobuf:"bytes,3,opt,name=ShortURL,proto3" json:"ShortURL,omitempty"`
 }
-
+// Reset
 func (x *BatchRequest) Reset() {
 	*x = BatchRequest{}
 	if protoimpl.UnsafeEnabled {
@@ -148,11 +148,11 @@ func (x *BatchRequest) Reset() {
 		ms.StoreMessageInfo(mi)
 	}
 }
-
+// String
 func (x *BatchRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
-
+// ProtoMessage
 func (*BatchRequest) ProtoMessage() {}
 
 func (x *BatchRequest) ProtoReflect() protoreflect.Message {
