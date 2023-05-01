@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "internal/app/api/grpc/proto";
+
+// Put
+
+message PutRequest {
+    string value = 1;
+    string userid = 2;
+  }
+
+message PutResponse {    
+    string key = 1;
+    string error = 2; // ошибка
+  }
+
+
+message BatchRequest {
+    string CorrelationID = 1;
+    string OriginalURL = 2;
+    string ShortURL = 3;
+  }
+
+
+message PutBatchRequest {
+    string userid = 1;
+    repeated BatchRequest dcc = 2;
+  }
+
+
+message PutBatchResponse {
+  string error = 1; // ошибка
+  repeated BatchResponse dcCorr = 2;
+  }
+
+
+message BatchResponse {
+  string CorrelationID = 1;
+  string OriginalURL = 2;
+  string ShortURL = 3;
+}
+
+
+
+
+service ShortService {
+    rpc Put(PutRequest) returns (PutResponse);
+    rpc PutBatch(PutBatchRequest) returns (PutBatchResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc Stat(StatRequest) returns (StatResponse);
+  }
+  
+// Get
+
+message GetRequest {
+    string key = 1;
+  }
+
+message GetResponse {    
+    string value = 1;
+    bool del = 2;
+    string error = 3; // ошибка
+  }
+
+message GetBatchRequest {
+  string userid = 1;
+	}
+  
+message GetBatchResponse {
+  repeated userURL userURLsMap = 1;
+  string error = 2; // ошибка
+  }
+
+message userURL {
+  string shortURL = 1;
+  string URL = 2; 
+  }
+
+// Delete
+
+message Delete {
+    string key = 1;
+    string userid = 2;
+  }
+
+message DeleteRequest {
+    repeated Delete shurls = 1;
+  }
+
+message DeleteResponse {    
+    string error = 1; // ошибка
+  }
+
+
+
+// Info
+
+message PingRequest {
+}
+
+message PingResponse {    
+  bool ok = 1;
+  string error = 2; // ошибка
+}
+
+message StatRequest {
+}
+
+message StatResponse {    
+  StatData stat = 1;
+  string error = 2; // ошибка
+}
+
+message StatData {    
+  int64 Urls = 1;
+  int64 Users = 2; 
+}
+
+
+
+/*
+protoc --go_out=. --go_opt=paths=source_relative \
+  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+  services.proto
+*/

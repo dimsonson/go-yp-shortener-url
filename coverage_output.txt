@@ -1,0 +1,14 @@
+dbo@MacBook-Air go-yp-shortener-url % go test --count=1 -coverprofile=coverage.out ./... ; \                                                     
+cat coverage.out | \
+awk 'BEGIN {cov=0; stat=0;} \
+    $3!="" { cov+=($3==1?$2:0); stat+=$2; } \
+    END {printf("Total coverage: %.2f%% of statements\n", (cov/stat)*100);}'
+?       github.com/dimsonson/go-yp-shortener-url/cmd/shortener  [no test files]
+ok      github.com/dimsonson/go-yp-shortener-url/internal/app/handlers  0.100s  coverage: 88.1% of statements
+?       github.com/dimsonson/go-yp-shortener-url/internal/app/handlers/servicemock      [no test files]
+ok      github.com/dimsonson/go-yp-shortener-url/internal/app/httprouters       0.479s  coverage: 90.5% of statements
+?       github.com/dimsonson/go-yp-shortener-url/internal/app/models    [no test files]
+?       github.com/dimsonson/go-yp-shortener-url/internal/app/service   [no test files]
+?       github.com/dimsonson/go-yp-shortener-url/internal/app/settings  [no test files]
+?       github.com/dimsonson/go-yp-shortener-url/internal/app/storage   [no test files]
+Total coverage: 89.07% of statements

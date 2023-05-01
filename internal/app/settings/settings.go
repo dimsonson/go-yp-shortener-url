@@ -1,32 +1,36 @@
+// Package settings пакет настроек сервиса.
 package settings
 
 import "time"
 
-// длинна укороченной ссылки без первого слеш
+// RequestsTimeout начальный таймаут для горутин.
+var RequestsTimeout = 300 * time.Millisecond
+
+// KeyLeght длинна укороченной ссылки без первого слеш.
 const KeyLeght int = 5 //значение должно быть больше 0
 
-// длинна слайса байт для UserID
+// UserIDLeght длинна слайса байт для UserID.
 const UserIDLeght int = 16 //значение должно быть больше 0
 
-// ключ подписи
+// SignKey ключ подписи.
 const SignKey string = "9e9e0b4e6de418b2f84fca35165571c5"
 
-// timeout запроса
+// StorageTimeout timeout запроса.
 const StorageTimeout = 5 * time.Second
 
-// имя таблицы в базе PosgreSQL
+// SQLTableName имя таблицы в базе PosgreSQL.
 const SQLTableName = "sh_urls"
 
-// тип для context.WithValue
+// ctxKey тип для context.WithValue.
 type ctxKey string
 
-// ключ для context.WithValue
+// CtxKeyUserID ключ для context.WithValue.
 const CtxKeyUserID ctxKey = "uid"
 
-// количество каналов для воркеров при установке пометку удаленный для sh_urls
+// WorkersCount количество каналов для воркеров при установке пометку удаленный для sh_urls.
 const WorkersCount = 30
 
-// константы цветового вывода в консоль
+// WorkersCount константы цветового вывода в консоль.
 const (
 	ColorBlack  = "\u001b[30m"
 	ColorRed    = "\u001b[31m"

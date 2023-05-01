@@ -3,30 +3,31 @@ package httprouters
 import (
 	"compress/gzip"
 	"io"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
-// структура для записи зашифрованного ответа
+// gzipWriter структура для записи сжатого ответа.
 type gzipWriter struct {
 	http.ResponseWriter
 	gzWriter io.Writer
 }
 
-// метод для записи зашифрованного ответа
+// gzipWriter метод для записи сжатого ответа.
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.gzWriter будет отвечать за gzip-сжатие, поэтому пишем в него
 	return w.gzWriter.Write(b)
 }
 
-// структура для чтения зашифрованного тела запроса
+// gzipReader структура для чтения сжатого тела запроса.
 type gzipReader struct {
 	gzipReader *gzip.Reader
 	gzipBody   io.ReadCloser
 }
 
-// метод для закрытия тела запроса
+// gzipReader метод для закрытия тела запроса.
 func (r gzipReader) Close() error {
 	//закрываем gzipReader
 	r.gzipReader.Close()
@@ -34,12 +35,12 @@ func (r gzipReader) Close() error {
 	return r.gzipBody.Close()
 }
 
-// метод для чтения зашифрованного тела запроса
+// Read метод для чтения зашифрованного тела запроса.
 func (r gzipReader) Read(b []byte) (int, error) {
 	return r.gzipReader.Read(b)
 }
 
-// middleware функция распаковки-сжатия http алгоритмом gzip
+// middlewareGzip функция распаковки-сжатия http алгоритмом gzip для использования в роутере.
 func middlewareGzip(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// проверяем, что запрос содежит сжатые данные
@@ -47,7 +48,7 @@ func middlewareGzip(next http.Handler) http.Handler {
 			// читаем и распаковываем тело запроса с gzip
 			gzR, err := gzip.NewReader(r.Body)
 			if err != nil {
-				log.Println("gzip error: ", err)
+				log.Print("gzip error: ", err)
 				return
 			}
 			defer gzR.Close()
@@ -59,7 +60,7 @@ func middlewareGzip(next http.Handler) http.Handler {
 			// создаём gzip.Writer поверх текущего w для записи сжатого ответа
 			gzW, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 			if err != nil {
-				log.Println("gzip encodimg error:", err)
+				log.Print("gzip encodimg error:", err)
 				return
 			}
 			defer gzW.Close()

@@ -5,25 +5,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
+	"sync"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/dimsonson/go-yp-shortener-url/internal/app/models"
 )
 
-// структура хранилища
+// StorageFile структура файлового хранилища.
 type StorageFile struct {
 	UserID   map[string]string `json:"iserid,omitempty"` // shorturl:userid
 	IDURL    map[string]string `json:"idurl,omitempty"`  // shorturl:URL
 	DelURL   map[string]bool   `json:"_"`                // shorturl:deleted_url
-	pathName string  
+	pathName string
+	mu       sync.RWMutex
 }
 
-// метод записи id:url в хранилище
-func (ms *StorageFile) StoragePut(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
-
+// Put метод записи id:url в файловое хранилище.
+func (ms *StorageFile) Put(ctx context.Context, key string, value string, userid string) (existKey string, err error) {
 	// записываем в хранилице userid, id, URL
+	ms.mu.Lock()
 	ms.IDURL[key] = value
 	ms.UserID[key] = userid
 	ms.DelURL[key] = false
@@ -31,24 +34,27 @@ func (ms *StorageFile) StoragePut(ctx context.Context, key string, value string,
 	// открываем файл
 	sfile, err := os.OpenFile(ms.pathName, os.O_WRONLY, 0777)
 	if err != nil {
-		log.Println("storage file opening error: ", err)
+		log.Print("storage file opening error: ", err)
 		return "", err
 	}
 	defer sfile.Close()
 	// кодирование в JSON
 	js, err := json.Marshal(ms)
 	if err != nil {
-		log.Println("JSON marshalling from struct error: ", err)
-		return //err
+		log.Print("JSON marshalling from struct error: ", err)
+		return "", err
 	}
 	// запись в файл
-	sfile.Write(js)
+	_, err = sfile.Write(js)
+	if err != nil {
+		return "", err
+	}
+	ms.mu.Unlock()
 	return existKey, err
 }
 
-// конструктор нового хранилища JSON
+// NewFileStorage конструктор нового файлового хранилища.
 func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool, p string) *StorageFile {
-
 	return &StorageFile{
 		UserID:   u,
 		IDURL:    s,
@@ -57,8 +63,8 @@ func NewFileStorage(u map[string]string, s map[string]string, d map[string]bool,
 	}
 }
 
-// метод получения записи из хранилища
-func (ms *StorageFile) StorageGet(ctx context.Context, key string) (value string, del bool, err error) {
+// Get метод получения записи из файлового хранилища.
+func (ms *StorageFile) Get(ctx context.Context, key string) (value string, del bool, err error) {
 	value, ok := ms.IDURL[key]
 	if !ok {
 		return "", false, fmt.Errorf("key %v not found", key)
@@ -67,14 +73,14 @@ func (ms *StorageFile) StorageGet(ctx context.Context, key string) (value string
 	return value, del, nil
 }
 
-// метод определения длинны хранилища
-func (ms *StorageFile) StorageLen(ctx context.Context) (lenn int) {
+// Len метод определения длинны файлового хранилища.
+func (ms *StorageFile) Len(ctx context.Context) (lenn int) {
 	lenn = len(ms.IDURL)
 	return lenn
 }
 
-// метод отбора URLs по UserID
-func (ms *StorageFile) StorageURLsByUserID(ctx context.Context, userid string) (userURLs map[string]string, err error) {
+// GetBatch метод отбора URLs по UserID.
+func (ms *StorageFile) GetBatch(ctx context.Context, userid string) (userURLs map[string]string, err error) {
 
 	userURLs = make(map[string]string)
 	for k, v := range ms.UserID {
@@ -88,17 +94,22 @@ func (ms *StorageFile) StorageURLsByUserID(ctx context.Context, userid string) (
 	return userURLs, err
 }
 
-func (ms *StorageFile) StorageLoadFromFile() {
+// Load метод загрузки хранилища в кеш при инциализации.
+func (ms *StorageFile) Load() {
 	// загрузка базы из JSON
 	p := ms.pathName
 	_, pathOk := os.Stat(filepath.Dir(p))
 	if os.IsNotExist(pathOk) {
-		os.MkdirAll(filepath.Dir(p), 0777)
+		err := os.MkdirAll(filepath.Dir(p), 0777)
+		if err != nil {
+			log.Print(err)
+			return
+		}
 		log.Printf("folder %s created\n", filepath.Dir(p))
 	}
 	sfile, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
-		log.Fatal("file creating error: ", err)
+		log.Fatal().AnErr("file creating error: ", err)
 	}
 	defer sfile.Close()
 
@@ -106,26 +117,26 @@ func (ms *StorageFile) StorageLoadFromFile() {
 	if fileInfo.Size() != 0 {
 		b, err := io.ReadAll(sfile)
 		if err != nil {
-			log.Println("file storage reading error:", err)
+			log.Print("file storage reading error:", err)
 		}
 		err = json.Unmarshal(b, &ms)
 		if err != nil {
-			log.Println("JSON unmarshalling to struct error:", err)
+			log.Print("JSON unmarshalling to struct error:", err)
 		}
 	}
 }
 
-func (ms *StorageFile) StorageOkPing(ctx context.Context) (bool, error) {
-
+// Ping метод проверки доступности SQL хранилища.
+func (ms *StorageFile) Ping(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (ms *StorageFile) StorageConnectionClose() {
-
+// Close метод закрытия соединения доступности SQL хранилища.
+func (ms *StorageFile) Close() {
 }
 
-// метод пакетной записи id:url в хранилище
-func (ms *StorageFile) StoragePutBatch(ctx context.Context, dc models.BatchRequest, userid string) (dcCorr models.BatchRequest, err error) {
+// PutBatch метод пакетной записи id:url в хранилище.
+func (ms *StorageFile) PutBatch(ctx context.Context, dc []models.BatchRequest, userid string) (dcCorr []models.BatchRequest, err error) {
 	// итерируем по слайсу
 	for _, v := range dc {
 		// записываем в хранилице userid, id, URL, del
@@ -136,8 +147,33 @@ func (ms *StorageFile) StoragePutBatch(ctx context.Context, dc models.BatchReque
 	return dc, err
 }
 
-func (ms *StorageFile) StorageDeleteURL(key string, userid string) (err error) {
+// Delete метод пометки записи в файловом хранилище как удаленной.
+func (ms *StorageFile) Delete(key string, userid string) (err error) {
 	ms.IDURL[key] = userid
 	ms.DelURL[key] = true
 	return nil
+}
+
+// UsersQty метод получения количества уникальных пользователей.
+func (ms *StorageFile) UsersQty(ctx context.Context) (usersQty int, err error) {
+	ref := make(map[string]bool, len(ms.UserID))
+	for sh, uid := range ms.UserID {
+		if _, ok := ref[uid]; !ok {
+			if _, del := ms.DelURL[sh]; del {
+				ref[uid] = true
+				usersQty++
+			}
+		}
+	}
+	return usersQty, nil
+}
+
+// ShortsQty метод получения количества уникальных коротких ссылок.
+func (ms *StorageFile) ShortsQty(ctx context.Context) (shortsQty int, err error) {
+	for _, del := range ms.DelURL {
+		if !del {
+			shortsQty++
+		}
+	}
+	return shortsQty, nil
 }
