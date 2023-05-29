@@ -52,7 +52,6 @@ type Server struct {
 	HTTPserver *http.Server
 	Config
 	Wg   sync.WaitGroup
-	Ctx  context.Context
 	Stop context.CancelFunc
 	ShortServicePrivider
 	ShortService *ShortServices
@@ -86,7 +85,6 @@ type ShortServices struct {
 func NewServer(ctx context.Context, stop context.CancelFunc, cfg Config) *Server {
 	return &Server{
 		Config: cfg,
-		Ctx:    ctx,
 		Stop:   stop,
 	}
 }
@@ -209,17 +207,14 @@ func (cfg *Config) Parse() {
 }
 
 // Start метод запуска сервара, вид запвсукаемого сервера зависит от EnableGRPC в структуре Config.
-func (srv *Server) Start() {
+func (srv *Server) Start(ctx context.Context) {
 	if srv.EnableGRPC {
-		//srv.InitGRPC()
 		srv.InitGRPCservice()
-		//	srv.InitGRPC()
-		srv.grpcGracefullShotdown()
-		srv.StartGRPC()
+		srv.grpcGracefullShotdown(ctx)
 		return
 	}
 	srv.InitHTTP()
-	srv.httpGracefullShotdown()
+	srv.httpGracefullShotdown(ctx)
 	srv.StartHTTP()
 }
 
@@ -310,11 +305,11 @@ func (srv *Server) StartGRPC() {
 }
 
 // grpcGracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
-func (srv *Server) grpcGracefullShotdown() {
+func (srv *Server) grpcGracefullShotdown(ctx context.Context) {
 	srv.Wg.Add(1)
 	go func() {
 		// получаем сигнал о завершении приложения
-		<-srv.Ctx.Done()
+		<-ctx.Done()
 		log.Print("got signal, attempting graceful shutdown")
 		srv.GRPCserver.GracefulStop()
 		srv.Wg.Done()
@@ -322,11 +317,11 @@ func (srv *Server) grpcGracefullShotdown() {
 }
 
 // GracefullShotdown метод благопроиятного для соединений и незавершенных запросов закрытия сервера.
-func (srv *Server) httpGracefullShotdown() {
+func (srv *Server) httpGracefullShotdown(ctx context.Context) {
 	// добавляем счетчик горутины
 	srv.Wg.Add(1)
 	// запуск горутины shutdown http сервера
-	go httpServerShutdown(srv.Ctx, &srv.Wg, srv.HTTPserver)
+	go httpServerShutdown(ctx, &srv.Wg, srv.HTTPserver)
 }
 
 // Put метод обработки gPRC запроса с text URL и возврат короткого URL.
